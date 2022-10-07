@@ -12,6 +12,10 @@ import { SidebarServerComponent } from './sidebar-server/sidebar-server.componen
   ],
   imports: [
     CommonModule
+  ],
+  exports: [
+    SidebarComponent,
+    SidebarServerComponent
   ]
 })
 export class ComponentsModule { }

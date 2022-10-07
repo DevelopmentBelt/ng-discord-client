@@ -10,6 +10,9 @@ import { DefaultViewComponent } from './default-view/default-view.component';
   ],
   imports: [
     CommonModule
+  ],
+  exports: [
+    DefaultViewComponent
   ]
 })
-export class ViewsModule { }
+export class ViewsModule {}
