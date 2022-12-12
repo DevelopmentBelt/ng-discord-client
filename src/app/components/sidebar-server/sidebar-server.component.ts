@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import {Component, Input, OnInit} from '@angular/core';
+import {SidebarServer} from "../../models/sidebar-server/sidebar-server";
 
 @Component({
   selector: 'sidebar-server',
@@ -7,8 +8,14 @@ import { Component, OnInit } from '@angular/core';
 })
 export class SidebarServerComponent implements OnInit {
 
+  @Input() private server: SidebarServer;
+
+  public serverIconURL: string = "";
+
   constructor() {}
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.serverIconURL = this.server.iconURL;
+  }
 
 }
