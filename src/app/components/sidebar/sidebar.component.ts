@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import {SidebarServer} from "../../models/sidebar-server/sidebar-server";
 
 @Component({
   selector: 'sidebar',
@@ -7,7 +8,7 @@ import { Component, OnInit } from '@angular/core';
 })
 export class SidebarComponent implements OnInit {
 
-  public sidebarServers: {} = {};
+  public sidebarServers: SidebarServer[] = [];
 
   constructor() {}
 

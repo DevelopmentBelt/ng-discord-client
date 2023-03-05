@@ -8,7 +8,7 @@ import {SidebarServer} from "../../models/sidebar-server/sidebar-server";
 })
 export class SidebarServerComponent implements OnInit {
 
-  @Input() private server: SidebarServer;
+  @Input() private server: SidebarServer = {} as SidebarServer;
 
   public serverIconURL: string = "";
 
