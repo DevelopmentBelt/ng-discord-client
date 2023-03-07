@@ -1,6 +1,12 @@
 <div class="container-fluid sidebar-container">
-  <ng-template *ngFor="sidebarServers" let-server>
-    <sidebar-server [server]="server">
-    </sidebar-server>
-  </ng-template>
+  <div class="row">
+    <div class="col-1 min-vh-100" style="background-color: #1e1f23;">
+      <div class="row" *ngFor="let server of sidebarServers">
+        <div class="col">
+          <sidebar-server [server]="server">
+          </sidebar-server>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>

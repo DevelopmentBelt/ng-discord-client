@@ -8,14 +8,16 @@ import {SidebarServer} from "../../models/sidebar-server/sidebar-server";
 })
 export class SidebarServerComponent implements OnInit {
 
-  @Input() private server: SidebarServer = {} as SidebarServer;
+  @Input() server: SidebarServer = {} as SidebarServer;
 
   public serverIconURL: string = "";
+  public serverDesc: string = "";
 
   constructor() {}
 
   ngOnInit(): void {
     this.serverIconURL = this.server.iconURL;
+    this.serverDesc = this.server.serverDescription;
   }
 
 }

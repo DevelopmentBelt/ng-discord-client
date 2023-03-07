@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DefaultViewComponent } from './default-view/default-view.component';
+import {ComponentsModule} from "../components/components.module";
 
 
 
@@ -8,9 +9,10 @@ import { DefaultViewComponent } from './default-view/default-view.component';
   declarations: [
     DefaultViewComponent
   ],
-  imports: [
-    CommonModule
-  ],
+    imports: [
+        CommonModule,
+        ComponentsModule
+    ],
   exports: [
     DefaultViewComponent
   ]
