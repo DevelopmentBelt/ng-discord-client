@@ -1,8 +1,8 @@
-<div class="container-fluid sidebar-container">
+<div class="container-fluid sidebar-container g-0">
   <div class="row">
-    <div class="col-1 min-vh-100" id="angcord_servers" style="background-color: #1e1f23;">
+    <div class="col min-vh-100" id="angcord_servers" style="background-color: #1e1f23;">
       <div class="row" *ngFor="let server of sidebarServers">
-        <div class="col">
+        <div class="col g-0">
           <sidebar-server [server]="server">
           </sidebar-server>
         </div>

@@ -23,7 +23,9 @@ import { MemberSidebarComponent } from './ang-content/member-sidebar/member-side
   ],
   exports: [
     SidebarComponent,
-    SidebarServerComponent
+    SidebarServerComponent,
+    AngcordContentComponent,
+    AngContentComponent
   ]
 })
 export class ComponentsModule { }
