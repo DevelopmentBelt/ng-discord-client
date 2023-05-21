@@ -1,0 +1,24 @@
+#angcord-content {
+  background-color: #313338;
+  min-height: 100vh;
+  height: 100vh;
+  min-width: 100%;
+}
+#messages-container {
+  min-height: 94%;
+  overflow-y: auto;
+}
+#chatbox {
+  background-color: #383a40;
+  color: #d9dbde;
+  box-shadow: none;
+  border: 0;
+  border-radius: 5px;
+  padding: 8px;
+  width: 100%
+}
+#chatbox:focus {
+  border: none;
+  box-shadow: none;
+  outline: none;
+}
