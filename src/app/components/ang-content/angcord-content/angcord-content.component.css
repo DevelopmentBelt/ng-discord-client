@@ -6,7 +6,11 @@
 }
 #messages-container {
   min-height: 94%;
+  height: 94%;
   overflow-y: auto;
+}
+.message-row {
+  color: white;
 }
 #chatbox {
   background-color: #383a40;
