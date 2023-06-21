@@ -32,7 +32,11 @@ export class AngcordContentComponent implements OnInit {
       postedTimestamp: moment(),
       edited: false,
       editTimestamp: moment(),
-      author: {} as Author
+      author: {
+        userId: 1,
+        username: 'Badger',
+        profilePic: 'https://avatars.githubusercontent.com/u/8027457?v=4'
+      } as Author
     };
     this.messageList.push(msg);
     // TODO We need to post this to the web service

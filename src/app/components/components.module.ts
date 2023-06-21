@@ -6,6 +6,8 @@ import { AngContentComponent } from './ang-content/ang-content.component';
 import { ChannelSidebarComponent } from './ang-content/channel-sidebar/channel-sidebar.component';
 import { AngcordContentComponent } from './ang-content/angcord-content/angcord-content.component';
 import { MemberSidebarComponent } from './ang-content/member-sidebar/member-sidebar.component';
+import {AppModule} from "../app.module";
+import {PipesModule} from "../pipes/pipes.module";
 
 
 
@@ -19,7 +21,8 @@ import { MemberSidebarComponent } from './ang-content/member-sidebar/member-side
     MemberSidebarComponent
   ],
   imports: [
-    CommonModule
+    CommonModule,
+    PipesModule
   ],
   exports: [
     SidebarComponent,

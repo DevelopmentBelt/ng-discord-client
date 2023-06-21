@@ -1,23 +1,21 @@
 <div class="container-fluid no-gutters" id="angcord-content">
-  <div class="row" id="messages-container">
+  <div class="row d-block" id="messages-container">
     <!-- Messages -->
-    <div class="col col-12" *ngFor="let msg of messageList">
+    <div class="message-object" *ngFor="let msg of messageList">
       <div class="row message-row">
         <div class="col col-1 profile-pic text-center">
           <img class="img-fluid" src="{{ msg.author.profilePic }}" />
         </div>
         <div class="col col-11">
           <div class="row">
-            <div class="col col-6 display-name">
-              {{ msg.author.username }}
-            </div>
-            <div class="col col-6 post-time">
-              {{ msg.postedTimestamp }}
+            <div class="col col-12">
+              <span class="username-label">{{ msg.author.username }}</span>
+              <span class="px-2 datetime-label">{{ msg.postedTimestamp | datetimeFormatter: 'MM/DD/YYYY h:mm A' }}</span>
             </div>
           </div>
           <div class="row">
             <div class="col col-12">
-              <p>{{ msg.text }}</p>
+              <p class="message-data text-wrap text-break">{{ msg.text }}</p>
             </div>
           </div>
         </div>

@@ -26,3 +26,17 @@
   box-shadow: none;
   outline: none;
 }
+
+.message-object {}
+.message-object:hover {
+  background-color: #5d5d5d;
+}
+.message-row {
+  padding: 20px 5px;
+}
+.username-label {}
+.datetime-label {
+  font-size: 11px;
+  color: #afafaf;
+}
+.message-data {}
