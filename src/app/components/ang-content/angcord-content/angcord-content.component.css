@@ -12,6 +12,10 @@
 .message-row {
   color: white;
 }
+.pro-pic {
+  height: 60px;
+  width: 60px;
+}
 #chatbox {
   background-color: #383a40;
   color: #d9dbde;
@@ -31,8 +35,9 @@
 .message-object:hover {
   background-color: #5d5d5d;
 }
-.message-row {
-  padding: 20px 5px;
+.message-row {}
+.message-row p {
+  margin-bottom: 0;
 }
 .username-label {}
 .datetime-label {
