@@ -1,6 +1,7 @@
 import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
 import {Author, Mention, Message} from "../../../models/message/message";
 import * as moment from "moment";
+import {MessageWebService} from "../../../services/message-web-service/message-web.service";
 
 @Component({
   selector: 'angcord-content',
@@ -11,7 +12,7 @@ export class AngcordContentComponent implements OnInit {
   @ViewChild('messageBox') private messageBox!: ElementRef;
   public messageList: Message[] = [] as Message[];
 
-  constructor() {}
+  constructor(private webService: MessageWebService) {}
 
   ngOnInit(): void {
     // TODO Need to get the latest messages from the web service
@@ -26,6 +27,7 @@ export class AngcordContentComponent implements OnInit {
 
   public postMessage(textRaw: string) {
     const msg: Message = {
+      id: "test",
       text: textRaw,
       rawText: textRaw,
       mentions: {} as Mention[],
@@ -38,7 +40,7 @@ export class AngcordContentComponent implements OnInit {
         profilePic: 'https://avatars.githubusercontent.com/u/8027457?v=4'
       } as Author
     };
-    this.messageList.push(msg);
-    // TODO We need to post this to the web service
+    if (this.webService.postMessage(msg))
+      this.messageList.push(msg);
   }
 }

@@ -1,6 +1,7 @@
 import {Moment} from "moment";
 
 export interface Message {
+  id: string;
   text: string;
   rawText: string;
   mentions: Mention[];
@@ -8,6 +9,7 @@ export interface Message {
   edited: boolean;
   editTimestamp: Moment;
   author: Author;
+  hidden?: boolean;
 }
 
 export interface Author {

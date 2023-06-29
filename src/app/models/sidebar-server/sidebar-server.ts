@@ -1,7 +1,7 @@
 export interface SidebarServer {
   iconURL: string,
   serverName: string,
-  serverId: string,
+  serverId: number,
   ownerId: string,
   serverDescription: string
 }
