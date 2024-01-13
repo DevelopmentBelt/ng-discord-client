@@ -8,6 +8,7 @@ import { AngcordContentComponent } from './ang-content/angcord-content/angcord-c
 import { MemberSidebarComponent } from './ang-content/member-sidebar/member-sidebar.component';
 import {AppModule} from "../app.module";
 import {PipesModule} from "../pipes/pipes.module";
+import {AvatarModule} from "primeng/avatar";
 
 
 
@@ -20,10 +21,11 @@ import {PipesModule} from "../pipes/pipes.module";
     AngcordContentComponent,
     MemberSidebarComponent
   ],
-  imports: [
-    CommonModule,
-    PipesModule
-  ],
+    imports: [
+        CommonModule,
+        PipesModule,
+        AvatarModule
+    ],
   exports: [
     SidebarComponent,
     SidebarServerComponent,
