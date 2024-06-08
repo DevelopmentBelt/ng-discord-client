@@ -24,5 +24,9 @@ div.profile-spacer {
   background-color: #80838e; /* Set the background color to match your design */
 }
 div.user-profile {}
-div.username {}
-div.motto {}
+div.username {
+  color: #F1F1F1;
+}
+div.motto {
+  color: #949aa4;
+}
