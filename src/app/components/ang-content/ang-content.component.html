@@ -7,7 +7,7 @@
       <div class="row">
         <div class="col-1">
           <!-- Channel Sidebar -->
-          <channel-sidebar></channel-sidebar>
+          <channel-sidebar (selectedServerChange)="handleServerChange($event)"></channel-sidebar>
         </div>
         <div class="col-8 g-0">
           <!-- Angcord Content -->

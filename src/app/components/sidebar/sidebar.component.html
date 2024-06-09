@@ -1,8 +1,12 @@
 <div class="container-fluid sidebar-container g-0">
   <div class="row">
-    <div class="col min-vh-100" id="angcord_servers" style="background-color: #1e1f23;">
+    <div class="col min-vh-100" id="angcord_servers">
       <div class="row" *ngFor="let server of sidebarServers">
-        <div class="col g-0 p-1 sidebar-hover rounded" [ngClass]="(selectedServerId == server.serverId) ? 'bg-secondary rounded' : ''">
+        <div
+          class="col g-0 p-1 sidebar-server-contain rounded"
+          [ngClass]="(selectedServerId() == server.serverId) ? 'bg-secondary rounded' : ''"
+          (click)="selectServer(server);"
+        >
           <sidebar-server [server]="server">
           </sidebar-server>
         </div>

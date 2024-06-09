@@ -1,9 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import {ChangeDetectionStrategy, Component, OnInit} from '@angular/core';
+import {SidebarServer} from "../../models/sidebar-server/sidebar-server";
 
 @Component({
   selector: 'ang-content',
   templateUrl: './ang-content.component.html',
-  styleUrls: ['./ang-content.component.css']
+  styleUrls: ['./ang-content.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AngContentComponent implements OnInit {
 
@@ -11,5 +13,7 @@ export class AngContentComponent implements OnInit {
 
   ngOnInit(): void {
   }
+
+  handleServerChange(server: SidebarServer) {}
 
 }

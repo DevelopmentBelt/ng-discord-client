@@ -1,4 +1,4 @@
-import {Component, ElementRef, Input, OnInit, ViewChild} from '@angular/core';
+import {ChangeDetectionStrategy, Component, ElementRef, Input, OnInit, ViewChild} from '@angular/core';
 import {Author, Mention, Message} from "../../../models/message/message";
 import * as moment from "moment";
 import {MessageWebService} from "../../../services/message-web-service/message-web.service";
@@ -7,7 +7,8 @@ import {User} from "../../../models/user/user";
 @Component({
   selector: 'angcord-content',
   templateUrl: './angcord-content.component.html',
-  styleUrls: ['./angcord-content.component.css']
+  styleUrls: ['./angcord-content.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AngcordContentComponent implements OnInit {
   @Input('serverId') serverId: string = "";

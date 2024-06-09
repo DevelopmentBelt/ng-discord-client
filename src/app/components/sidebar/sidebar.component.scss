@@ -1,4 +1,12 @@
-.sidebar-hover:hover {
+.sidebar-server-contain:hover {
   opacity: .65;
   cursor: pointer;
+}
+.sidebar-server-contain {
+  max-width: 100px;
+  margin-left: auto;
+  margin-right: auto;
+}
+#angcord_servers {
+  background-color: #1e1f23;
 }
