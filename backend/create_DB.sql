@@ -7,7 +7,6 @@ CREATE TABLE IF NOT EXISTS `servers` (
 );
 
 CREATE TABLE IF NOT EXISTS `members` (
-  `member_id` BIGINT(64) AUTO_INCREMENT PRIMARY KEY,
   `member_name` VARCHAR(255),
   `user_id` BIGINT(64)
 );
@@ -23,18 +22,18 @@ CREATE TABLE IF NOT EXISTS `users` (
 
 CREATE TABLE IF NOT EXISTS `messages` (
   `message_id` BIGINT(64) AUTO_INCREMENT PRIMARY KEY,
-  `posted_by_member_id` BIGINT(64),
+  `posted_by_user_id` BIGINT(64),
   `raw_text` TEXT(1024),
   `timestamp_posted` DATETIME
 );
 
 CREATE TABLE IF NOT EXISTS `message_content` (
-  `main_message_id` BIGINT(64),
-  `mentioned_members` TEXT(1024),
-  `attachments` TEXT(1024)
+  `message_id` BIGINT(64),
+  `mentioned_members` TEXT(1024)
 );
 
 CREATE TABLE IF NOT EXISTS `attachment` (
   `attachment_id` BIGINT(64) AUTO_INCREMENT PRIMARY KEY,
-  `attachment_data` TEXT(4024)
+  `attachment_data` TEXT(4024),
+  `message_id` BIGINT(64)
 );

@@ -40,6 +40,7 @@ export class AngcordContentComponent implements OnInit {
       postedTimestamp: moment(),
       edited: false,
       editTimestamp: moment(),
+      attachments: [],
       author: {
         userId: 1,
         username: 'Badger',

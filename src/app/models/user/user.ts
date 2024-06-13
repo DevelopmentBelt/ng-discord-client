@@ -1,8 +1,7 @@
 export interface User {
   id: number;
   username: string;
-  fullName: string;
-  profilePic: string;
+  userPic: string;
+  email: string;
+  userBio: string;
 }
-
-export interface UserDetails {}
