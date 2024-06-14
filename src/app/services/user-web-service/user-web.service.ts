@@ -1,17 +1,29 @@
 import { Injectable } from '@angular/core';
-import {LoginResponse, RegisterResponse} from "../../models/user/auth";
+import {LoginRequest, LoginResponse, RegisterRequest, RegisterResponse} from "../../models/user/auth";
 import {ServerConnectivityService} from "../server-connectivity.service";
+import {Observable} from "rxjs";
 
 @Injectable({
   providedIn: 'root'
 })
 export class UserWebService {
-  constructor(serverConnectivityService: ServerConnectivityService) {}
+  private readonly API_URL = 'users';
+  constructor(private serverConnectivityService: ServerConnectivityService) {}
 
-  public register(email: string, user_name: string, password: string): Promise<RegisterResponse> {
-    return new Promise<RegisterResponse>(() => {});
+  public register(email: string, userName: string, password: string): Observable<RegisterResponse> {
+    const registerRequest: RegisterRequest = {
+      email: email,
+      password: password,
+      username: userName
+    };
+    return this.serverConnectivityService.sendPostReq(`${this.API_URL}/register`, registerRequest, {});
   }
-  public login(user_name: string, password: string): Promise<LoginResponse> {
-    return new Promise<LoginResponse>(() => {});
+  public login(userName: string, email: string, password: string): Observable<LoginResponse> {
+    const loginRequest: LoginRequest = {
+      username: userName,
+      email: email,
+      password: password
+    };
+    return this.serverConnectivityService.sendPostReq(`${this.API_URL}/login`, loginRequest, {});
   }
 }

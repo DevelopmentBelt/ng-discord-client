@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `user_bio` TEXT(1024),
   `user_pic` TEXT(1024),
   `email` VARCHAR(255),
+  `email_verified` BOOLEAN,
   `password` VARCHAR(256)
 );
 
