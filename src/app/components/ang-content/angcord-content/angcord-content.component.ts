@@ -1,6 +1,6 @@
 import {
-  ChangeDetectionStrategy,
-  Component,
+  ChangeDetectionStrategy, ChangeDetectorRef,
+  Component, effect,
   ElementRef,
   input,
   Input,
@@ -31,7 +31,18 @@ export class AngcordContentComponent implements OnInit {
   @ViewChild('messageBox') private messageBox!: ElementRef;
   public messageList: Message[] = [] as Message[];
 
-  constructor(private webService: MessageWebService) {}
+  constructor(
+    private webService: MessageWebService,
+    private cdr: ChangeDetectorRef
+  ) {
+    effect(() => {
+      const serverId = this.serverId();
+      const channelId = this.channelId();
+      this.messageList = [];
+      this.messageBox.nativeElement.value = '';
+      cdr.detectChanges();
+    }, { allowSignalWrites: true });
+  }
 
   ngOnInit(): void {
     // TODO Need to get the latest messages from the web service

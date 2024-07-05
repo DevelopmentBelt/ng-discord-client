@@ -49,5 +49,6 @@ export class SidebarComponent implements OnInit {
 
   selectServer(server: SidebarServer) {
     this.selectedServerId.set(server.serverId);
+    this.selectedServerChange.emit(server);
   }
 }

@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, OnInit} from '@angular/core';
+import {ChangeDetectionStrategy, Component, OnInit, signal, WritableSignal} from '@angular/core';
 import {SidebarServer} from "../../models/sidebar-server/sidebar-server";
 import {AngcordContentComponent} from "./angcord-content/angcord-content.component";
 import {MemberSidebarComponent} from "./member-sidebar/member-sidebar.component";
@@ -17,11 +17,14 @@ import {ChannelSidebarComponent} from "./channel-sidebar/channel-sidebar.compone
   standalone: true
 })
 export class AngContentComponent implements OnInit {
+  selectedServer: WritableSignal<SidebarServer> = signal(null);
 
   constructor() {}
 
   ngOnInit(): void {}
 
-  handleServerChange(server: SidebarServer) {}
+  handleServerChange(server: SidebarServer) {
+    this.selectedServer.set(server);
+  }
 
 }
