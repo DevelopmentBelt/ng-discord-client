@@ -4,14 +4,19 @@ import {ServerConnectivityService} from "../server-connectivity.service";
 import {Observable} from "rxjs";
 import {User} from "../../models/user/user";
 import * as moment from 'moment';
+import {Socket} from "ngx-socket-io";
 
 @Injectable({
   providedIn: 'root'
 })
 export class MessageWebService {
-  constructor(private serverConnectivityService: ServerConnectivityService) {}
+  constructor(
+    private serverConnectivityService: ServerConnectivityService,
+    private socket: Socket
+  ) {}
 
   public postMessage(user: User, msg: Message): Observable<Message> {
+    this.socket.emit("message", user, msg);
     return this.serverConnectivityService.sendPostReq("postMessage", {
       'postedByMemberId': user.id,
       'message': msg.text,
