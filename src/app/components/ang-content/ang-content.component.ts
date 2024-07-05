@@ -9,10 +9,9 @@ import {SidebarServer} from "../../models/sidebar-server/sidebar-server";
 })
 export class AngContentComponent implements OnInit {
 
-  constructor() { }
+  constructor() {}
 
-  ngOnInit(): void {
-  }
+  ngOnInit(): void {}
 
   handleServerChange(server: SidebarServer) {}
 
