@@ -1,11 +1,19 @@
 import {Component, OnInit} from '@angular/core';
 import {UserWebService} from "./services/user-web-service/user-web.service";
 import {LoginResponse, RegisterResponse} from "./models/user/auth";
+import {DefaultViewComponent} from "./views/default-view/default-view.component";
+import {CommonModule} from "@angular/common";
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss']
+  styleUrls: ['./app.component.scss'],
+  imports: [
+    DefaultViewComponent,
+    CommonModule
+  ],
+  providers: [],
+  standalone: true
 })
 export class AppComponent implements OnInit {
   public isLoggedIn: boolean = true;

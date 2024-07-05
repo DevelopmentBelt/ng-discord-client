@@ -1,18 +1,32 @@
-import {ChangeDetectionStrategy, Component, ElementRef, Input, OnInit, ViewChild} from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  input,
+  Input,
+  InputSignal,
+  OnInit,
+  ViewChild
+} from '@angular/core';
 import {Author, Mention, Message} from "../../../models/message/message";
 import * as moment from "moment";
 import {MessageWebService} from "../../../services/message-web-service/message-web.service";
 import {User} from "../../../models/user/user";
+import {DatetimeFormatterPipe} from "../../../pipes/datetimeFormatter/datetime-formatter.pipe";
 
 @Component({
   selector: 'angcord-content',
   templateUrl: './angcord-content.component.html',
   styleUrls: ['./angcord-content.component.css'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    DatetimeFormatterPipe
+  ],
+  standalone: true
 })
 export class AngcordContentComponent implements OnInit {
-  @Input('serverId') serverId: string = "";
-  @Input('channelId') channelId: string = "";
+  serverId: InputSignal<string> = input("");
+  channelId: InputSignal<string> = input("");
 
   @ViewChild('messageBox') private messageBox!: ElementRef;
   public messageList: Message[] = [] as Message[];
@@ -21,7 +35,7 @@ export class AngcordContentComponent implements OnInit {
 
   ngOnInit(): void {
     // TODO Need to get the latest messages from the web service
-    this.webService.getLatestMessages(this.serverId, this.channelId).subscribe((resp) => {});
+    this.webService.getLatestMessages(this.serverId(), this.channelId()).subscribe((resp) => {});
   }
 
   public handleKeyDownEvent($event: KeyboardEvent) {

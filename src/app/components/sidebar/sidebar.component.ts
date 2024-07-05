@@ -1,11 +1,18 @@
 import {ChangeDetectionStrategy, Component, EventEmitter, OnInit, Output, signal, WritableSignal} from '@angular/core';
 import {SidebarServer} from "../../models/sidebar-server/sidebar-server";
+import {SidebarServerComponent} from "../sidebar-server/sidebar-server.component";
+import {NgClass} from "@angular/common";
 
 @Component({
   selector: 'sidebar',
   templateUrl: './sidebar.component.html',
   styleUrls: ['./sidebar.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    SidebarServerComponent,
+    NgClass
+  ],
+  standalone: true
 })
 export class SidebarComponent implements OnInit {
   public selectedServerId: WritableSignal<string> = signal('952934994085568552');

@@ -1,33 +1,40 @@
 <div class="container-fluid no-gutters" id="angcord-content">
   <div class="row d-block" id="messages-container">
     <!-- Messages -->
-    <div class="message-object" *ngFor="let msg of messageList; let i = index;">
-      <div class="row message-row">
-          <div class="col col-1 text-center">
-            <ng-container *ngIf="i == 0 || messageList[i-1]?.author?.userId != msg.author.userId; else elseBlock">
-              <img class="img-fluid pro-pic" src="{{ msg.author.profilePic }}" />
-            </ng-container>
-            <ng-template #elseBlock>
-              <span class="datetime-label">{{ msg.postedTimestamp | datetimeFormatter: 'h:mm A' }}</span>
-            </ng-template>
-          </div>
-          <div class="col col-11">
-            <div class="row">
-              <div class="col col-12">
-                <ng-container *ngIf="i == 0 || messageList[i-1]?.author?.userId != msg.author.userId;">
-                  <span class="username-label">{{ msg.author.username }}</span>
-                  <span class="px-2 datetime-label">{{ msg.postedTimestamp | datetimeFormatter: 'MM/DD/YYYY h:mm A' }}</span>
+    @for (msg of messageList; track msg; let i = $index) {
+      <div class="message-object">
+        <div class="row message-row">
+            <div class="col col-1 text-center">
+              @if (i == 0 || messageList[i-1]?.author?.userId != msg.author.userId) {
+                <ng-container>
+                  <img class="img-fluid pro-pic" src="{{ msg.author.profilePic }}" />
                 </ng-container>
+              } @else {
+                <ng-template #elseBlock>
+                  <span class="datetime-label">{{ msg.postedTimestamp | datetimeFormatter: 'h:mm A' }}</span>
+                </ng-template>
+              }
+            </div>
+            <div class="col col-11">
+              <div class="row">
+                <div class="col col-12">
+                  @if (i == 0 || messageList[i-1]?.author?.userId != msg.author.userId) {
+                    <ng-container>
+                      <span class="username-label">{{ msg.author.username }}</span>
+                      <span class="px-2 datetime-label">{{ msg.postedTimestamp | datetimeFormatter: 'MM/DD/YYYY h:mm A' }}</span>
+                    </ng-container>
+                  }
+                </div>
+              </div>
+              <div class="row">
+                <div class="col col-12">
+                  <p class="message-data text-wrap text-break">{{ msg.text }}</p>
+                </div>
               </div>
             </div>
-            <div class="row">
-              <div class="col col-12">
-                <p class="message-data text-wrap text-break">{{ msg.text }}</p>
-              </div>
-            </div>
-          </div>
+        </div>
       </div>
-    </div>
+    }
   </div>
   <div class="row">
     <!-- Message Input -->

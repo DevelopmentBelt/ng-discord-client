@@ -5,7 +5,8 @@ import {SidebarServer} from "../../models/sidebar-server/sidebar-server";
   selector: 'sidebar-server',
   templateUrl: './sidebar-server.component.html',
   styleUrls: ['./sidebar-server.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: true
 })
 export class SidebarServerComponent implements OnInit {
 
