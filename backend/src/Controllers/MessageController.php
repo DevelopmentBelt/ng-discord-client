@@ -7,7 +7,8 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 
 class MessageController extends Routes {
   protected function registerRoutes() {
-    $this->app->get('/', [$this, 'index']);
+    $this->app->post('/messages', [$this, 'postMessage']);
+    $this->app->delete('/messages', [$this, 'deleteMessage']);
   }
 
   public function postMessage(Request $request, Response $response, $args): Response {

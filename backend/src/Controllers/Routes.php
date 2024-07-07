@@ -7,7 +7,7 @@ use Slim\App;
 
 abstract class Routes
 {
-  protected $app;
+  protected App $app;
   protected DatabaseService $dbService;
 
   public function __construct(App $app, DatabaseService $dbService)

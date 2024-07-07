@@ -8,8 +8,8 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 
 class UserController extends Routes {
   protected function registerRoutes() {
-    $this->app->post('users/register', [$this, 'register']);
-    $this->app->post('users/login', [$this, 'login']);
+    $this->app->post('/users/register', [$this, 'register']);
+    $this->app->post('/users/login', [$this, 'login']);
   }
 
   protected function register(Request $request, Response $response, $args) {
@@ -29,6 +29,7 @@ class UserController extends Routes {
     } else {
       // TODO Error, this username or email already exists...
     }
+    return null;
   }
   protected function login(Request $request, Response $response, $args) {
     $body = $request->getParsedBody();
@@ -55,5 +56,6 @@ class UserController extends Routes {
       // Not a valid user, inform them...
       // TODO
     }
+    return null;
   }
 }

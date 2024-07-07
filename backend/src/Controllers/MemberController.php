@@ -6,7 +6,5 @@ use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
 class MemberController extends Routes {
-  protected function registerRoutes() {
-    $this->app->get('/', [$this, 'index']);
-  }
+  protected function registerRoutes() {}
 }
