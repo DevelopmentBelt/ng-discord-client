@@ -19,7 +19,6 @@
     "@angular/platform-browser-dynamic": "^18.0.6",
     "@angular/router": "^18.0.6",
     "moment": "^2.29.4",
-    "ngx-socket-io": "^4.7.0",
     "primeng": "^17.3.2",
     "rxjs": "^7.5.0",
     "tslib": "^2.3.0",

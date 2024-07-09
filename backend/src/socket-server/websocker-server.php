@@ -1,5 +1,6 @@
 <?php
 
+use Ratchet\App;
 use Ratchet\Http\HttpServer;
 use Ratchet\MessageComponentInterface;
 use Ratchet\ConnectionInterface;
@@ -15,7 +16,7 @@ error_reporting(E_ALL ^ E_DEPRECATED);
  * chat.php
  * Send any incoming messages to all connected clients (except sender)
  */
-class MyChat implements MessageComponentInterface {
+class BaseSocketListener implements MessageComponentInterface {
   protected $clients;
 
   public function __construct() {
@@ -23,7 +24,6 @@ class MyChat implements MessageComponentInterface {
   }
 
   public function onOpen(ConnectionInterface $conn) {
-    var_dump($conn);
     $this->clients->attach($conn);
   }
 
@@ -47,13 +47,9 @@ class MyChat implements MessageComponentInterface {
 }
 
 // Run the server application through the WebSocket protocol on port 8080
-$server = IoServer::factory(
-  new HttpServer(
-    new WsServer(
-      new MyChat()
-    )
-  ),
-  8080
-);
+$app = new App('localhost', 8080);
 
-$server->run();
+$app->route('/base', new WsServer(new BaseSocketListener()), ['*']);
+$app->route('/channel', new WsServer(new BaseSocketListener()), ['*']);
+
+$app->run();

@@ -4,7 +4,7 @@ import {ServerConnectivityService} from "../server-connectivity.service";
 import {Observable} from "rxjs";
 import {User} from "../../models/user/user";
 import * as moment from 'moment';
-import {SocketService} from "../socket-service/socket.service";
+import {ChannelSocketService} from "../socket-service/channel-socket.service";
 
 @Injectable({
   providedIn: 'root'
@@ -12,7 +12,7 @@ import {SocketService} from "../socket-service/socket.service";
 export class MessageWebService {
   constructor(
     private serverConnectivityService: ServerConnectivityService,
-    private socketService: SocketService
+    private socketService: ChannelSocketService
   ) {}
 
   public postMessage(user: User, msg: Message): Observable<Message> {
