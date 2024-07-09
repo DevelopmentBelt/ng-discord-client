@@ -13,7 +13,11 @@ export class MessageWebService {
   constructor(
     private serverConnectivityService: ServerConnectivityService,
     private socketService: ChannelSocketService
-  ) {}
+  ) {
+    socketService.setUserId(1);
+    socketService.setChannelId(1);
+    socketService.connect();
+  }
 
   public postMessage(user: User, msg: Message): Observable<Message> {
     this.socketService.sendMessage(msg);
