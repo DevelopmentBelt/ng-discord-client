@@ -13,6 +13,8 @@ import * as moment from "moment";
 import {MessageWebService} from "../../../services/message-web-service/message-web.service";
 import {User} from "../../../models/user/user";
 import {DatetimeFormatterPipe} from "../../../pipes/datetimeFormatter/datetime-formatter.pipe";
+import {Subscription} from "rxjs";
+import {ChannelSocketService} from "../../../services/socket-service/channel-socket.service";
 
 @Component({
   selector: 'angcord-content',
@@ -25,29 +27,52 @@ import {DatetimeFormatterPipe} from "../../../pipes/datetimeFormatter/datetime-f
   standalone: true
 })
 export class AngcordContentComponent implements OnInit {
-  serverId: InputSignal<string> = input("");
-  channelId: InputSignal<string> = input("");
+  serverId: InputSignal<string> = input("1"); // TODO Get rid of 1
+  channelId: InputSignal<string> = input("1"); // TODO Get rid of 1
 
   @ViewChild('messageBox') private messageBox!: ElementRef;
   public messageList: Message[] = [] as Message[];
 
+  private subs: Subscription = new Subscription();
+
   constructor(
     private webService: MessageWebService,
+    private socketService: ChannelSocketService,
     private cdr: ChangeDetectorRef
   ) {
     effect(() => {
+      console.log("[DEBUG] angcord-content effect ran...");
+      this.subs.unsubscribe();
+      this.subs = new Subscription();
       const serverId = this.serverId();
       const channelId = this.channelId();
+      this.socketService.setChannelId(channelId);
+      this.socketService.setUserId(1);
       this.messageList = [];
       this.messageBox.nativeElement.value = '';
+      // TODO Need to get the latest messages from the web service
+      this.subs.add(
+        this.webService.getLatestMessages(serverId, channelId).subscribe((resp) => {})
+      );
+      this.subs.add(
+        this.socketService.onMessage().subscribe((msg) => {
+          const message = JSON.parse(msg.data) as Message;
+          console.log("[DEBUG] message =>", message);
+          message.editTimestamp = moment(message.editTimestamp);
+          message.postedTimestamp = moment(message.postedTimestamp);
+          this.messageList.push(message);
+          cdr.detectChanges();
+        })
+      );
       cdr.detectChanges();
     }, { allowSignalWrites: true });
   }
 
-  ngOnInit(): void {
-    // TODO Need to get the latest messages from the web service
-    this.webService.getLatestMessages(this.serverId(), this.channelId()).subscribe((resp) => {});
-  }
+  ngOnInit(): void {}
+
+  ngOnDestroy(): void {
+    this.subs.unsubscribe();
+}
 
   public handleKeyDownEvent($event: KeyboardEvent) {
     if ($event.key.toUpperCase() == 'ENTER' && this.messageBox.nativeElement != undefined) {
@@ -78,7 +103,9 @@ export class AngcordContentComponent implements OnInit {
       fullName: 'badger.jar',
       profilePic: ''
     } as unknown as User;
-    if (this.webService.postMessage(user, msg))
-      this.messageList.push(msg);
+    if (this.webService.postMessage(user, msg)) {
+      // Successful post...
+      this.socketService.sendMessage(msg);
+    }
   }
 }

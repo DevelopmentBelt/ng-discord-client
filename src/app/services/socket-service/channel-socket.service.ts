@@ -6,7 +6,7 @@ import {Observable, Subject} from "rxjs";
 })
 export class ChannelSocketService {
   private io: WebSocket;
-  private channelId: number;
+  private channelId: string;
   private userId: number;
 
   private messageSubject = new Subject<MessageEvent>();
@@ -17,7 +17,7 @@ export class ChannelSocketService {
   isConnected() {
     return this.connected;
   }
-  setChannelId(channelId: number) {
+  setChannelId(channelId: string) {
     this.channelId = channelId;
     if (this.userId) {
       this.disconnect();
@@ -52,8 +52,10 @@ export class ChannelSocketService {
     return true;
   }
   disconnect() {
-    this.connected = false;
-    this.io.close();
+    if (this.io) {
+      this.connected = false;
+      this.io.close();
+    }
   }
   sendMessage(message: any) {
     this.io.send(JSON.stringify(message));

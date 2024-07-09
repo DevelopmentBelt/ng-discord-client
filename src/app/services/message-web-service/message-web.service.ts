@@ -4,23 +4,16 @@ import {ServerConnectivityService} from "../server-connectivity.service";
 import {Observable} from "rxjs";
 import {User} from "../../models/user/user";
 import * as moment from 'moment';
-import {ChannelSocketService} from "../socket-service/channel-socket.service";
 
 @Injectable({
   providedIn: 'root'
 })
 export class MessageWebService {
   constructor(
-    private serverConnectivityService: ServerConnectivityService,
-    private socketService: ChannelSocketService
-  ) {
-    socketService.setUserId(1);
-    socketService.setChannelId(1);
-  }
+    private serverConnectivityService: ServerConnectivityService
+  ) {}
 
   public postMessage(user: User, msg: Message): Observable<Message> {
-    if (this.socketService.isConnected())
-      this.socketService.sendMessage(msg);
     return this.serverConnectivityService.sendPostReq("postMessage", {
       'postedByMemberId': user.id,
       'message': msg.text,

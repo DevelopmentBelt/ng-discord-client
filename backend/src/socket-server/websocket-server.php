@@ -28,12 +28,8 @@ class BaseSocketListener implements MessageComponentInterface {
   }
 
   public function onMessage(ConnectionInterface $from, $msg) {
-    echo '[DEBUG] msg => ' . $msg . "\n";
-    var_dump($msg);
     foreach ($this->clients as $client) {
-      if ($from != $client) {
-        $client->send($msg);
-      }
+      $client->send($msg);
     }
   }
 
