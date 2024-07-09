@@ -16,11 +16,11 @@ export class MessageWebService {
   ) {
     socketService.setUserId(1);
     socketService.setChannelId(1);
-    socketService.connect();
   }
 
   public postMessage(user: User, msg: Message): Observable<Message> {
-    this.socketService.sendMessage(msg);
+    if (this.socketService.isConnected())
+      this.socketService.sendMessage(msg);
     return this.serverConnectivityService.sendPostReq("postMessage", {
       'postedByMemberId': user.id,
       'message': msg.text,

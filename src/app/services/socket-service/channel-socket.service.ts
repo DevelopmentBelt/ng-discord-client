@@ -19,9 +19,17 @@ export class ChannelSocketService {
   }
   setChannelId(channelId: number) {
     this.channelId = channelId;
+    if (this.userId) {
+      this.disconnect();
+      this.connect();
+    }
   }
   setUserId(userId: number) {
     this.userId = userId;
+    if (this.channelId) {
+      this.disconnect();
+      this.connect();
+    }
   }
   onMessage(): Observable<MessageEvent> {
     return this.messageObs;
@@ -44,9 +52,10 @@ export class ChannelSocketService {
     return true;
   }
   disconnect() {
+    this.connected = false;
     this.io.close();
   }
   sendMessage(message: any) {
-    this.io.send(message);
+    this.io.send(JSON.stringify(message));
   }
 }
