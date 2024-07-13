@@ -1,3 +1,10 @@
+DROP TABLE IF EXISTS `servers`;
+DROP TABLE IF EXISTS `members`;
+DROP TABLE IF EXISTS `users`;
+DROP TABLE IF EXISTS `messages`;
+DROP TABLE IF EXISTS `message_content`;
+DROP TABLE IF EXISTS `attachment`;
+
 CREATE TABLE IF NOT EXISTS `servers` (
   `server_id` BIGINT(64) AUTO_INCREMENT PRIMARY KEY,
   `server_name` VARCHAR(255),
@@ -8,7 +15,8 @@ CREATE TABLE IF NOT EXISTS `servers` (
 
 CREATE TABLE IF NOT EXISTS `members` (
   `member_name` VARCHAR(255),
-  `user_id` BIGINT(64)
+  `user_id` BIGINT(64),
+  `motto` VARCHAR(255)
 );
 
 CREATE TABLE IF NOT EXISTS `users` (
@@ -21,8 +29,22 @@ CREATE TABLE IF NOT EXISTS `users` (
   `password` VARCHAR(256)
 );
 
+CREATE TABLE IF NOT EXISTS `categories` (
+  `category_id` BIGINT(64) AUTO_INCREMENT PRIMARY KEY,
+  `server_id` BIGINT(64),
+  `category_name` VARCHAR(255),
+  `category_icon` TEXT(1024)
+);
+
+CREATE TABLE IF NOT EXISTS `channels` (
+  `channel_id` BIGINT(64) AUTO_INCREMENT PRIMARY KEY,
+  `category_id` BIGINT(64),
+  `channel_name` VARCHAR(255)
+);
+
 CREATE TABLE IF NOT EXISTS `messages` (
   `message_id` BIGINT(64) AUTO_INCREMENT PRIMARY KEY,
+  `channel_id` BIGINT(64),
   `posted_by_user_id` BIGINT(64),
   `raw_text` TEXT(1024),
   `timestamp_posted` DATETIME

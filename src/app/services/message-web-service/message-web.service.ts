@@ -13,8 +13,8 @@ export class MessageWebService {
     private serverConnectivityService: ServerConnectivityService
   ) {}
 
-  public postMessage(user: User, msg: Message): Observable<Message> {
-    return this.serverConnectivityService.sendPostReq("postMessage", {
+  public postMessage(user: User, channelId: string, msg: Message): Observable<Message> {
+    return this.serverConnectivityService.sendPostReq(`messages/${channelId}`, {
       'postedByMemberId': user.id,
       'message': msg.text,
       'attachments': msg.attachments,

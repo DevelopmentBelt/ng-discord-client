@@ -6,7 +6,7 @@ import {Observable} from "rxjs";
   providedIn: 'root'
 })
 export class ServerConnectivityService {
-  private BASE_URL: string = 'localhost:4200/';
+  private BASE_URL: string = 'http://localhost:80/api/';
   constructor(private httpClient: HttpClient) {}
 
   public sendPostReq(path: string, body: any, options: any): Observable<any> {

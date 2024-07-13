@@ -26,6 +26,7 @@ class ComposerStaticInit50aaf6bcbdef57da525bf13560ff5a7f
             'Symfony\\Polyfill\\Ctype\\' => 23,
             'Symfony\\Component\\Routing\\' => 26,
             'Symfony\\Component\\HttpFoundation\\' => 33,
+            'Slim\\Http\\' => 10,
             'Slim\\' => 5,
         ),
         'R' => 
@@ -94,6 +95,10 @@ class ComposerStaticInit50aaf6bcbdef57da525bf13560ff5a7f
         'Symfony\\Component\\HttpFoundation\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/http-foundation',
+        ),
+        'Slim\\Http\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/slim/http/src',
         ),
         'Slim\\' => 
         array (

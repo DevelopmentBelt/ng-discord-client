@@ -7,8 +7,8 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 
 class MessageController extends Routes {
   protected function registerRoutes() {
-    $this->app->post('/messages', [$this, 'postMessage']);
-    $this->app->delete('/messages', [$this, 'deleteMessage']);
+    $this->app->post('/api/messages/{channelId}', [$this, 'postMessage']);
+    $this->app->delete('/api/messages', [$this, 'deleteMessage']);
   }
 
   public function postMessage(Request $request, Response $response, $args): Response {
@@ -18,6 +18,7 @@ class MessageController extends Routes {
     $attachments = $body['attachments'];
     // TODO We need to parse the mentioned members from the rawText
     $timestampPosted = $body['timestamp'];
+    $channelId = $body['channelId'];
     return $response;
   }
 

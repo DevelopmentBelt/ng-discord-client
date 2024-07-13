@@ -4,7 +4,7 @@ import {
   ElementRef,
   input,
   Input,
-  InputSignal,
+  InputSignal, OnDestroy,
   OnInit,
   ViewChild
 } from '@angular/core';
@@ -13,7 +13,7 @@ import * as moment from "moment";
 import {MessageWebService} from "../../../services/message-web-service/message-web.service";
 import {User} from "../../../models/user/user";
 import {DatetimeFormatterPipe} from "../../../pipes/datetimeFormatter/datetime-formatter.pipe";
-import {Subscription} from "rxjs";
+import {Subscription, take} from "rxjs";
 import {ChannelSocketService} from "../../../services/socket-service/channel-socket.service";
 
 @Component({
@@ -26,7 +26,7 @@ import {ChannelSocketService} from "../../../services/socket-service/channel-soc
   ],
   standalone: true
 })
-export class AngcordContentComponent implements OnInit {
+export class AngcordContentComponent implements OnInit, OnDestroy {
   serverId: InputSignal<string> = input("1"); // TODO Get rid of 1
   channelId: InputSignal<string> = input("1"); // TODO Get rid of 1
 
@@ -41,7 +41,6 @@ export class AngcordContentComponent implements OnInit {
     private cdr: ChangeDetectorRef
   ) {
     effect(() => {
-      console.log("[DEBUG] angcord-content effect ran...");
       this.subs.unsubscribe();
       this.subs = new Subscription();
       const serverId = this.serverId();
@@ -57,7 +56,6 @@ export class AngcordContentComponent implements OnInit {
       this.subs.add(
         this.socketService.onMessage().subscribe((msg) => {
           const message = JSON.parse(msg.data) as Message;
-          console.log("[DEBUG] message =>", message);
           message.editTimestamp = moment(message.editTimestamp);
           message.postedTimestamp = moment(message.postedTimestamp);
           this.messageList.push(message);
@@ -103,9 +101,9 @@ export class AngcordContentComponent implements OnInit {
       fullName: 'badger.jar',
       profilePic: ''
     } as unknown as User;
-    if (this.webService.postMessage(user, msg)) {
-      // Successful post...
+    this.webService.postMessage(user, this.channelId(), msg).pipe(take(1)).subscribe((resp) => {
+      // TODO Check that the message was success, send it to everyone
       this.socketService.sendMessage(msg);
-    }
+    });
   }
 }
