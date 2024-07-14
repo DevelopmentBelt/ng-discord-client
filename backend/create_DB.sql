@@ -13,12 +13,6 @@ CREATE TABLE IF NOT EXISTS `servers` (
   `owner_id` BIGINT(64)
 );
 
-CREATE TABLE IF NOT EXISTS `members` (
-  `member_name` VARCHAR(255),
-  `user_id` BIGINT(64),
-  `motto` VARCHAR(255)
-);
-
 CREATE TABLE IF NOT EXISTS `users` (
   `user_id` BIGINT(64) AUTO_INCREMENT PRIMARY KEY,
   `user_name` VARCHAR(255),
@@ -27,6 +21,15 @@ CREATE TABLE IF NOT EXISTS `users` (
   `email` VARCHAR(255),
   `email_verified` BOOLEAN,
   `password` VARCHAR(256)
+);
+
+INSERT INTO `users` (`user_name`, `user_bio`, `user_pic`, `email`, `email_verified`, `password`)
+VALUES ("badger", null, null, "thewolfbadger@gmail.com", true, "$2y$15$OegX3WOx5wps82XPr79hneJRkVHYA91s2sthUPh1vV1Hn5xwVqpSi");
+
+CREATE TABLE IF NOT EXISTS `members` (
+  `member_name` VARCHAR(255),
+  `user_id` BIGINT(64),
+  `status` VARCHAR(255)
 );
 
 CREATE TABLE IF NOT EXISTS `categories` (

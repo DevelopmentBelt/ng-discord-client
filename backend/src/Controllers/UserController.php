@@ -47,7 +47,7 @@ class UserController extends Routes {
       $passwordRet = $stmt->fetchColumn();
       if (password_verify($password, $passwordRet)) {
         // Valid password
-        // TODO
+        return true;
       } else {
         // Not a valid password
         // TODO

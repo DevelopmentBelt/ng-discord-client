@@ -1,8 +1,9 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, OnInit, signal, WritableSignal} from '@angular/core';
 import {UserWebService} from "./services/user-web-service/user-web.service";
 import {LoginResponse, RegisterResponse} from "./models/user/auth";
 import {DefaultViewComponent} from "./views/default-view/default-view.component";
 import {CommonModule} from "@angular/common";
+import {LoginComponent} from "./components/login/login.component";
 
 @Component({
   selector: 'app-root',
@@ -10,20 +11,19 @@ import {CommonModule} from "@angular/common";
   styleUrls: ['./app.component.scss'],
   imports: [
     DefaultViewComponent,
-    CommonModule
+    CommonModule,
+    LoginComponent
   ],
   providers: [],
   standalone: true
 })
 export class AppComponent implements OnInit {
-  public isLoggedIn: boolean = true;
+  isLoggedIn: WritableSignal<boolean> = signal(false);
 
   constructor(private userWebService: UserWebService) {}
   public ngOnInit(): void {}
-  public async login(user_name: string, password: string, email?: string): Promise<LoginResponse> {
-    return await this.userWebService.login(user_name, email, password);
-  }
-  public async register(email: string, user_name: string, password: string): Promise<RegisterResponse> {
-    return await this.userWebService.register(email, user_name, password);
+
+  handleLoggedIn() {
+    this.isLoggedIn.set(true);
   }
 }
