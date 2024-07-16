@@ -8,6 +8,7 @@ use App\Services\DatabaseService;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Server\RequestHandlerInterface;
+use Slim\Exception\HttpNotFoundException;
 use Slim\Factory\AppFactory;
 use Slim\Routing\RouteCollectorProxy;
 
@@ -20,21 +21,33 @@ $app = AppFactory::create();
 
 $app->addBodyParsingMiddleware();
 
+$app->addRoutingMiddleware();
+
 // Add the ErrorMiddleware before the CORS middleware
 // to ensure error responses contain all CORS headers.
 $app->addErrorMiddleware(true, true, true);
 
-$corsMiddleware = function (Request $request, RequestHandlerInterface $handler): Response {
-  $response = $handler->handle($request);
-  return $response
-    ->withHeader('Access-Control-Allow-Origin', '*')
-    ->withHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, DELETE, PUT')
-    ->withHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-};
+$corsMiddleware = function (Request $request, RequestHandlerInterface $handler) use ($app): Response {
+  if ($request->getMethod() === 'OPTIONS') {
+    $response = $app->getResponseFactory()->createResponse();
+  } else {
+    $response = $handler->handle($request);
+  }
 
-$app->options('/{routes:.+}', function ($request, $response, $args) {
+  $response = $response
+    ->withHeader('Access-Control-Allow-Credentials', 'true')
+    ->withHeader('Access-Control-Allow-Origin', '*')
+    ->withHeader('Access-Control-Allow-Headers', '*')
+    ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
+    ->withHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+    ->withHeader('Pragma', 'no-cache');
+
+  if (ob_get_contents()) {
+    ob_clean();
+  }
+
   return $response;
-});
+};
 
 $app->add($corsMiddleware);
 
@@ -46,7 +59,10 @@ $serverController = new ServerController($app, $dbService);
 $memberController = new MemberController($app, $dbService);
 /**/
 
-$app->addRoutingMiddleware();
 $errorMiddleware = $app->addErrorMiddleware(true, true, true);
+
+$app->map(['GET', 'POST', 'PUT', 'DELETE', 'PATCH'], '/{routes:.+}', function ($request, $response) {
+  throw new HttpNotFoundException($request);
+});
 
 $app->run();
