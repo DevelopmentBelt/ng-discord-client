@@ -1,1 +1,16 @@
 <sidebar (selectedServerChange)="selectedServerChange.emit($event)"></sidebar>
+<div class="container-fluid sidebar-container g-0">
+  <div class="row">
+    <div class="col min-vh-100" id="angcord_servers">
+      @for (category of categories(); track category) {
+        <div class="row">
+          <div
+            class="col g-0 p-1 sidebar-server-contain rounded"
+          >
+            {{ category.categoryName }}
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>

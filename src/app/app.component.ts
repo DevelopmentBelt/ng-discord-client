@@ -18,7 +18,7 @@ import {LoginComponent} from "./components/login/login.component";
   standalone: true
 })
 export class AppComponent implements OnInit {
-  isLoggedIn: WritableSignal<boolean> = signal(false);
+  isLoggedIn: WritableSignal<boolean> = signal(true); // TODO Set to false
 
   constructor(private userWebService: UserWebService) {}
   public ngOnInit(): void {}
