@@ -3,6 +3,7 @@ import {SidebarServer} from "../../models/sidebar-server/sidebar-server";
 import {AngcordContentComponent} from "./angcord-content/angcord-content.component";
 import {MemberSidebarComponent} from "./member-sidebar/member-sidebar.component";
 import {ChannelSidebarComponent} from "./channel-sidebar/channel-sidebar.component";
+import {Channel} from "../../models/channel/channel";
 
 @Component({
   selector: 'ang-content',
@@ -18,6 +19,7 @@ import {ChannelSidebarComponent} from "./channel-sidebar/channel-sidebar.compone
 })
 export class AngContentComponent implements OnInit {
   selectedServer: WritableSignal<SidebarServer> = signal(null);
+  selectedChannel: WritableSignal<Channel> = signal(null);
 
   constructor() {}
 

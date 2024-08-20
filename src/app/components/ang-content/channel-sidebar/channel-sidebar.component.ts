@@ -37,6 +37,18 @@ export class ChannelSidebarComponent implements OnInit {
         {
           channelId: 1,
           channelName: 'General'
+        } as Channel,
+        {
+          channelId: 2,
+          channelName: 'My Computer Specs'
+        } as Channel,
+        {
+          channelId: 3,
+          channelName: 'School shit'
+        } as Channel,
+        {
+          channelId: 4,
+          channelName: 'Car parts'
         } as Channel
       ]
     } as Category,
@@ -44,7 +56,6 @@ export class ChannelSidebarComponent implements OnInit {
 
   constructor() { }
 
-  ngOnInit(): void {
-  }
+  ngOnInit(): void {}
 
 }

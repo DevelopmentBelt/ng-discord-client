@@ -1,0 +1,15 @@
+#serverChannels {
+  background-color: #2b2d32;
+  color: #b5b9c0;
+}
+.category-name {
+  font-weight: bold;
+}
+.channel-name {
+  text-transform: lowercase;
+}
+.channel-name::before {
+  content: '#';
+  font-weight: bold;
+  font-size: 22px;
+}

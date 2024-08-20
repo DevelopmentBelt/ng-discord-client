@@ -5,11 +5,11 @@
         <!-- Angcord Header -->
       </div>
       <div class="row">
-        <div class="col-1">
+        <div class="col-3">
           <!-- Channel Sidebar -->
           <channel-sidebar (selectedServerChange)="handleServerChange($event)"></channel-sidebar>
         </div>
-        <div class="col-8 g-0">
+        <div class="col-6 g-0">
           <!-- Angcord Content -->
           <angcord-content [serverId]="selectedServer() ? selectedServer().serverId : ''"></angcord-content>
         </div>
