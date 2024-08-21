@@ -14,8 +14,16 @@
                 {{ category.categoryName }}
               </div>
               @for (chan of category.channels; track chan) {
-                <div class="col-12 channel-name">
-                  {{ chan.channelName }}
+                <div
+                  class="col-12 gy-1"
+                >
+                  <div
+                    class="channel-name"
+                    (click)="handleChannelSelect(chan)"
+                    [ngClass]="{'active': selectedChannel() == chan}"
+                  >
+                    {{ chan.channelName }}
+                  </div>
                 </div>
               }
             </div>

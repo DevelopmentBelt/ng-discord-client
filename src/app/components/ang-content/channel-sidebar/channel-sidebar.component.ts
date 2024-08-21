@@ -4,15 +4,16 @@ import {
   EventEmitter,
   input,
   InputSignal,
-  OnInit,
-  Output, signal,
+  OnInit, output,
+  Output, OutputEmitterRef, signal,
   WritableSignal
 } from '@angular/core';
-import {SidebarServer} from "../../../models/sidebar-server/sidebar-server";
 import {SidebarComponent} from "../../sidebar/sidebar.component";
 import {SidebarServerComponent} from "../../sidebar-server/sidebar-server.component";
 import {Category} from "../../../models/channel/category";
 import {Channel} from "../../../models/channel/channel";
+import {NgClass} from "@angular/common";
+import {Server} from "../../../models/server/server";
 
 @Component({
   selector: 'channel-sidebar',
@@ -21,14 +22,18 @@ import {Channel} from "../../../models/channel/channel";
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     SidebarComponent,
-    SidebarServerComponent
+    SidebarServerComponent,
+    NgClass
   ],
   standalone: true
 })
 export class ChannelSidebarComponent implements OnInit {
-  @Output() public selectedServerChange: EventEmitter<SidebarServer> = new EventEmitter<SidebarServer>();
-  selectedChannel: WritableSignal<number> = signal(null);
+  selectedServerChange: OutputEmitterRef<Server> = output();
+  selectedChannelChange: OutputEmitterRef<Channel> = output();
 
+  selectedChannel: WritableSignal<Channel> = signal(null);
+
+  servers: InputSignal<Server[]> = input([]);
   categories: InputSignal<Category[]> = input([
     {
       categoryName: "Information",
@@ -54,8 +59,13 @@ export class ChannelSidebarComponent implements OnInit {
     } as Category,
   ]);
 
-  constructor() { }
+  constructor() {}
 
   ngOnInit(): void {}
+
+  handleChannelSelect(chan: Channel) {
+    this.selectedChannel.set(chan);
+    this.selectedChannelChange.emit(chan);
+  }
 
 }

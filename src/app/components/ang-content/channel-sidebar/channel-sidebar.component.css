@@ -7,8 +7,19 @@
 }
 .channel-name {
   text-transform: lowercase;
+  border-radius: 5px;
+  padding: 1px 4px;
+}
+.channel-name:hover {
+  background-color: rgb(62, 64, 70);
+  cursor: pointer;
+}
+.channel-name.active {
+  background-color: rgb(60, 60, 66);
+  color: white;
 }
 .channel-name::before {
+  margin-left: 8px;
   content: '#';
   font-weight: bold;
   font-size: 22px;

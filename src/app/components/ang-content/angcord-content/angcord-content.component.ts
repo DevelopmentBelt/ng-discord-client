@@ -15,6 +15,8 @@ import {User} from "../../../models/user/user";
 import {DatetimeFormatterPipe} from "../../../pipes/datetimeFormatter/datetime-formatter.pipe";
 import {Subscription, take} from "rxjs";
 import {ChannelSocketService} from "../../../services/socket-service/channel-socket.service";
+import {Channel} from "../../../models/channel/channel";
+import {Server} from "../../../models/server/server";
 
 @Component({
   selector: 'angcord-content',
@@ -27,8 +29,8 @@ import {ChannelSocketService} from "../../../services/socket-service/channel-soc
   standalone: true
 })
 export class AngcordContentComponent implements OnInit, OnDestroy {
-  serverId: InputSignal<string> = input("1"); // TODO Get rid of 1
-  channelId: InputSignal<string> = input("1"); // TODO Get rid of 1
+  server: InputSignal<Server> = input(); // TODO Get rid of 1
+  channel: InputSignal<Channel> = input(); // TODO Get rid of 1
 
   @ViewChild('messageBox') private messageBox!: ElementRef;
   public messageList: Message[] = [] as Message[];
@@ -43,26 +45,31 @@ export class AngcordContentComponent implements OnInit, OnDestroy {
     effect(() => {
       this.subs.unsubscribe();
       this.subs = new Subscription();
-      const serverId = this.serverId();
-      const channelId = this.channelId();
-      this.socketService.setChannelId(channelId);
-      this.socketService.setUserId(1);
-      this.messageList = [];
-      this.messageBox.nativeElement.value = '';
-      // TODO Need to get the latest messages from the web service
-      this.subs.add(
-        this.webService.getLatestMessages(serverId, channelId).subscribe((resp) => {})
-      );
-      this.subs.add(
-        this.socketService.onMessage().subscribe((msg) => {
-          const message = JSON.parse(msg.data) as Message;
-          message.editTimestamp = moment(message.editTimestamp);
-          message.postedTimestamp = moment(message.postedTimestamp);
-          this.messageList.push(message);
-          cdr.detectChanges();
-        })
-      );
-      cdr.detectChanges();
+      const server = this.server();
+      const channel = this.channel();
+      if (server && channel) {
+        const serverId = server.serverId;
+        const channelId = channel.channelId;
+        this.socketService.setChannelId(channelId + "");
+        this.socketService.setUserId(1);
+        this.messageList = [];
+        this.messageBox.nativeElement.value = '';
+        // TODO Need to get the latest messages from the web service
+        this.subs.add(
+          this.webService.getLatestMessages(serverId + "", channelId + "").subscribe((resp) => {
+          })
+        );
+        this.subs.add(
+          this.socketService.onMessage().subscribe((msg) => {
+            const message = JSON.parse(msg.data) as Message;
+            message.editTimestamp = moment(message.editTimestamp);
+            message.postedTimestamp = moment(message.postedTimestamp);
+            this.messageList.push(message);
+            cdr.detectChanges();
+          })
+        );
+        cdr.detectChanges();
+      }
     }, { allowSignalWrites: true });
   }
 
@@ -101,7 +108,7 @@ export class AngcordContentComponent implements OnInit, OnDestroy {
       fullName: 'badger.jar',
       profilePic: ''
     } as unknown as User;
-    this.webService.postMessage(user, this.channelId(), msg).pipe(take(1)).subscribe((resp) => {
+    this.webService.postMessage(user, this.channel().channelId + "", msg).pipe(take(1)).subscribe((resp) => {
       // TODO Check that the message was success, send it to everyone
       this.socketService.sendMessage(msg);
     });

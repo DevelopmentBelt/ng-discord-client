@@ -1,7 +1,10 @@
+import {Category} from "../channel/category";
+
 export interface Server {
-  serverId: number;
+  iconURL: string;
   serverName: string;
+  serverId: string;
+  ownerId: string;
   serverDescription: string;
-  serverIcon: string;
-  ownerId: number;
+  categories?: Category[];
 }

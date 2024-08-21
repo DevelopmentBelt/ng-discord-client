@@ -1,7 +1,7 @@
 import {ChangeDetectionStrategy, Component, EventEmitter, OnInit, Output, signal, WritableSignal} from '@angular/core';
-import {SidebarServer} from "../../models/sidebar-server/sidebar-server";
 import {SidebarServerComponent} from "../sidebar-server/sidebar-server.component";
 import {NgClass} from "@angular/common";
+import {Server} from "../../models/server/server";
 
 @Component({
   selector: 'sidebar',
@@ -16,10 +16,10 @@ import {NgClass} from "@angular/common";
 })
 export class SidebarComponent implements OnInit {
   public selectedServerId: WritableSignal<string> = signal('952934994085568552');
-  @Output() public selectedServerChange: EventEmitter<SidebarServer> = new EventEmitter<SidebarServer>();
+  @Output() public selectedServerChange: EventEmitter<Server> = new EventEmitter<Server>();
 
   // TODO Change to an input
-  public sidebarServers: SidebarServer[] = [
+  public sidebarServers: Server[] = [
     {
       iconURL: 'https://i.gyazo.com/abe61b99e892258fd30fccb500a86579.png',
       serverName: 'CollectiveM',
@@ -32,7 +32,7 @@ export class SidebarComponent implements OnInit {
       serverName: "Badger's Dev Community",
       serverId: '932655785190764564',
       ownerId: '394446211341615104',
-      serverDescription: 'I started Badger\'s Developer Community back in July of 2019. It\'s been a thing for quite a while and I have helped many people within it to fix their problems with my scripts and/or other scripts. We are a community with multiple developers and players of FiveM, as well as other software and other games. Many of us look forward to helping each other as we believe "You help me, I help you" type of philosophy. If you ever need help, don\'t be afraid to ask for it! '
+      serverDescription: 'I started Badger\'s Developer Community back in July of 2019. It\'s been a thing for quite a while and I have helped many people within it to fix their problems with my scripts and/or other scripts. We are a community with multiple developers and players of FiveM, as well as other software and other games. Many of us look forward to helping each other as we believe "You help me, I help you" type of philosophy. If you ever need help, don\'t be afraid to ask for it!'
     },
     {
       iconURL: 'https://pbs.twimg.com/profile_images/1193274446892666880/c39OPO6z_400x400.jpg',
@@ -47,7 +47,7 @@ export class SidebarComponent implements OnInit {
 
   ngOnInit(): void {}
 
-  selectServer(server: SidebarServer) {
+  selectServer(server: Server) {
     this.selectedServerId.set(server.serverId);
     this.selectedServerChange.emit(server);
   }

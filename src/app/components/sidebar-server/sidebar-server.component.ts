@@ -1,5 +1,5 @@
 import {ChangeDetectionStrategy, Component, Input, OnInit} from '@angular/core';
-import {SidebarServer} from "../../models/sidebar-server/sidebar-server";
+import {Server} from "../../models/server/server";
 
 @Component({
   selector: 'sidebar-server',
@@ -10,7 +10,7 @@ import {SidebarServer} from "../../models/sidebar-server/sidebar-server";
 })
 export class SidebarServerComponent implements OnInit {
 
-  @Input() server: SidebarServer = {} as SidebarServer;
+  @Input() server: Server = {} as Server;
 
   public serverIconURL: string = "";
   public serverDesc: string = "";

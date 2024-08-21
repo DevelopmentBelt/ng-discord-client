@@ -7,11 +7,20 @@
       <div class="row">
         <div class="col-3">
           <!-- Channel Sidebar -->
-          <channel-sidebar (selectedServerChange)="handleServerChange($event)"></channel-sidebar>
+          <channel-sidebar
+            (selectedServerChange)="handleServerChange($event)"
+            (selectedChannelChange)="handleChannelChange($event)"
+            [servers]="servers()"
+          >
+          </channel-sidebar>
         </div>
         <div class="col-6 g-0">
           <!-- Angcord Content -->
-          <angcord-content [serverId]="selectedServer() ? selectedServer().serverId : ''"></angcord-content>
+          <angcord-content
+            [server]="selectedServer()"
+            [channel]="selectedChannel()"
+          >
+          </angcord-content>
         </div>
         <div class="col-3">
           <!-- Roles Sidebar -->
