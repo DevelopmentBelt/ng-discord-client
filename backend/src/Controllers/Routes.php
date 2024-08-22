@@ -2,6 +2,8 @@
 
 namespace App\Controllers;
 
+session_start();
+
 use App\Services\DatabaseService;
 use Slim\App;
 

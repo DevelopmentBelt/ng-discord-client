@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Controllers;
+session_start();
 
 use App\Services\DatabaseService;
 use Psr\Http\Message\ResponseInterface as Response;
@@ -46,12 +47,14 @@ class UserController extends Routes {
     $userOrEmailExists = $stmt->fetchColumn();
     if ($userOrEmailExists) {
       // Valid user, is password correct?
-      $stmt = $pdo->prepare("SELECT `password` FROM `users` WHERE `email` = :email OR `user_name` = :username");
+      $stmt = $pdo->prepare("SELECT `password`, `user_id` FROM `users` WHERE `email` = :email OR `user_name` = :username");
       $stmt->execute(['email' => $email, 'username' => $username]);
-      $passwordRet = $stmt->fetchColumn();
+      $passwordRet = $stmt->fetchColumn('password');
+      $userId = $stmt->fetchColumn('user_id');
       if (password_verify($password, $passwordRet)) {
         // Valid password
         $response->getBody()->write(json_encode(['status' => 'success', 'message' => 'Login successful']));
+        $_SESSION['user_id'] = $userId;
         return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
       } else {
         // Not a valid password

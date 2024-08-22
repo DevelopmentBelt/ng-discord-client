@@ -35,6 +35,7 @@ VALUES ("badger", null, null, "thewolfbadger@gmail.com", true, "$2y$15$OegX3WOx5
 CREATE TABLE IF NOT EXISTS `members` (
   `member_name` VARCHAR(255),
   `user_id` BIGINT(64),
+  `server_id` BIGINT(64),
   `status` VARCHAR(255)
 );
 
