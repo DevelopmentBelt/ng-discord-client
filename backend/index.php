@@ -5,12 +5,13 @@ use App\Controllers\MessageController;
 use App\Controllers\ServerController;
 use App\Controllers\UserController;
 use App\Services\DatabaseService;
+use App\Services\Utils;
+use App\Services\UtilService;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Server\RequestHandlerInterface;
 use Slim\Exception\HttpNotFoundException;
 use Slim\Factory\AppFactory;
-use Slim\Routing\RouteCollectorProxy;
 
 require __DIR__ . '/vendor/autoload.php';
 
@@ -53,10 +54,11 @@ $app->add($corsMiddleware);
 
 /**/
 $dbService = new DatabaseService();
-$messageController = new MessageController($app, $dbService);
-$userController = new UserController($app, $dbService);
-$serverController = new ServerController($app, $dbService);
-$memberController = new MemberController($app, $dbService);
+$utils = new UtilService();
+$messageController = new MessageController($app, $dbService, $utils);
+$userController = new UserController($app, $dbService, $utils);
+$serverController = new ServerController($app, $dbService, $utils);
+$memberController = new MemberController($app, $dbService, $utils);
 /**/
 
 $errorMiddleware = $app->addErrorMiddleware(true, true, true);

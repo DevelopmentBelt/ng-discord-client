@@ -22,14 +22,14 @@ export class MessageWebService {
     }, {});
   }
   public getMessages(serverId: string, channelId: string, offset: number, limit: number): Observable<Message[]> {
-    return this.serverConnectivityService.sendGetRequest("getMessages?serverId=" + serverId + "&channelId="
-      + channelId + "&offset=" + offset + "&limit=" + limit, {});
+    return this.serverConnectivityService.sendGetRequest("messages/" + serverId + "/"
+      + channelId + "?offset=" + offset + "&limit=" + limit, {});
   }
   public getLatestMessages(serverId: string, channelId: string): Observable<Message[]> {
-    return this.serverConnectivityService.sendGetRequest("getMessages?serverId=" + serverId + "&channelId=" + channelId, {});
+    return this.serverConnectivityService.sendGetRequest("messages/" + serverId + "/" + channelId, {});
   }
   public deleteMessageById(msgId: string): Observable<Message> {
-    return this.serverConnectivityService.sendDeleteRequest("deleteMessageById?messageId=" + msgId, {});
+    return this.serverConnectivityService.sendDeleteRequest("deleteMessageById/" + msgId, {});
   }
   public hideMessageById(msgId: string) {}
 }
