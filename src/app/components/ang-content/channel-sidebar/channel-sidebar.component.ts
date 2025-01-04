@@ -61,7 +61,9 @@ export class ChannelSidebarComponent implements OnInit {
 
   constructor() {}
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.handleChannelSelect(this.categories()[0].channels[0]); // Choose first channel
+  }
 
   handleChannelSelect(chan: Channel) {
     this.selectedChannel.set(chan);

@@ -14,10 +14,9 @@ class MessageController extends Routes {
   }
 
   public function getMessages(Request $request, Response $response, $args) {
-    $serverId = $args['serverId'];
     $channelId = $args['channelId'];
     $conn = $this->dbService->getConnection();
-    $stmt = $conn->prepare("SELECT * FROM `messages` WHERE `channel_id` = ?
+    $stmt = $conn->prepare("SELECT *, user_name, user_pic FROM `messages` JOIN `users` ON (`messages`.posted_by_user_id = `users`.user_id)  WHERE `channel_id` = ?
                          ORDER BY `timestamp_posted` LIMIT 100");
     $success = $stmt->execute([$channelId]);
     if ($success) {

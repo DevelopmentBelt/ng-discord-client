@@ -17,7 +17,9 @@ class UtilService
       'postedTimestamp' => $timestamp_posted,
       'channelId' => $channel_id,
       'author' => [
-        'userId' => $posted_by_user_id
+        'userId' => $posted_by_user_id,
+        'username' => $msg['user_name'],
+        'profilePic' => $msg['user_pic']
       ]
     ];
   }

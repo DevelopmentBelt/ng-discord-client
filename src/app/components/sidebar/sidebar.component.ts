@@ -45,7 +45,9 @@ export class SidebarComponent implements OnInit {
 
   constructor() {}
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.selectServer(this.sidebarServers[0]) // Default to first server id on init...
+  }
 
   selectServer(server: Server) {
     this.selectedServerId.set(server.serverId);
