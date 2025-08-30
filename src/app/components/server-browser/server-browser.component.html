@@ -1,0 +1,188 @@
+<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+  <div class="bg-discord-lighter border border-discord-border rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col">
+    <!-- Header -->
+    <div class="px-6 py-4 border-b border-discord-border flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-8 h-8 bg-discord-blue rounded flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+          </svg>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold text-discord-text-lighter">Server Discovery</h3>
+          <p class="text-sm text-discord-text-muted">Find and join amazing communities</p>
+        </div>
+      </div>
+      <button 
+        (click)="close()"
+        class="p-2 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150"
+      >
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="px-6 py-4 border-b border-discord-border">
+      <div class="flex flex-col space-y-4">
+        <!-- Search Bar -->
+        <div class="flex space-x-3">
+          <div class="flex-1 relative">
+            <input
+              type="text"
+              [(ngModel)]="searchQuery"
+              (input)="onSearchInput()"
+              placeholder="Search servers..."
+              class="w-full bg-discord-light text-discord-text-light border-0 rounded-lg px-4 py-3 text-sm focus:bg-discord-light focus:outline-none focus:ring-2 focus:ring-discord-blue/50 transition-all duration-200"
+            />
+            <div class="absolute right-3 top-1/2 transform -translate-y-1/2 text-discord-text-muted">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Category Filter -->
+        <div class="flex items-center space-x-4">
+          <span class="text-sm font-medium text-discord-text-muted">Category:</span>
+          <select 
+            [(ngModel)]="selectedCategory"
+            (change)="onCategoryChange()"
+            class="bg-discord-light text-discord-text-light border-0 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-discord-blue/50"
+          >
+            @for (category of categories; track category) {
+              <option [value]="category">{{ category.charAt(0).toUpperCase() + category.slice(1) }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Tag Filters -->
+        <div class="flex items-center space-x-4">
+          <span class="text-sm font-medium text-discord-text-muted">Tags:</span>
+          <div class="flex flex-wrap gap-2">
+            @for (tag of availableTags; track tag) {
+              <button
+                (click)="toggleTag(tag)"
+                [class]="selectedTags().includes(tag) 
+                  ? 'bg-discord-blue text-white' 
+                  : 'bg-discord-medium text-discord-text-muted hover:bg-discord-light hover:text-discord-text-light'"
+                class="px-3 py-1 rounded-full text-xs font-medium transition-colors duration-200"
+              >
+                {{ tag }}
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="flex-1 overflow-y-auto px-6 py-4">
+      @if (isLoading()) {
+        <div class="flex items-center justify-center py-12">
+          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-discord-blue"></div>
+        </div>
+      } @else if (filteredServers().length === 0) {
+        <div class="text-center py-12">
+          <div class="w-16 h-16 bg-discord-medium rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-discord-text-muted" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+            </svg>
+          </div>
+          <h4 class="text-lg font-medium text-discord-text-lighter mb-2">No servers found</h4>
+          <p class="text-discord-text-muted">Try adjusting your search terms or filters</p>
+        </div>
+      } @else {
+        <!-- Results Count -->
+        <div class="flex items-center justify-between mb-4">
+          <span class="text-sm text-discord-text-muted">
+            {{ totalServers() }} server{{ totalServers() !== 1 ? 's' : '' }} found
+          </span>
+        </div>
+
+        <!-- Server Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          @for (server of paginatedServers; track server.serverId) {
+            <div class="bg-discord-medium hover:bg-discord-light/50 rounded-lg p-4 border border-discord-border transition-colors duration-200">
+              <!-- Server Header -->
+              <div class="flex items-start space-x-3 mb-3">
+                <div class="w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
+                  @if (server.iconURL) {
+                    <img [src]="server.iconURL" [alt]="server.serverName" class="w-full h-full object-cover">
+                  } @else {
+                    <div class="w-full h-full bg-discord-blue flex items-center justify-center text-white font-bold text-lg">
+                      {{ server.serverName.charAt(0) }}
+                    </div>
+                  }
+                </div>
+                <div class="flex-1 min-w-0">
+                  <h4 class="text-discord-text-lighter font-semibold text-sm truncate">{{ server.serverName }}</h4>
+                  <p class="text-discord-text-muted text-xs">{{ formatMemberCount(server.memberCount) }} members</p>
+                </div>
+              </div>
+
+              <!-- Server Description -->
+              <p class="text-discord-text-light text-sm mb-3 line-clamp-2">{{ server.serverDescription }}</p>
+
+              <!-- Server Tags -->
+              <div class="flex flex-wrap gap-1 mb-3">
+                @for (tag of server.tags.slice(0, 3); track tag) {
+                  <span class="px-2 py-1 bg-discord-dark text-discord-text-muted text-xs rounded">{{ tag }}</span>
+                }
+                @if (server.tags.length > 3) {
+                  <span class="px-2 py-1 bg-discord-dark text-discord-text-muted text-xs rounded">+{{ server.tags.length - 3 }}</span>
+                }
+              </div>
+
+              <!-- Action Button -->
+              <button
+                (click)="server.isJoined ? leaveServer(server) : joinServer(server)"
+                [class]="server.isJoined 
+                  ? 'w-full bg-discord-dark hover:bg-discord-dark/80 text-discord-text-muted hover:text-discord-text-light' 
+                  : 'w-full bg-discord-blue hover:bg-discord-blue-dark text-white'"
+                class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
+              >
+                {{ server.isJoined ? 'Leave Server' : 'Join Server' }}
+              </button>
+            </div>
+          }
+        </div>
+
+        <!-- Pagination -->
+        @if (totalPages > 1) {
+          <div class="flex items-center justify-center space-x-2 mt-6">
+            <button
+              (click)="goToPage(currentPage() - 1)"
+              [disabled]="currentPage() === 1"
+              class="px-3 py-2 bg-discord-medium hover:bg-discord-light disabled:bg-discord-dark disabled:cursor-not-allowed text-discord-text-light rounded-lg transition-colors duration-200"
+            >
+              Previous
+            </button>
+            
+            @for (page of pageNumbers; track page) {
+              <button
+                (click)="goToPage(page)"
+                [class]="page === currentPage() 
+                  ? 'bg-discord-blue text-white' 
+                  : 'bg-discord-medium hover:bg-discord-light text-discord-text-light'"
+                class="px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
+              >
+                {{ page }}
+              </button>
+            }
+            
+            <button
+              (click)="goToPage(currentPage() + 1)"
+              [disabled]="currentPage() === totalPages"
+              class="px-3 py-2 bg-discord-medium hover:bg-discord-light disabled:bg-discord-dark disabled:cursor-not-allowed text-discord-text-light rounded-lg transition-colors duration-200"
+            >
+              Next
+            </button>
+          </div>
+        }
+      }
+    </div>
+  </div>
+</div>

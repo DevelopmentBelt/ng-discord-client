@@ -63,3 +63,11 @@
     (serverCreated)="onServerCreated($event)"
   ></app-server-creation-modal>
 }
+
+<!-- Server Browser Modal -->
+@if (showServerBrowser()) {
+  <app-server-browser
+    (closeBrowser)="closeServerBrowser()"
+    (serverJoined)="onServerJoined($event)"
+  ></app-server-browser>
+}

@@ -4,6 +4,7 @@ import {NgClass} from "@angular/common";
 import {Server} from "../../models/server/server";
 import {ServerCreationModalComponent} from "../server-creation-modal/server-creation-modal.component";
 import {NewServerData} from "../server-creation-modal/server-creation-modal.component";
+import {ServerBrowserComponent} from "../server-browser/server-browser.component";
 
 @Component({
   selector: 'sidebar',
@@ -13,7 +14,8 @@ import {NewServerData} from "../server-creation-modal/server-creation-modal.comp
   imports: [
     SidebarServerComponent,
     NgClass,
-    ServerCreationModalComponent
+    ServerCreationModalComponent,
+    ServerBrowserComponent
   ],
   standalone: true
 })
@@ -23,6 +25,7 @@ export class SidebarComponent implements OnInit {
   
   // Modal visibility state
   showServerCreation: WritableSignal<boolean> = signal(false);
+  showServerBrowser: WritableSignal<boolean> = signal(false);
 
   // TODO Change to an input
   public sidebarServers: Server[] = [
@@ -76,8 +79,7 @@ export class SidebarComponent implements OnInit {
   }
 
   exploreServers() {
-    // TODO: Implement explore servers functionality
-    console.log('Explore servers clicked');
+    this.showServerBrowser.set(true);
   }
   
   /**
@@ -85,6 +87,24 @@ export class SidebarComponent implements OnInit {
    */
   closeServerCreation(): void {
     this.showServerCreation.set(false);
+  }
+
+  /**
+   * Close server browser modal
+   */
+  closeServerBrowser(): void {
+    this.showServerBrowser.set(false);
+  }
+
+  /**
+   * Handle server joined from browser
+   */
+  onServerJoined(server: Server): void {
+    // TODO: Add the joined server to the user's server list
+    console.log('Server joined:', server);
+    
+    // Close the browser
+    this.closeServerBrowser();
   }
   
   /**
