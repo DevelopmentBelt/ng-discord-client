@@ -2,6 +2,8 @@ import {ChangeDetectionStrategy, Component, EventEmitter, OnInit, Output, signal
 import {SidebarServerComponent} from "../sidebar-server/sidebar-server.component";
 import {NgClass} from "@angular/common";
 import {Server} from "../../models/server/server";
+import {ServerCreationModalComponent} from "../server-creation-modal/server-creation-modal.component";
+import {NewServerData} from "../server-creation-modal/server-creation-modal.component";
 
 @Component({
   selector: 'sidebar',
@@ -10,13 +12,17 @@ import {Server} from "../../models/server/server";
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     SidebarServerComponent,
-    NgClass
+    NgClass,
+    ServerCreationModalComponent
   ],
   standalone: true
 })
 export class SidebarComponent implements OnInit {
   public selectedServerId: WritableSignal<string> = signal('952934994085568552');
   @Output() public selectedServerChange: EventEmitter<Server> = new EventEmitter<Server>();
+  
+  // Modal visibility state
+  showServerCreation: WritableSignal<boolean> = signal(false);
 
   // TODO Change to an input
   public sidebarServers: Server[] = [
@@ -66,12 +72,40 @@ export class SidebarComponent implements OnInit {
   }
 
   addServer() {
-    // TODO: Implement add server functionality
-    console.log('Add server clicked');
+    this.showServerCreation.set(true);
   }
 
   exploreServers() {
     // TODO: Implement explore servers functionality
     console.log('Explore servers clicked');
+  }
+  
+  /**
+   * Close server creation modal
+   */
+  closeServerCreation(): void {
+    this.showServerCreation.set(false);
+  }
+  
+  /**
+   * Handle server creation
+   */
+  onServerCreated(serverData: NewServerData): void {
+    // TODO: Implement actual server creation with backend API
+    console.log('Server created:', serverData);
+    
+    // For now, create a mock server and add it to the list
+    const newServer: Server = {
+      serverId: Math.random().toString(36).substring(2, 15),
+      serverName: serverData.serverName,
+      serverDescription: serverData.serverDescription,
+      iconURL: serverData.serverIcon ? URL.createObjectURL(serverData.serverIcon) : '',
+      ownerId: 'current-user-id' // TODO: Get actual user ID
+    };
+    
+    this.sidebarServers.push(newServer);
+    
+    // Close the modal
+    this.closeServerCreation();
   }
 }

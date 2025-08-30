@@ -1,0 +1,212 @@
+<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" (keydown)="onKeydown($event)">
+  <div class="bg-discord-lighter border border-discord-border rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+    <!-- Modal Header -->
+    <div class="px-6 py-4 border-b border-discord-border flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 bg-discord-blue rounded-full flex items-center justify-center flex-shrink-0">
+          <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+          </svg>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold text-discord-text-lighter">Create Your Server</h3>
+          <p class="text-sm text-discord-text-muted">Give your new server a personality with a name and an icon. You can always change it later.</p>
+        </div>
+      </div>
+      <button 
+        (click)="close()"
+        class="p-2 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150"
+        title="Close"
+      >
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Modal Content -->
+    <div class="flex-1 overflow-y-auto px-6 py-4">
+      <form class="space-y-6" (ngSubmit)="createServer()">
+        <!-- Server Icon Section -->
+        <div>
+          <h4 class="text-sm font-semibold text-discord-text-muted uppercase tracking-wider mb-3">Server Icon</h4>
+          <div class="flex items-center space-x-4">
+            <!-- Icon Preview/Upload Area -->
+            <div class="relative">
+              @if (selectedIconPreview()) {
+                <div class="w-20 h-20 rounded-full overflow-hidden bg-discord-medium border-2 border-discord-border">
+                  <img [src]="selectedIconPreview()" alt="Server icon preview" class="w-full h-full object-cover" />
+                </div>
+                <button 
+                  type="button"
+                  (click)="removeIcon()"
+                  class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition-colors duration-150"
+                  title="Remove icon"
+                >
+                  <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                  </svg>
+                </button>
+              } @else {
+                <div class="w-20 h-20 rounded-full bg-discord-medium border-2 border-dashed border-discord-border flex items-center justify-center">
+                  <svg class="w-8 h-8 text-discord-text-muted" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/>
+                  </svg>
+                </div>
+              }
+            </div>
+            
+            <!-- Upload Button -->
+            <div class="flex-1">
+              <label class="block text-sm font-medium text-discord-text-muted mb-2">Upload Image</label>
+              <input 
+                type="file" 
+                accept="image/*"
+                (change)="onIconSelected($event)"
+                class="hidden"
+                id="server-icon-upload"
+              />
+              <label 
+                for="server-icon-upload"
+                class="inline-flex items-center px-4 py-2 bg-discord-blue hover:bg-discord-blue-dark text-white font-medium rounded-md transition-colors duration-150 cursor-pointer"
+              >
+                <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                </svg>
+                Choose Image
+              </label>
+              <p class="text-xs text-discord-text-muted mt-1">PNG, JPG or GIF. Max size: 5MB</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Server Name Section -->
+        <div>
+          <label class="block text-sm font-medium text-discord-text-muted mb-2">
+            Server Name <span class="text-red-400">*</span>
+          </label>
+          <input 
+            type="text" 
+            [(ngModel)]="serverName"
+            name="serverName"
+            class="w-full bg-discord-light text-discord-text-light border border-discord-border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-discord-blue/50 transition-all duration-200"
+            placeholder="Enter server name"
+            maxlength="100"
+            required
+          />
+          <p class="text-xs text-discord-text-muted mt-1">
+            {{ serverName().length }}/100 characters
+          </p>
+        </div>
+
+        <!-- Server Description Section -->
+        <div>
+          <label class="block text-sm font-medium text-discord-text-muted mb-2">Description</label>
+          <textarea 
+            [(ngModel)]="serverDescription"
+            name="serverDescription"
+            rows="3"
+            class="w-full bg-discord-light text-discord-text-light border border-discord-border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-discord-blue/50 transition-all duration-200"
+            placeholder="Describe your server (optional)"
+            maxlength="500"
+          ></textarea>
+          <p class="text-xs mt-1" [class]="getDescriptionCharCountColor()">
+            {{ getDescriptionCharCount() }}/500 characters
+          </p>
+        </div>
+
+        <!-- Server Settings Section -->
+        <div class="space-y-4">
+          <h4 class="text-sm font-semibold text-discord-text-muted uppercase tracking-wider">Server Settings</h4>
+          
+          <!-- Public Server Toggle -->
+          <div class="flex items-center justify-between">
+            <div>
+              <label class="text-sm font-medium text-discord-text-light">Public Server</label>
+              <p class="text-xs text-discord-text-muted">Anyone can find and join your server</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input 
+                type="checkbox" 
+                [(ngModel)]="isPublic"
+                name="isPublic"
+                class="sr-only peer"
+              />
+              <div class="w-11 h-6 bg-discord-medium peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-discord-blue/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-discord-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-discord-blue"></div>
+            </label>
+          </div>
+
+          <!-- Verification Level -->
+          <div>
+            <label class="block text-sm font-medium text-discord-text-light mb-2">Verification Level</label>
+            <div class="space-y-2">
+              @for (level of ['None', 'Low', 'Medium', 'High', 'Very High']; track level) {
+                <label class="flex items-start space-x-3 cursor-pointer">
+                  <input 
+                    type="radio" 
+                    [value]="level"
+                    [(ngModel)]="verificationLevel"
+                    name="verificationLevel"
+                    class="mt-1 text-discord-blue focus:ring-discord-blue"
+                  />
+                  <div class="flex-1">
+                    <span class="text-discord-text-light font-medium">{{ level }}</span>
+                    <p class="text-xs text-discord-text-muted">{{ getVerificationLevelDescription(level) }}</p>
+                  </div>
+                </label>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Error Display -->
+        @if (errors().length > 0) {
+          <div class="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+            <div class="flex items-center space-x-2 mb-2">
+              <svg class="w-4 h-4 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+              </svg>
+              <span class="text-sm font-medium text-red-400">Please fix the following errors:</span>
+            </div>
+            <ul class="text-sm text-red-400 space-y-1">
+              @for (error of errors(); track error) {
+                <li class="flex items-center space-x-2">
+                  <span class="w-1 h-1 bg-red-400 rounded-full"></span>
+                  <span>{{ error }}</span>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+      </form>
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="px-6 py-4 border-t border-discord-border flex items-center justify-between">
+      <button 
+        (click)="close()"
+        class="px-4 py-2 bg-discord-medium hover:bg-discord-hover text-discord-text-light font-medium rounded-md transition-colors duration-150"
+      >
+        Cancel
+      </button>
+      <button 
+        type="submit"
+        (click)="createServer()"
+        [disabled]="isCreating()"
+        class="px-6 py-2 bg-discord-blue hover:bg-discord-blue-dark disabled:bg-discord-medium disabled:cursor-not-allowed text-white font-medium rounded-md transition-colors duration-150 flex items-center space-x-2"
+      >
+        @if (isCreating()) {
+          <svg class="w-4 h-4 animate-spin" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/>
+          </svg>
+          <span>Creating...</span>
+        } @else {
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+          </svg>
+          <span>Create Server</span>
+        }
+      </button>
+    </div>
+  </div>
+</div>
