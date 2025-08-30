@@ -1,34 +1,35 @@
-<div class="container-fluid sidebar-container g-0">
-  <div class="row">
-    <div class="col-4">
+<div class="channel-sidebar-container">
+  <div class="row h-100">
+    <!-- Server List (Left Section) -->
+    <div class="col-4 server-list-section">
       <sidebar (selectedServerChange)="selectedServerChange.emit($event)"></sidebar>
     </div>
-    <div class="col-8">
-      <div class="row">
-        <div class="col min-vh-100" id="serverChannels">
-          @for (category of categories(); track category) {
-            <div class="row">
-              <div
-                class="col-12 category-name"
-              >
-                {{ category.categoryName }}
-              </div>
-              @for (chan of category.channels; track chan) {
-                <div
-                  class="col-12 gy-1"
-                >
-                  <div
-                    class="channel-name"
-                    (click)="handleChannelSelect(chan)"
-                    [ngClass]="{'active': selectedChannel() == chan}"
-                  >
-                    {{ chan.channelName }}
-                  </div>
-                </div>
-              }
+
+    <!-- Separator -->
+    <div class="col-auto sidebar-separator"></div>
+
+    <!-- Channel List (Right Section) -->
+    <div class="col-7 channel-list-section">
+      <div class="channel-list-header">
+        <h6 class="server-name">Server Name</h6>
+      </div>
+      <div class="channel-list-content">
+        @for (category of categories(); track category) {
+          <div class="category-section">
+            <div class="category-name">
+              {{ category.categoryName }}
             </div>
-          }
-        </div>
+            @for (chan of category.channels; track chan) {
+              <div
+                class="channel-item"
+                (click)="handleChannelSelect(chan)"
+                [ngClass]="{'active': selectedChannel() == chan}"
+              >
+                # {{ chan.channelName }}
+              </div>
+            }
+          </div>
+        }
       </div>
     </div>
   </div>

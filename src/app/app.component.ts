@@ -1,6 +1,5 @@
 import {Component, OnInit, signal, WritableSignal} from '@angular/core';
 import {UserWebService} from "./services/user-web-service/user-web.service";
-import {LoginResponse, RegisterResponse} from "./models/user/auth";
 import {DefaultViewComponent} from "./views/default-view/default-view.component";
 import {CommonModule} from "@angular/common";
 import {LoginComponent} from "./components/login/login.component";

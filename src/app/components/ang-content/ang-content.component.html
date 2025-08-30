@@ -1,32 +1,45 @@
-<div class="container-fluid">
-  <div class="row">
-    <div class="col-12">
-      <div class="row">
-        <!-- Angcord Header -->
-      </div>
-      <div class="row">
-        <div class="col-3">
-          <!-- Channel Sidebar -->
-          <channel-sidebar
-            (selectedServerChange)="handleServerChange($event)"
-            (selectedChannelChange)="handleChannelChange($event)"
-            [servers]="servers()"
-          >
-          </channel-sidebar>
-        </div>
-        <div class="col-6 g-0">
-          <!-- Angcord Content -->
-          <angcord-content
-            [server]="selectedServer()"
-            [channel]="selectedChannel()"
-          >
-          </angcord-content>
-        </div>
-        <div class="col-3">
-          <!-- Roles Sidebar -->
-          <member-sidebar></member-sidebar>
-        </div>
-      </div>
+<div class="resizable-layout">
+  <!-- Header area (if needed) -->
+  <div class="layout-header">
+    <!-- Angcord Header -->
+  </div>
+
+  <!-- Main content area with resizable panels -->
+  <div class="layout-content">
+    <!-- Left sidebar: Server list and channels -->
+    <div class="left-sidebar" [style.width.%]="leftSidebarWidth()">
+      <channel-sidebar
+        (selectedServerChange)="handleServerChange($event)"
+        (selectedChannelChange)="handleChannelChange($event)"
+        [servers]="servers()"
+      >
+      </channel-sidebar>
+    </div>
+
+    <!-- Resize handle between left sidebar and main content -->
+    <div
+      class="resize-handle left-resize-handle"
+      (mousedown)="startResizing($event, 'left')"
+    ></div>
+
+    <!-- Main content area -->
+    <div class="main-content" [style.width.%]="mainContentWidth()">
+      <angcord-content
+        [server]="selectedServer()"
+        [channel]="selectedChannel()"
+      >
+      </angcord-content>
+    </div>
+
+    <!-- Resize handle between main content and right sidebar -->
+    <div
+      class="resize-handle right-resize-handle"
+      (mousedown)="startResizing($event, 'right')"
+    ></div>
+
+    <!-- Right sidebar: Member list -->
+    <div class="right-sidebar" [style.width.%]="rightSidebarWidth()">
+      <member-sidebar></member-sidebar>
     </div>
   </div>
 </div>

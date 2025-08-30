@@ -25,15 +25,17 @@ class UserController extends Routes {
     $stmt->execute(['email' => $email, 'username' => $username]);
     $userOrEmailExists = $stmt->fetchColumn();
     if ($userOrEmailExists == 0) {
+      // Hash the password before storing
+      $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
       $stmt = $pdo->prepare("INSERT INTO `users` (`email`, `user_name`, `password`) VALUES (:email, :username, :password)");
-      $stmt->execute(['email' => $email, 'username' => $username, 'password' => $password]);
+      $stmt->execute(['email' => $email, 'username' => $username, 'password' => $hashedPassword]);
       $pdo->commit();
-      $response->getBody()->write(json_encode(['status' => 'success', 'message' => 'Register successful']));
+      $response->getBody()->write(json_encode(['status' => 'success', 'message' => 'Registration successful']));
       return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
     } else {
       // Error, this username or email already exists...
-      $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Username or Email already exists...']));
-      return $response->withHeader('Content-Type', 'application/json')->withStatus(401);
+      $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Username or Email already exists']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(409);
     }
   }
   public function login(Request $request, Response $response, $args) {

@@ -1,1 +1,99 @@
+/* Resizable Layout Styles */
+.resizable-layout {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
 
+.layout-header {
+  height: 50px;
+  background-color: #36393f;
+  border-bottom: 1px solid #202225;
+  flex-shrink: 0;
+}
+
+.layout-content {
+  display: flex;
+  flex: 1;
+  height: calc(100vh - 50px);
+  overflow: hidden;
+}
+
+.left-sidebar,
+.main-content,
+.right-sidebar {
+  height: 100%;
+  overflow: hidden;
+  background-color: #2f3136;
+}
+
+.left-sidebar {
+  background-color: #202225;
+  border-right: 1px solid #202225;
+  min-width: 200px;
+  max-width: 400px;
+}
+
+.main-content {
+  background-color: #36393f;
+  border-right: 1px solid #202225;
+  min-width: 300px;
+  flex: 1;
+}
+
+.right-sidebar {
+  background-color: #2f3136;
+  min-width: 200px;
+  max-width: 400px;
+}
+
+/* Resize Handle Styles */
+.resize-handle {
+  width: 4px;
+  background-color: #202225;
+  cursor: col-resize;
+  position: relative;
+  flex-shrink: 0;
+  transition: background-color 0.2s ease;
+}
+
+.resize-handle:hover,
+.resize-handle.resizing {
+  background-color: #5865f2;
+}
+
+.resize-handle::before {
+  content: '';
+  position: absolute;
+  left: -4px;
+  right: -4px;
+  top: 0;
+  bottom: 0;
+  background-color: transparent;
+}
+
+.resize-handle:hover::before {
+  background-color: rgba(88, 101, 242, 0.1);
+}
+
+/* Prevent text selection during resize */
+.resizing * {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .left-sidebar,
+  .right-sidebar {
+    min-width: 150px;
+    max-width: 300px;
+  }
+
+  .main-content {
+    min-width: 200px;
+  }
+}

@@ -1,26 +1,50 @@
 <canvas id="svgBlob"></canvas>
 
 <div class="position login-bg">
-  <form class="discord-container" [formGroup]="form">
+  <form class="discord-container" [formGroup]="form" (ngSubmit)="login()">
     <div class="centering-wrapper">
       <div class="section1 text-center">
         <div class="primary-header">Welcome back!</div>
         <div class="secondary-header">We're so excited to see you again!</div>
+
+        @if (errorMessage()) {
+          <div class="general-error-message">
+            {{ errorMessage() }}
+          </div>
+        }
+
         <div class="input-position">
           <div class="form-group">
-            <h5 class="input-placeholder" id="email-txt">Email<span class="error-message" id="email-error"></span></h5>
-            <input type="email" formControlName="email" required name="email" class="form-style" id="logemail" autocomplete="off" style="margin-bottom: 20px;">
-            <i class="input-icon uil uil-at"></i>
+            <h5 class="input-placeholder" id="identifier-txt">
+              Email or Username
+              @if (identifierError) {
+                <span class="error-message" id="identifier-error">{{ identifierError }}</span>
+              }
+            </h5>
+            <input type="text" formControlName="identifier" required name="identifier" class="form-style" id="logidentifier" autocomplete="username" style="margin-bottom: 20px;" [class.error]="identifierError" placeholder="Enter your email or username">
+            <i class="input-icon uil uil-user"></i>
           </div>
           <div class="form-group">
-            <h5 class="input-placeholder" id="pword-txt">Password<span class="error-message" id="password-error"></span></h5>
-            <input type="password" formControlName="password" required name="password" class="form-style" id="logpass" autocomplete="on">
+            <h5 class="input-placeholder" id="pword-txt">
+              Password
+              @if (passwordError) {
+                <span class="error-message" id="password-error">{{ passwordError }}</span>
+              }
+            </h5>
+            <input type="password" formControlName="password" required name="password" class="form-style" id="logpass" autocomplete="on" [class.error]="passwordError">
             <i class="input-icon uil uil-lock-alt"></i>
           </div>
         </div>
         <div class="password-container"><a href="#" class="link">Forgot your password?</a></div>
         <div class="btn-position">
-          <button (click)="login()" class="btn">login</button>
+          <button type="submit" class="btn" [disabled]="isLoading()" [class.loading]="isLoading()">
+            @if (isLoading()) {
+              <span class="loading-spinner"></span>
+              Logging in...
+            } @else {
+              Login
+            }
+          </button>
         </div>
       </div>
     </div>
