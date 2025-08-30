@@ -17,6 +17,7 @@ import {Subscription, take} from "rxjs";
 import {ChannelSocketService} from "../../../services/socket-service/channel-socket.service";
 import {Channel} from "../../../models/channel/channel";
 import {Server} from "../../../models/server/server";
+import {AlertService} from "../../../services/alert-service/alert-service";
 
 @Component({
   selector: 'angcord-content',
@@ -39,7 +40,8 @@ export class AngcordContentComponent implements OnInit, OnDestroy {
   constructor(
     private webService: MessageWebService,
     private socketService: ChannelSocketService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private alertService: AlertService
   ) {
     effect(() => {
       this.subs.unsubscribe();
@@ -82,7 +84,113 @@ export class AngcordContentComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.subs.unsubscribe();
-}
+  }
+
+  /**
+   * Get channel description based on channel type and settings
+   */
+  getChannelDescription(): string {
+    const channel = this.channel();
+    if (!channel) return 'General discussion';
+    
+    // You can customize this based on channel properties
+    if (channel.channelName?.toLowerCase().includes('general')) {
+      return 'General discussion';
+    } else if (channel.channelName?.toLowerCase().includes('help')) {
+      return 'Get help and support';
+    } else if (channel.channelName?.toLowerCase().includes('announcements')) {
+      return 'Important announcements';
+    } else {
+      return 'Channel discussion';
+    }
+  }
+
+  /**
+   * Get message input placeholder text
+   */
+  getMessagePlaceholder(): string {
+    const channelName = this.channel()?.channelName || 'general';
+    return `Message #${channelName}`;
+  }
+
+  /**
+   * Open search functionality for the current channel
+   */
+  openSearch(): void {
+    const channelName = this.channel()?.channelName || 'general';
+    console.log(`Opening search for #${channelName}`);
+    
+    // TODO: Implement search modal/overlay
+    // This could open a search overlay similar to Discord's Ctrl+K functionality
+    this.alertService.featureComingSoon(`Search in #${channelName}`);
+  }
+
+  /**
+   * Open inbox/messages functionality
+   */
+  openInbox(): void {
+    console.log('Opening inbox');
+    
+    // TODO: Implement inbox modal/overlay
+    // This could show direct messages, mentions, etc.
+    this.alertService.featureComingSoon('Inbox');
+  }
+
+  /**
+   * Open help and support functionality
+   */
+  openHelp(): void {
+    console.log('Opening help');
+    
+    // TODO: Implement help modal/overlay
+    // This could show help documentation, keyboard shortcuts, etc.
+    this.alertService.featureComingSoon('Help and Support');
+  }
+
+  /**
+   * Handle file upload functionality
+   */
+  uploadFile(): void {
+    console.log('Opening file upload');
+    
+    // Create a file input element
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.multiple = true;
+    fileInput.accept = 'image/*,video/*,audio/*,.pdf,.doc,.docx,.txt';
+    
+    fileInput.onchange = (event: any) => {
+      const files = event.target.files;
+      if (files && files.length > 0) {
+        console.log(`Selected ${files.length} file(s):`, files);
+        
+        // TODO: Implement actual file upload to server
+        // This would typically involve:
+        // 1. File validation (size, type, etc.)
+        // 2. Upload to file storage service
+        // 3. Send message with file attachment
+        // 4. Update UI to show upload progress
+        
+        this.alertService.info(
+          'File Upload',
+          `${files.length} file(s) selected. File upload functionality is coming soon!`
+        );
+      }
+    };
+    
+    fileInput.click();
+  }
+
+  /**
+   * Open emoji picker functionality
+   */
+  openEmojiPicker(): void {
+    console.log('Opening emoji picker');
+    
+    // TODO: Implement emoji picker modal/overlay
+    // This could show a grid of emojis organized by category
+    this.alertService.featureComingSoon('Emoji Picker');
+  }
 
   public handleKeyDownEvent($event: KeyboardEvent) {
     if ($event.key.toUpperCase() == 'ENTER' && this.messageBox.nativeElement != undefined) {

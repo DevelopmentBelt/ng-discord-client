@@ -6,22 +6,39 @@
         <span class="text-discord-text-lighter font-bold text-sm">#</span>
       </div>
       <div>
-        <h5 class="m-0 text-lg font-semibold text-discord-text-lighter">general</h5>
-        <p class="m-0 text-sm text-discord-text-muted">General discussion</p>
+        <h5 class="m-0 text-lg font-semibold text-discord-text-lighter">{{ channel()?.channelName || 'general' }}</h5>
+        <p class="m-0 text-sm text-discord-text-muted">{{ getChannelDescription() }}</p>
       </div>
     </div>
     <div class="flex items-center space-x-2">
-      <button class="p-2 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150">
+      <!-- Search Button -->
+      <button 
+        class="p-2 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150 group relative"
+        (click)="openSearch()"
+        title="Search in #{{ channel()?.channelName || 'general' }}"
+      >
         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
           <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
         </svg>
       </button>
-      <button class="p-2 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150">
+      
+      <!-- Inbox Button -->
+      <button 
+        class="p-2 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150 group relative"
+        (click)="openInbox()"
+        title="Inbox"
+      >
         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
           <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/>
         </svg>
       </button>
-      <button class="p-2 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150">
+      
+      <!-- Help Button -->
+      <button 
+        class="p-2 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150 group relative"
+        (click)="openHelp()"
+        title="Help"
+      >
         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
           <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/>
         </svg>
@@ -68,16 +85,27 @@
         id="chatbox" 
         (keydown)="handleKeyDownEvent($event);" 
         (submit)="postMessage(messageBox.value); messageBox.value = '';" 
-        [placeholder]="'Message #general'"
+        [placeholder]="getMessagePlaceholder()"
         class="w-full bg-discord-light text-discord-text-light border-0 rounded-lg px-4 py-3 text-sm focus:bg-discord-light focus:outline-none focus:ring-2 focus:ring-discord-blue/50 transition-all duration-200" 
       />
       <div class="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
-        <button class="p-1.5 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150">
+        <!-- File Upload Button -->
+        <button 
+          class="p-1.5 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150"
+          (click)="uploadFile()"
+          title="Upload a file"
+        >
           <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/>
           </svg>
         </button>
-        <button class="p-1.5 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150">
+        
+        <!-- Emoji Button -->
+        <button 
+          class="p-1.5 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150"
+          (click)="openEmojiPicker()"
+          title="Open emoji picker"
+        >
           <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 100-2 1 1 0 000 2zm7-1a1 1 0 11-2 0 1 1 0 012 0zm-7.536 5.879a1 1 0 001.415 0 3 3 0 014.242 0 1 1 0 001.415-1.415 5 5 0 00-7.072 0 1 1 0 000 1.415z" clip-rule="evenodd"/>
           </svg>
