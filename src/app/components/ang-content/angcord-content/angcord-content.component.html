@@ -1,45 +1,33 @@
-<div class="container-fluid no-gutters" id="angcord-content">
-  <div class="row d-block" id="messages-container">
+<div id="angcord-content">
+  <div id="messages-container">
     <!-- Messages -->
     @for (msg of messageList; track msg; let i = $index) {
       <div class="message-object">
-        <div class="row message-row">
-            <div class="col col-1 text-center">
+        <div class="message-row">
+            <div class="message-avatar">
               @if (i == 0 || messageList[i-1]?.author?.userId != msg.author.userId) {
-                <ng-container>
-                  <img class="img-fluid pro-pic" src="{{ msg.author.profilePic }}" />
-                </ng-container>
+                <img class="img-fluid pro-pic" src="{{ msg.author.profilePic }}" />
               } @else {
-                <ng-template #elseBlock>
-                  <span class="datetime-label">{{ msg.postedTimestamp | datetimeFormatter: 'h:mm A' }}</span>
-                </ng-template>
+                <span class="datetime-label">{{ msg.postedTimestamp | datetimeFormatter: 'h:mm A' }}</span>
               }
             </div>
-            <div class="col col-11">
-              <div class="row">
-                <div class="col col-12">
-                  @if (i == 0 || messageList[i-1]?.author?.userId != msg.author.userId) {
-                    <ng-container>
-                      <span class="username-label">{{ msg.author.username }}</span>
-                      <span class="px-2 datetime-label">{{ msg.postedTimestamp | datetimeFormatter: 'MM/DD/YYYY h:mm A' }}</span>
-                    </ng-container>
-                  }
-                </div>
+            <div class="message-content">
+              <div class="message-header">
+                @if (i == 0 || messageList[i-1]?.author?.userId != msg.author.userId) {
+                  <span class="username-label">{{ msg.author.username }}</span>
+                  <span class="px-2 datetime-label">{{ msg.postedTimestamp | datetimeFormatter: 'MM/DD/YYYY h:mm A' }}</span>
+                }
               </div>
-              <div class="row">
-                <div class="col col-12">
-                  <p class="message-data text-wrap text-break">{{ msg.text }}</p>
-                </div>
+              <div class="message-body">
+                <p class="message-data text-wrap text-break">{{ msg.text }}</p>
               </div>
             </div>
         </div>
       </div>
     }
   </div>
-  <div class="row">
+  <div class="message-input-container">
     <!-- Message Input -->
-    <div class="col col-12">
-      <input type="text" #messageBox id="chatbox" (keydown)="handleKeyDownEvent($event);" (submit)="postMessage(messageBox.value); messageBox.value = '';" [placeholder]="'Message #general'" />
-    </div>
+    <input type="text" #messageBox id="chatbox" (keydown)="handleKeyDownEvent($event);" (submit)="postMessage(messageBox.value); messageBox.value = '';" [placeholder]="'Message #general'" />
   </div>
 </div>

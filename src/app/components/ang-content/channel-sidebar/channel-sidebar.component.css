@@ -1,7 +1,9 @@
 .channel-sidebar-container {
   height: 100%;
+  display: flex;
   background-color: #2f3136;
   color: #b5b9c0;
+  position: relative;
 }
 
 /* Server List Section (Left) */
@@ -9,13 +11,39 @@
   height: 100%;
   overflow-y: auto;
   border-right: 1px solid #202225;
+  min-width: 60px;
+  max-width: 70%;
 }
 
-/* Separator */
-.sidebar-separator {
-  width: 1px;
+/* Internal Resize Handle */
+.internal-resize-handle {
+  width: 4px;
   height: 100%;
   background-color: #202225;
+  cursor: col-resize;
+  position: relative;
+  flex-shrink: 0;
+  transition: background-color 0.2s ease;
+  z-index: 10;
+}
+
+.internal-resize-handle:hover,
+.internal-resize-handle.resizing {
+  background-color: #5865f2;
+}
+
+.internal-resize-handle::before {
+  content: '';
+  position: absolute;
+  left: -4px;
+  right: -4px;
+  top: 0;
+  bottom: 0;
+  background-color: transparent;
+}
+
+.internal-resize-handle:hover::before {
+  background-color: rgba(88, 101, 242, 0.1);
 }
 
 /* Channel List Section (Right) */
@@ -24,6 +52,8 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-width: 200px;
+  max-width: 80%;
 }
 
 .channel-list-header {
@@ -85,6 +115,14 @@
 
 .channel-item.active:hover {
   background-color: #5865f2;
+}
+
+/* Prevent text selection during internal resize */
+.internal-resizing * {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 /* Scrollbar styling */
