@@ -1,0 +1,40 @@
+// Notification Badge Styles
+
+// Pulse animation for high notification counts
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+// Smooth transitions
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 200ms;
+}
+
+// Hover effects
+.rounded-full:hover {
+  transform: scale(1.1);
+}
+
+// Responsive sizing
+@media (max-width: 640px) {
+  .w-5.h-5 {
+    width: 1rem;
+    height: 1rem;
+  }
+  
+  .w-6.h-6 {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+}

@@ -1,0 +1,235 @@
+<div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" (click)="close()">
+  <div class="bg-discord-dark border border-discord-border rounded-lg shadow-xl w-full max-w-4xl h-[80vh] flex flex-col" (click)="$event.stopPropagation()" (keydown)="onKeydown($event)">
+    
+    <!-- Header -->
+    <div class="flex items-center justify-between p-6 border-b border-discord-border">
+      <div class="flex items-center space-x-3">
+        <div class="w-8 h-8 bg-discord-blue rounded-full flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
+            <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
+          </svg>
+        </div>
+        <div>
+          <h2 class="text-xl font-semibold text-discord-text-lighter">Inbox</h2>
+          <p class="text-sm text-discord-text-muted">Manage your messages and notifications</p>
+        </div>
+      </div>
+      
+      <div class="flex items-center space-x-2">
+        <button 
+          (click)="toggleFilters()"
+          class="p-2 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded-md transition-colors duration-150"
+          [class.bg-discord-hover]="showFilters()"
+        >
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd"/>
+          </svg>
+        </button>
+        <button 
+          (click)="close()"
+          class="p-2 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded-md transition-colors duration-150"
+        >
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Search and Actions -->
+    <div class="p-6 border-b border-discord-border">
+      <div class="flex items-center space-x-4">
+        <div class="flex-1 relative">
+          <input
+            type="text"
+            placeholder="Search inbox..."
+            [(ngModel)]="searchQuery"
+            (input)="onSearchInput()"
+            class="w-full bg-discord-medium border border-discord-border rounded-md px-4 py-2 pl-10 text-discord-text-light placeholder-discord-text-muted focus:outline-none focus:ring-2 focus:ring-discord-blue focus:border-transparent"
+          >
+          <svg class="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-discord-text-muted" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+          </svg>
+        </div>
+        
+        <button 
+          (click)="markAllAsRead()"
+          class="px-4 py-2 bg-discord-blue hover:bg-discord-blue-dark text-white font-medium rounded-md transition-colors duration-150"
+        >
+          Mark All Read
+        </button>
+      </div>
+    </div>
+
+    <!-- Filters Panel -->
+    @if (showFilters()) {
+      <div class="px-6 py-4 border-b border-discord-border bg-discord-lighter">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-discord-text-light mb-2">Show</label>
+            <div class="space-y-2">
+              <label class="flex items-center">
+                <input 
+                  type="checkbox" 
+                  [(ngModel)]="filters().showRead"
+                  (change)="applyFilters()"
+                  class="mr-2 text-discord-blue focus:ring-discord-blue"
+                >
+                <span class="text-sm text-discord-text">Read</span>
+              </label>
+              <label class="flex items-center">
+                <input 
+                  type="checkbox" 
+                  [(ngModel)]="filters().showUnread"
+                  (change)="applyFilters()"
+                  class="mr-2 text-discord-blue focus:ring-discord-blue"
+                >
+                <span class="text-sm text-discord-text">Unread</span>
+              </label>
+            </div>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-discord-text-light mb-2">Priority</label>
+            <div class="space-y-2">
+              @for (priority of ['low', 'medium', 'high', 'urgent']; track priority) {
+                <label class="flex items-center">
+                  <input 
+                    type="checkbox" 
+                    [checked]="filters().priority.includes(priority)"
+                    (change)="updateFilters({priority: filters().priority.includes(priority) ? filters().priority.filter(p => p !== priority) : [...filters().priority, priority]})"
+                    class="mr-2 text-discord-blue focus:ring-discord-blue"
+                  >
+                  <span class="text-sm text-discord-text capitalize">{{ priority }}</span>
+                </label>
+              }
+            </div>
+          </div>
+          
+          <div class="col-span-2">
+            <button 
+              (click)="clearFilters()"
+              class="px-3 py-1 text-sm bg-discord-medium hover:bg-discord-hover text-discord-text-light rounded-md transition-colors duration-150"
+            >
+              Clear Filters
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Tabs -->
+    <div class="flex border-b border-discord-border">
+      @for (tab of ['all', 'unread', 'mentions', 'direct-messages']; track tab) {
+        <button
+          (click)="selectTab(tab)"
+          class="px-6 py-3 text-sm font-medium transition-colors duration-150 relative"
+          [class.text-discord-text-lighter]="selectedTab() === tab"
+          [class.text-discord-text-muted]="selectedTab() !== tab"
+          [class.border-b-2]="selectedTab() === tab"
+          [class.border-discord-blue]="selectedTab() === tab"
+        >
+          {{ tab.charAt(0).toUpperCase() + tab.slice(1).replace('-', ' ') }}
+          @if (getUnreadCountForTab(tab) > 0) {
+            <span class="ml-2 px-2 py-0.5 text-xs bg-discord-blue text-white rounded-full">
+              {{ getUnreadCountForTab(tab) }}
+            </span>
+          }
+        </button>
+      }
+    </div>
+
+    <!-- Content -->
+    <div class="flex-1 overflow-hidden">
+      @if (isLoading()) {
+        <div class="flex items-center justify-center h-full">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-discord-blue"></div>
+        </div>
+      } @else if (filteredItems().length === 0) {
+        <div class="flex flex-col items-center justify-center h-full text-center p-8">
+          <svg class="w-16 h-16 text-discord-text-muted mb-4" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
+            <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
+          </svg>
+          <h3 class="text-lg font-medium text-discord-text-lighter mb-2">No items found</h3>
+          <p class="text-discord-text-muted">Try adjusting your filters or search terms</p>
+        </div>
+      } @else {
+        <div class="overflow-y-auto h-full">
+          @for (item of filteredItems(); track item.id) {
+            <div 
+              class="p-4 hover:bg-discord-hover border-b border-discord-border cursor-pointer transition-colors duration-150"
+              [class.bg-discord-hover/50]="!item.isRead"
+              (click)="selectItem(item)"
+            >
+              <div class="flex items-start space-x-3">
+                <!-- Icon -->
+                <div class="flex-shrink-0 w-10 h-10 bg-discord-medium rounded-full flex items-center justify-center">
+                  <svg class="w-5 h-5 text-discord-text-muted" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="{{ getTypeIcon(item.type) }}"/>
+                  </svg>
+                </div>
+                
+                <!-- Content -->
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                      <h4 class="text-sm font-medium text-discord-text-lighter mb-1 flex items-center space-x-2">
+                        <span>{{ item.title }}</span>
+                        @if (!item.isRead) {
+                          <span class="w-2 h-2 bg-discord-blue rounded-full"></span>
+                        }
+                        @if (item.priority !== 'low') {
+                          <span class="text-xs px-2 py-0.5 rounded-full {{ getPriorityColor(item.priority) }}">
+                            {{ item.priority }}
+                          </span>
+                        }
+                      </h4>
+                      
+                      <p class="text-sm text-discord-text mb-2 line-clamp-2">{{ item.content }}</p>
+                      
+                      <div class="flex items-center space-x-4 text-xs text-discord-text-muted">
+                        <span>{{ getRelativeTime(item.timestamp) }}</span>
+                        @if (item.sender) {
+                          <span>from {{ item.sender.username }}</span>
+                        }
+                        @if (item.mentionCount && item.mentionCount > 1) {
+                          <span>{{ item.mentionCount }} mentions</span>
+                        }
+                      </div>
+                    </div>
+                    
+                    <!-- Actions -->
+                    <div class="flex items-center space-x-1">
+                      @if (!item.isRead) {
+                        <button 
+                          (click)="markAsRead(item); $event.stopPropagation()"
+                          class="p-1 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-medium rounded transition-colors duration-150"
+                          title="Mark as read"
+                        >
+                          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                          </svg>
+                        </button>
+                      }
+                      <button 
+                        (click)="deleteItem(item); $event.stopPropagation()"
+                        class="p-1 text-discord-text-muted hover:text-red-400 hover:bg-discord-medium rounded transition-colors duration-150"
+                        title="Delete"
+                      >
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+</div>

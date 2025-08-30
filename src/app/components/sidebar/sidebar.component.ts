@@ -4,8 +4,11 @@ import { FormsModule } from '@angular/forms';
 import { ServerBrowserComponent } from '../server-browser/server-browser.component';
 import { SidebarServerComponent } from '../sidebar-server/sidebar-server.component';
 import { ServerCreationModalComponent } from '../server-creation-modal/server-creation-modal.component';
+import { InboxModalComponent } from '../inbox-modal/inbox-modal.component';
+import { NotificationBadgeComponent } from '../notification-badge/notification-badge.component';
 import { Server } from '../../models/server/server';
 import { ServerConnectivityService } from '../../services/server-connectivity.service';
+import { InboxService } from '../../services/inbox-service/inbox.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -13,7 +16,7 @@ import { ServerConnectivityService } from '../../services/server-connectivity.se
 
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [CommonModule, FormsModule, ServerBrowserComponent, SidebarServerComponent, ServerCreationModalComponent]
+  imports: [CommonModule, FormsModule, ServerBrowserComponent, SidebarServerComponent, ServerCreationModalComponent, InboxModalComponent, NotificationBadgeComponent]
 })
 export class SidebarComponent implements OnInit {
   // Input Signals
@@ -37,9 +40,11 @@ export class SidebarComponent implements OnInit {
   selectedServerId: WritableSignal<string> = signal('home');
   sidebarServers: WritableSignal<Server[]> = signal([]);
   showServerCreation: WritableSignal<boolean> = signal(false);
+  showInboxModal: WritableSignal<boolean> = signal(false);
 
   constructor(
-    private serverService: ServerConnectivityService
+    private serverService: ServerConnectivityService,
+    private inboxService: InboxService
   ) {}
 
   ngOnInit(): void {
@@ -204,5 +209,38 @@ export class SidebarComponent implements OnInit {
       .join('')
       .toUpperCase()
       .substring(0, 2);
+  }
+
+  /**
+   * Open inbox modal
+   */
+  openInbox(): void {
+    this.showInboxModal.set(true);
+  }
+
+  /**
+   * Close inbox modal
+   */
+  closeInboxModal(): void {
+    this.showInboxModal.set(false);
+  }
+
+  /**
+   * Get unread count from inbox service
+   */
+  getUnreadCount(): number {
+    return this.inboxService.getUnreadCount();
+  }
+
+  /**
+   * Handle inbox item selection
+   */
+  onInboxItemSelected(item: any): void {
+    console.log('Inbox item selected:', item);
+    // TODO: Handle different types of inbox items
+    // - Direct messages: Open DM thread
+    // - Mentions: Navigate to message
+    // - Server invites: Show invite modal
+    // - etc.
   }
 }

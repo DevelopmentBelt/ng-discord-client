@@ -204,4 +204,25 @@ export class ServerCreationModalComponent implements OnInit {
   get nameCharRemaining(): number {
     return 100 - this.serverName().length;
   }
+
+  /**
+   * Get character count for description (method version for template)
+   */
+  getDescriptionCharCount(): number {
+    return this.descriptionCharCount;
+  }
+
+  /**
+   * Get color class for description character count
+   */
+  getDescriptionCharCountColor(): string {
+    const count = this.descriptionCharCount;
+    if (count > 450) {
+      return 'text-red-500';
+    } else if (count > 400) {
+      return 'text-yellow-500';
+    } else {
+      return 'text-discord-text-muted';
+    }
+  }
 }
