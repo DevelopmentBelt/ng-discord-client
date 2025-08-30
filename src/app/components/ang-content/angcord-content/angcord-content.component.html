@@ -113,4 +113,16 @@
       </div>
     </div>
   </div>
+
+  <!-- Search Component Overlay -->
+  @if (showSearch) {
+    <app-search
+      [serverId]="server()?.serverId || ''"
+      [channelId]="(channel()?.channelId || '').toString()"
+      [serverName]="server()?.serverName || ''"
+      [channelName]="channel()?.channelName || ''"
+      (closeSearch)="closeSearch()"
+      (messageSelected)="onMessageSelected($event)"
+    ></app-search>
+  }
 </div>

@@ -18,13 +18,15 @@ import {ChannelSocketService} from "../../../services/socket-service/channel-soc
 import {Channel} from "../../../models/channel/channel";
 import {Server} from "../../../models/server/server";
 import {AlertService} from "../../../services/alert-service/alert-service";
+import {SearchComponent} from "../../search/search.component";
 
 @Component({
   selector: 'angcord-content',
   templateUrl: './angcord-content.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    DatetimeFormatterPipe
+    DatetimeFormatterPipe,
+    SearchComponent
   ],
   standalone: true
 })
@@ -34,6 +36,9 @@ export class AngcordContentComponent implements OnInit, OnDestroy {
 
   @ViewChild('messageBox') private messageBox!: ElementRef;
   public messageList: Message[] = [] as Message[];
+  
+  // Search state
+  showSearch: boolean = false;
 
   private subs: Subscription = new Subscription();
 
@@ -117,12 +122,26 @@ export class AngcordContentComponent implements OnInit, OnDestroy {
    * Open search functionality for the current channel
    */
   openSearch(): void {
-    const channelName = this.channel()?.channelName || 'general';
-    console.log(`Opening search for #${channelName}`);
-    
-    // TODO: Implement search modal/overlay
-    // This could open a search overlay similar to Discord's Ctrl+K functionality
-    this.alertService.featureComingSoon(`Search in #${channelName}`);
+    this.showSearch = true;
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * Close search functionality
+   */
+  closeSearch(): void {
+    this.showSearch = false;
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * Handle message selection from search results
+   */
+  onMessageSelected(message: Message): void {
+    // TODO: Navigate to the selected message in the chat
+    // This could scroll to the message or highlight it
+    console.log('Message selected from search:', message);
+    this.alertService.info('Message Selected', 'Message selected from search results');
   }
 
   /**
