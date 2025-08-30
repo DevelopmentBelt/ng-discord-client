@@ -53,4 +53,25 @@ export class SidebarComponent implements OnInit {
     this.selectedServerId.set(server.serverId);
     this.selectedServerChange.emit(server);
   }
+
+  selectHome() {
+    const homeServer: Server = {
+      serverId: 'home',
+      serverName: 'Home',
+      iconURL: '',
+      ownerId: '',
+      serverDescription: 'Home server'
+    };
+    this.selectServer(homeServer);
+  }
+
+  addServer() {
+    // TODO: Implement add server functionality
+    console.log('Add server clicked');
+  }
+
+  exploreServers() {
+    // TODO: Implement explore servers functionality
+    console.log('Explore servers clicked');
+  }
 }

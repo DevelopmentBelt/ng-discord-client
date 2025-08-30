@@ -1,12 +1,57 @@
 <div class="flex flex-col items-center py-4 space-y-2 bg-discord-dark min-h-screen" id="angcord_servers">
+  <!-- Home Button -->
+  <div
+    class="w-12 h-12 rounded-xl cursor-pointer transition-all duration-200 hover:rounded-2xl hover:bg-discord-hover group relative"
+    [ngClass]="(selectedServerId() == 'home') ? 'bg-discord-blue rounded-2xl' : 'bg-discord-medium'"
+    (click)="selectHome()"
+  >
+    <div class="w-full h-full flex items-center justify-center">
+      <svg class="w-6 h-6 text-discord-text-lighter" fill="currentColor" viewBox="0 0 20 20">
+        <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/>
+      </svg>
+    </div>
+    <div class="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-0 bg-discord-text-lighter rounded-r-full transition-all duration-200 opacity-0 group-hover:h-8 group-hover:opacity-100"></div>
+  </div>
+
+  <!-- Separator -->
+  <div class="w-8 h-px bg-discord-border rounded-full"></div>
+
+  <!-- Server List -->
   @for (server of sidebarServers; track server) {
     <div
-      class="w-12 h-12 rounded-xl cursor-pointer transition-all duration-200 hover:rounded-2xl hover:bg-discord-hover"
+      class="w-12 h-12 rounded-xl cursor-pointer transition-all duration-200 hover:rounded-2xl hover:bg-discord-hover group relative"
       [ngClass]="(selectedServerId() == server.serverId) ? 'bg-discord-blue rounded-2xl' : 'bg-discord-medium'"
       (click)="selectServer(server);"
     >
       <sidebar-server [server]="server">
       </sidebar-server>
+      <div class="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-0 bg-discord-text-lighter rounded-r-full transition-all duration-200 opacity-0 group-hover:h-8 group-hover:opacity-100"></div>
     </div>
   }
+
+  <!-- Add Server Button -->
+  <div
+    class="w-12 h-12 rounded-xl cursor-pointer transition-all duration-200 hover:rounded-2xl hover:bg-discord-hover group bg-discord-medium"
+    (click)="addServer();"
+  >
+    <div class="w-full h-full flex items-center justify-center">
+      <svg class="w-6 h-6 text-discord-text-muted group-hover:text-discord-text-light transition-colors duration-200" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+      </svg>
+    </div>
+    <div class="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-0 bg-discord-text-lighter rounded-r-full transition-all duration-200 opacity-0 group-hover:h-8 group-hover:opacity-100"></div>
+  </div>
+
+  <!-- Explore Public Servers Button -->
+  <div
+    class="w-12 h-12 rounded-xl cursor-pointer transition-all duration-200 hover:rounded-2xl hover:bg-discord-hover group bg-discord-medium"
+    (click)="exploreServers();"
+  >
+    <div class="w-full h-full flex items-center justify-center">
+      <svg class="w-6 h-6 text-discord-text-muted group-hover:text-discord-text-light transition-colors duration-200" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+      </svg>
+    </div>
+    <div class="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-0 bg-discord-text-lighter rounded-r-full transition-all duration-200 opacity-0 group-hover:h-8 group-hover:opacity-100"></div>
+  </div>
 </div>

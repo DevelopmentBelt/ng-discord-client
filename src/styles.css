@@ -17,6 +17,8 @@ body {
   font-family: 'Whitney', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background-color: #36393f;
   color: #dcddde;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Custom Discord color variables */
@@ -35,4 +37,59 @@ body {
   --discord-text-muted-light: #afafaf;
   --discord-hover: rgba(79, 84, 92, 0.4);
   --discord-border: #202225;
+}
+
+/* Custom scrollbar styling for Discord-like appearance */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #202225;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #40444b;
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #202225 transparent;
+}
+
+/* Selection styling */
+::selection {
+  background: rgba(88, 101, 242, 0.3);
+  color: #ffffff;
+}
+
+/* Focus outline for accessibility */
+*:focus {
+  outline: 2px solid #5865f2;
+  outline-offset: 2px;
+}
+
+/* Button and interactive element transitions */
+button, a, [role="button"] {
+  transition: all 0.15s ease-in-out;
+}
+
+/* Input focus states */
+input:focus, textarea:focus {
+  box-shadow: 0 0 0 2px rgba(88, 101, 242, 0.3);
+}
+
+/* Smooth transitions for all elements */
+* {
+  transition: background-color 0.15s ease-in-out, 
+              color 0.15s ease-in-out, 
+              border-color 0.15s ease-in-out,
+              opacity 0.15s ease-in-out,
+              transform 0.15s ease-in-out;
 }

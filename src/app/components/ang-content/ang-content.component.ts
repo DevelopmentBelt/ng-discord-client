@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, OnInit, signal, WritableSignal, HostListener} from '@angular/core';
+import {ChangeDetectionStrategy, Component, OnInit, signal, WritableSignal, HostListener, ElementRef} from '@angular/core';
 import {AngcordContentComponent} from "./angcord-content/angcord-content.component";
 import {MemberSidebarComponent} from "./member-sidebar/member-sidebar.component";
 import {ChannelSidebarComponent} from "./channel-sidebar/channel-sidebar.component";
@@ -33,7 +33,7 @@ export class AngContentComponent implements OnInit {
   private startX: number = 0;
   private startWidths: { left: number; main: number; right: number } = { left: 20, main: 60, right: 20 };
 
-  constructor() {}
+  constructor(private elementRef: ElementRef) {}
 
   ngOnInit(): void {
     this.loadSavedWidths();
@@ -68,7 +68,8 @@ export class AngContentComponent implements OnInit {
   private handleMouseMove(event: MouseEvent): void {
     if (!this.isResizing) return;
 
-    const container = (event.target as Element).closest('.layout-content') as HTMLElement;
+    // Use the component's element to get the container width
+    const container = this.elementRef.nativeElement.querySelector('.flex-1.flex.overflow-hidden') as HTMLElement;
     if (!container) return;
 
     const containerWidth = container.offsetWidth;
@@ -80,9 +81,16 @@ export class AngContentComponent implements OnInit {
       let newLeftWidth = this.startWidths.left + deltaPercent;
       let newMainWidth = this.startWidths.main - deltaPercent;
 
-      // Constrain widths between 10% and 40%
-      newLeftWidth = Math.max(10, Math.min(40, newLeftWidth));
-      newMainWidth = Math.max(20, Math.min(80, newMainWidth));
+      // Constrain widths between 15% and 35% for left sidebar
+      newLeftWidth = Math.max(15, Math.min(35, newLeftWidth));
+      newMainWidth = Math.max(25, Math.min(70, newMainWidth));
+
+      // Ensure total doesn't exceed 100%
+      const totalLeftMain = newLeftWidth + newMainWidth;
+      if (totalLeftMain > 85) {
+        newLeftWidth = 35;
+        newMainWidth = 50;
+      }
 
       this.leftSidebarWidth.set(newLeftWidth);
       this.mainContentWidth.set(newMainWidth);
@@ -91,9 +99,16 @@ export class AngContentComponent implements OnInit {
       let newMainWidth = this.startWidths.main + deltaPercent;
       let newRightWidth = this.startWidths.right - deltaPercent;
 
-      // Constrain widths between 10% and 40% for sidebars, 20%+ for main
-      newRightWidth = Math.max(10, Math.min(40, newRightWidth));
-      newMainWidth = Math.max(20, Math.min(80, newMainWidth));
+      // Constrain widths between 15% and 35% for right sidebar
+      newRightWidth = Math.max(15, Math.min(35, newRightWidth));
+      newMainWidth = Math.max(25, Math.min(70, newMainWidth));
+
+      // Ensure total doesn't exceed 100%
+      const totalMainRight = newMainWidth + newRightWidth;
+      if (totalMainRight > 85) {
+        newMainWidth = 50;
+        newRightWidth = 35;
+      }
 
       this.mainContentWidth.set(newMainWidth);
       this.rightSidebarWidth.set(newRightWidth);

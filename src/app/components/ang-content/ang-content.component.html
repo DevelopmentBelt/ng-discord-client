@@ -1,13 +1,16 @@
-<div class="h-screen flex flex-col overflow-hidden">
-  <!-- Header area (if needed) -->
-  <div class="h-12 bg-discord-lighter border-b border-discord-border flex-shrink-0">
-    <!-- Angcord Header -->
+<div class="h-screen flex flex-col overflow-hidden bg-discord-darker">
+  <!-- Header area with Discord-like styling -->
+  <div class="h-12 bg-discord-lighter border-b border-discord-border flex-shrink-0 flex items-center px-4">
+    <div class="flex items-center space-x-3">
+      <div class="w-6 h-6 bg-discord-blue rounded"></div>
+      <span class="text-discord-text-lighter font-semibold text-lg">Angcord</span>
+    </div>
   </div>
 
   <!-- Main content area with resizable panels -->
   <div class="flex-1 flex overflow-hidden">
     <!-- Left sidebar: Server list and channels -->
-    <div class="bg-discord-dark border-r border-discord-border min-w-[200px] max-w-[40%]" [style.width.%]="leftSidebarWidth()">
+    <div class="bg-discord-dark border-r border-discord-border min-w-[200px] max-w-[40%] flex-shrink-0" [style.width.%]="leftSidebarWidth()">
       <channel-sidebar
         (selectedServerChange)="handleServerChange($event)"
         (selectedChannelChange)="handleChannelChange($event)"
@@ -18,12 +21,14 @@
 
     <!-- Resize handle between left sidebar and main content -->
     <div
-      class="w-1 bg-discord-border cursor-col-resize hover:bg-discord-blue transition-colors duration-200 flex-shrink-0 relative z-10 before:absolute before:-left-1 before:-right-1 before:top-0 before:bottom-0 before:bg-transparent hover:before:bg-discord-blue/10"
+      class="w-1 bg-discord-border cursor-col-resize hover:bg-discord-blue transition-colors duration-200 flex-shrink-0 relative z-10 group"
       (mousedown)="startResizing($event, 'left')"
-    ></div>
+    >
+      <div class="absolute inset-0 bg-transparent group-hover:bg-discord-blue/20 transition-colors duration-200"></div>
+    </div>
 
     <!-- Main content area -->
-    <div class="bg-discord-lighter border-r border-discord-border min-w-[300px] flex-1" [style.width.%]="mainContentWidth()">
+    <div class="bg-discord-lighter border-r border-discord-border min-w-[300px] flex-1 flex-shrink-0" [style.width.%]="mainContentWidth()">
       <angcord-content
         [server]="selectedServer()"
         [channel]="selectedChannel()"
@@ -33,12 +38,14 @@
 
     <!-- Resize handle between main content and right sidebar -->
     <div
-      class="w-1 bg-discord-border cursor-col-resize hover:bg-discord-blue transition-colors duration-200 flex-shrink-0 relative z-10 before:absolute before:-left-1 before:-right-1 before:top-0 before:bottom-0 before:bg-transparent hover:before:bg-discord-blue/10"
+      class="w-1 bg-discord-border cursor-col-resize hover:bg-discord-blue transition-colors duration-200 flex-shrink-0 relative z-10 group"
       (mousedown)="startResizing($event, 'right')"
-    ></div>
+    >
+      <div class="absolute inset-0 bg-transparent group-hover:bg-discord-blue/20 transition-colors duration-200"></div>
+    </div>
 
     <!-- Right sidebar: Member list -->
-    <div class="bg-discord-medium min-w-[200px] max-w-[40%]" [style.width.%]="rightSidebarWidth()">
+    <div class="bg-discord-medium min-w-[200px] max-w-[40%] flex-shrink-0" [style.width.%]="rightSidebarWidth()">
       <member-sidebar></member-sidebar>
     </div>
   </div>
