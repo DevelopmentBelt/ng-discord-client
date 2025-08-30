@@ -1,18 +1,12 @@
-<div class="container-fluid sidebar-container g-0">
-  <div class="row">
-    <div class="col min-vh-100" id="angcord_servers">
-      @for (server of sidebarServers; track server) {
-        <div class="row">
-          <div
-            class="col g-0 p-1 sidebar-server-contain rounded"
-            [ngClass]="(selectedServerId() == server.serverId) ? 'bg-secondary rounded' : ''"
-            (click)="selectServer(server);"
-          >
-            <sidebar-server [server]="server">
-            </sidebar-server>
-          </div>
-        </div>
-      }
+<div class="flex flex-col items-center py-4 space-y-2 bg-discord-dark min-h-screen" id="angcord_servers">
+  @for (server of sidebarServers; track server) {
+    <div
+      class="w-12 h-12 rounded-xl cursor-pointer transition-all duration-200 hover:rounded-2xl hover:bg-discord-hover"
+      [ngClass]="(selectedServerId() == server.serverId) ? 'bg-discord-blue rounded-2xl' : 'bg-discord-medium'"
+      (click)="selectServer(server);"
+    >
+      <sidebar-server [server]="server">
+      </sidebar-server>
     </div>
-  </div>
+  }
 </div>

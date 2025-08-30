@@ -9,8 +9,7 @@ import {take} from "rxjs";
   imports: [
     ReactiveFormsModule
   ],
-  templateUrl: './login.component.html',
-  styleUrl: './login.component.css'
+  templateUrl: './login.component.html'
 })
 export class LoginComponent implements OnInit {
   userLoggedIn: OutputEmitterRef<void> = output();

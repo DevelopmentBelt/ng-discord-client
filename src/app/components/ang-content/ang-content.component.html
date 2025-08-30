@@ -1,13 +1,13 @@
-<div class="resizable-layout">
+<div class="h-screen flex flex-col overflow-hidden">
   <!-- Header area (if needed) -->
-  <div class="layout-header">
+  <div class="h-12 bg-discord-lighter border-b border-discord-border flex-shrink-0">
     <!-- Angcord Header -->
   </div>
 
   <!-- Main content area with resizable panels -->
-  <div class="layout-content">
+  <div class="flex-1 flex overflow-hidden">
     <!-- Left sidebar: Server list and channels -->
-    <div class="left-sidebar" [style.width.%]="leftSidebarWidth()">
+    <div class="bg-discord-dark border-r border-discord-border min-w-[200px] max-w-[40%]" [style.width.%]="leftSidebarWidth()">
       <channel-sidebar
         (selectedServerChange)="handleServerChange($event)"
         (selectedChannelChange)="handleChannelChange($event)"
@@ -18,12 +18,12 @@
 
     <!-- Resize handle between left sidebar and main content -->
     <div
-      class="resize-handle left-resize-handle"
+      class="w-1 bg-discord-border cursor-col-resize hover:bg-discord-blue transition-colors duration-200 flex-shrink-0 relative z-10 before:absolute before:-left-1 before:-right-1 before:top-0 before:bottom-0 before:bg-transparent hover:before:bg-discord-blue/10"
       (mousedown)="startResizing($event, 'left')"
     ></div>
 
     <!-- Main content area -->
-    <div class="main-content" [style.width.%]="mainContentWidth()">
+    <div class="bg-discord-lighter border-r border-discord-border min-w-[300px] flex-1" [style.width.%]="mainContentWidth()">
       <angcord-content
         [server]="selectedServer()"
         [channel]="selectedChannel()"
@@ -33,12 +33,12 @@
 
     <!-- Resize handle between main content and right sidebar -->
     <div
-      class="resize-handle right-resize-handle"
+      class="w-1 bg-discord-border cursor-col-resize hover:bg-discord-blue transition-colors duration-200 flex-shrink-0 relative z-10 before:absolute before:-left-1 before:-right-1 before:top-0 before:bottom-0 before:bg-transparent hover:before:bg-discord-blue/10"
       (mousedown)="startResizing($event, 'right')"
     ></div>
 
     <!-- Right sidebar: Member list -->
-    <div class="right-sidebar" [style.width.%]="rightSidebarWidth()">
+    <div class="bg-discord-medium min-w-[200px] max-w-[40%]" [style.width.%]="rightSidebarWidth()">
       <member-sidebar></member-sidebar>
     </div>
   </div>

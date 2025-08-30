@@ -6,7 +6,7 @@ import {Server} from "../../models/server/server";
 @Component({
   selector: 'sidebar',
   templateUrl: './sidebar.component.html',
-  styleUrls: ['./sidebar.component.scss'],
+
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     SidebarServerComponent,

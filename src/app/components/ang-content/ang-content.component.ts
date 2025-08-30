@@ -8,7 +8,6 @@ import {Server} from "../../models/server/server";
 @Component({
   selector: 'ang-content',
   templateUrl: './ang-content.component.html',
-  styleUrls: ['./ang-content.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     AngcordContentComponent,

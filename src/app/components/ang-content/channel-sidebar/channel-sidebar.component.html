@@ -1,33 +1,34 @@
-<div class="channel-sidebar-container" [class.internal-resizing]="isInternalResizing">
+<div class="h-full flex bg-discord-medium text-discord-text relative" [class.select-none]="isInternalResizing">
   <!-- Server List (Left Section) -->
-  <div class="server-list-section" [style.width.%]="serverListWidth()">
+  <div class="h-full overflow-y-auto border-r border-discord-border min-w-[60px] max-w-[70%]" [style.width.%]="serverListWidth()">
     <sidebar (selectedServerChange)="selectedServerChange.emit($event)"></sidebar>
   </div>
 
   <!-- Internal Resize Handle -->
   <div
-    class="internal-resize-handle"
+    class="w-1 bg-discord-border cursor-col-resize hover:bg-discord-blue transition-colors duration-200 flex-shrink-0 relative z-10 before:absolute before:-left-1 before:-right-1 before:top-0 before:bottom-0 before:bg-transparent hover:before:bg-discord-blue/10"
     (mousedown)="startInternalResizing($event)"
   ></div>
 
   <!-- Channel List (Right Section) -->
-  <div class="channel-list-section" [style.width.%]="channelListWidth()">
-    <div class="channel-list-header">
-      <h6 class="server-name">Server Name</h6>
+  <div class="h-full flex flex-col overflow-hidden min-w-[200px] max-w-[80%] w-full" [style.width.%]="channelListWidth()">
+    <div class="px-4 py-2 border-b border-discord-border bg-discord-lighter flex-shrink-0 overflow-hidden">
+      <h6 class="m-0 text-base font-semibold text-discord-text-lighter uppercase tracking-wider whitespace-nowrap overflow-hidden text-ellipsis block w-full">Server Name</h6>
     </div>
-    <div class="channel-list-content">
+    <div class="flex-1 overflow-y-auto overflow-x-hidden py-2 w-full">
       @for (category of categories(); track category) {
-        <div class="category-section">
-          <div class="category-name">
+        <div class="mb-4 w-full overflow-hidden">
+          <div class="px-4 py-2 text-xs font-semibold text-discord-text-muted uppercase tracking-wider whitespace-nowrap overflow-hidden text-ellipsis block w-full">
             {{ category.categoryName }}
           </div>
           @for (chan of category.channels; track chan) {
             <div
-              class="channel-item"
+              class="px-2 py-1.5 mx-2 rounded cursor-pointer text-sm text-discord-text hover:bg-discord-hover hover:text-discord-text-light transition-colors duration-100 flex items-center min-w-0"
+              [ngClass]="{'bg-discord-blue-dark text-discord-text-lighter hover:bg-discord-blue': selectedChannel() == chan}"
               (click)="handleChannelSelect(chan)"
-              [ngClass]="{'active': selectedChannel() == chan}"
             >
-              # {{ chan.channelName }}
+              <span class="flex-shrink-0 mr-1 font-bold text-base">#</span>
+              <span class="flex-1 min-w-0 whitespace-nowrap overflow-hidden text-ellipsis block">{{ chan.channelName }}</span>
             </div>
           }
         </div>

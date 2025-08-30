@@ -21,7 +21,6 @@ import {Server} from "../../../models/server/server";
 @Component({
   selector: 'angcord-content',
   templateUrl: './angcord-content.component.html',
-  styleUrls: ['./angcord-content.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     DatetimeFormatterPipe

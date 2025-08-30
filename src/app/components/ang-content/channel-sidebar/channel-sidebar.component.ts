@@ -17,7 +17,6 @@ import {Server} from "../../../models/server/server";
 @Component({
   selector: 'channel-sidebar',
   templateUrl: './channel-sidebar.component.html',
-  styleUrls: ['./channel-sidebar.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     SidebarComponent,

@@ -1,33 +1,41 @@
-<div id="angcord-content">
-  <div id="messages-container">
+<div class="h-full w-full bg-discord-lighter flex flex-col">
+  <div class="flex-1 overflow-y-auto pb-2.5">
     <!-- Messages -->
     @for (msg of messageList; track msg; let i = $index) {
-      <div class="message-object">
-        <div class="message-row">
-            <div class="message-avatar">
+      <div class="hover:bg-discord-light/30">
+        <div class="flex px-4 py-2 items-start gap-4">
+            <div class="flex-shrink-0 w-10 text-center">
               @if (i == 0 || messageList[i-1]?.author?.userId != msg.author.userId) {
-                <img class="img-fluid pro-pic" src="{{ msg.author.profilePic }}" />
+                <img class="h-10 w-10 rounded-full" src="{{ msg.author.profilePic }}" />
               } @else {
-                <span class="datetime-label">{{ msg.postedTimestamp | datetimeFormatter: 'h:mm A' }}</span>
+                <span class="text-xs text-discord-text-muted-light">{{ msg.postedTimestamp | datetimeFormatter: 'h:mm A' }}</span>
               }
             </div>
-            <div class="message-content">
-              <div class="message-header">
+            <div class="flex-1 min-w-0">
+              <div class="mb-1">
                 @if (i == 0 || messageList[i-1]?.author?.userId != msg.author.userId) {
-                  <span class="username-label">{{ msg.author.username }}</span>
-                  <span class="px-2 datetime-label">{{ msg.postedTimestamp | datetimeFormatter: 'MM/DD/YYYY h:mm A' }}</span>
+                  <span class="text-discord-text-lighter font-medium">{{ msg.author.username }}</span>
+                  <span class="px-2 text-xs text-discord-text-muted-light">{{ msg.postedTimestamp | datetimeFormatter: 'MM/DD/YYYY h:mm A' }}</span>
                 }
               </div>
-              <div class="message-body">
-                <p class="message-data text-wrap text-break">{{ msg.text }}</p>
+              <div class="break-words">
+                <p class="text-discord-text-light mb-0">{{ msg.text }}</p>
               </div>
             </div>
         </div>
       </div>
     }
   </div>
-  <div class="message-input-container">
+  <div class="p-4 bg-discord-lighter border-t border-discord-border flex-shrink-0">
     <!-- Message Input -->
-    <input type="text" #messageBox id="chatbox" (keydown)="handleKeyDownEvent($event);" (submit)="postMessage(messageBox.value); messageBox.value = '';" [placeholder]="'Message #general'" />
+    <input 
+      type="text" 
+      #messageBox 
+      id="chatbox" 
+      (keydown)="handleKeyDownEvent($event);" 
+      (submit)="postMessage(messageBox.value); messageBox.value = '';" 
+      [placeholder]="'Message #general'"
+      class="w-full bg-discord-light text-discord-text-light border-0 rounded-lg px-4 py-3 text-sm focus:bg-discord-light focus:outline-none focus:ring-0" 
+    />
   </div>
 </div>
