@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, OnInit, Output, signal, WritableSignal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, signal, WritableSignal, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Server } from '../../models/server/server';
@@ -20,8 +20,9 @@ export interface PublicServer extends Server {
   imports: [CommonModule, FormsModule]
 })
 export class ServerBrowserComponent implements OnInit {
-  @Output() closeBrowser = new EventEmitter<void>();
-  @Output() serverJoined = new EventEmitter<Server>();
+  // Output Signals
+  closeBrowser = output<void>();
+  serverJoined = output<Server>();
 
   // Search and filter state
   searchQuery: WritableSignal<string> = signal('');

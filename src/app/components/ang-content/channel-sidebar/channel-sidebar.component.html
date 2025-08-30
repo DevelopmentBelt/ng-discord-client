@@ -1,7 +1,7 @@
 <div class="h-full flex bg-discord-medium text-discord-text relative" [class.select-none]="isInternalResizing">
   <!-- Server List (Left Section) -->
   <div class="h-full overflow-y-auto border-r border-discord-border min-w-[60px] max-w-[70%] bg-discord-dark" [style.width.%]="serverListWidth()">
-    <sidebar (selectedServerChange)="onServerChange($event)"></sidebar>
+    <app-sidebar (serverSelected)="onServerChange($event)"></app-sidebar>
   </div>
 
   <!-- Internal Resize Handle -->

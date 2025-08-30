@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, OnInit, Output, signal, WritableSignal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, signal, WritableSignal, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AlertService } from '../../services/alert-service/alert-service';
@@ -20,8 +20,9 @@ export interface NewServerData {
   imports: [CommonModule, FormsModule]
 })
 export class ServerCreationModalComponent implements OnInit {
-  @Output() closeModal = new EventEmitter<void>();
-  @Output() serverCreated = new EventEmitter<NewServerData>();
+  // Output Signals
+  closeModal = output<void>();
+  serverCreated = output<NewServerData>();
 
   // Form data
   serverName: WritableSignal<string> = signal('');
@@ -106,20 +107,17 @@ export class ServerCreationModalComponent implements OnInit {
   }
 
   /**
-   * Create the server
+   * Create server
    */
-  async createServer(): Promise<void> {
+  createServer(): void {
     if (!this.validateForm()) {
       return;
     }
 
     this.isCreating.set(true);
 
-    try {
-      // TODO: Replace with actual API call to create server
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
+    // Simulate API call delay
+    setTimeout(() => {
       const serverData: NewServerData = {
         serverName: this.serverName().trim(),
         serverDescription: this.serverDescription().trim(),
@@ -128,28 +126,13 @@ export class ServerCreationModalComponent implements OnInit {
         verificationLevel: this.verificationLevel()
       };
 
-      // Emit the created server data
       this.serverCreated.emit(serverData);
-      
-      this.alertService.success(
-        'Server Created!', 
-        `Server "${serverData.serverName}" has been created successfully.`
-      );
-
-      this.closeModal.emit();
-    } catch (error) {
-      this.alertService.error(
-        'Creation Failed', 
-        'Failed to create server. Please try again.'
-      );
-      console.error('Server creation error:', error);
-    } finally {
       this.isCreating.set(false);
-    }
+    }, 1000);
   }
 
   /**
-   * Close the modal
+   * Close modal
    */
   close(): void {
     this.closeModal.emit();
@@ -165,33 +148,60 @@ export class ServerCreationModalComponent implements OnInit {
   }
 
   /**
+   * Get verification level options
+   */
+  get verificationLevels(): string[] {
+    return ['None', 'Low', 'Medium', 'High', 'Very High'];
+  }
+
+  /**
    * Get verification level description
    */
   getVerificationLevelDescription(level: string): string {
     const descriptions: { [key: string]: string } = {
-      'None': 'Unrestricted access - anyone can join',
-      'Low': 'Must have verified email on their Discord account',
-      'Medium': 'Must be registered on Discord for longer than 5 minutes',
-      'High': 'Must be a member of the server for longer than 10 minutes',
-      'Very High': 'Must have a verified phone number on their Discord account'
+      'None': 'No verification required',
+      'Low': 'Must have verified email',
+      'Medium': 'Must be registered for 5+ minutes',
+      'High': 'Must be a member for 10+ minutes',
+      'Very High': 'Must have verified phone number'
     };
     return descriptions[level] || '';
   }
 
   /**
+   * Check if form is valid
+   */
+  get isFormValid(): boolean {
+    return this.serverName().trim().length >= 2 && 
+           this.serverName().trim().length <= 100 &&
+           this.serverDescription().trim().length <= 500;
+  }
+
+  /**
    * Get character count for description
    */
-  getDescriptionCharCount(): number {
+  get descriptionCharCount(): number {
     return this.serverDescription().length;
   }
 
   /**
-   * Get character count color class
+   * Get remaining characters for description
    */
-  getDescriptionCharCountColor(): string {
-    const count = this.getDescriptionCharCount();
-    if (count > 450) return 'text-red-400';
-    if (count > 400) return 'text-yellow-400';
-    return 'text-discord-text-muted';
+  get descriptionCharRemaining(): number {
+    return 500 - this.serverDescription().length;
+  }
+
+  /**
+   * Get character count for name
+   */
+  get nameCharCount(): number {
+    return this.serverName().length;
+  }
+
+  /**
+   * Get remaining characters for name
+   */
+  get nameCharRemaining(): number {
+    return 100 - this.serverName().length;
   }
 }

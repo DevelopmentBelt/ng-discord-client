@@ -17,7 +17,7 @@
   <div class="w-8 h-px bg-discord-border rounded-full"></div>
 
   <!-- Server List -->
-  @for (server of sidebarServers; track server) {
+  @for (server of sidebarServers(); track server) {
     <div
       class="w-12 h-12 rounded-xl cursor-pointer transition-all duration-200 hover:rounded-2xl hover:bg-discord-hover group relative"
       [ngClass]="(selectedServerId() == server.serverId) ? 'bg-discord-blue rounded-2xl' : 'bg-discord-medium'"

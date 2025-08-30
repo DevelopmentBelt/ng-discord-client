@@ -1,0 +1,145 @@
+<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" (keydown)="onKeydown($event)">
+  <div class="bg-discord-lighter border border-discord-border rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+    <!-- Modal Header -->
+    <div class="px-6 py-4 border-b border-discord-border flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-8 h-8 bg-discord-blue rounded flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+          </svg>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold text-discord-text-lighter">
+            {{ isEditing ? 'Edit Role' : 'Create Role' }}
+          </h3>
+          <p class="text-sm text-discord-text-muted">
+            {{ isEditing ? 'Modify role settings and permissions' : 'Create a new role for your server' }}
+          </p>
+        </div>
+      </div>
+      <button 
+        (click)="close()"
+        class="p-2 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150"
+        title="Close"
+      >
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Modal Content -->
+    <div class="flex-1 overflow-y-auto px-6 py-4 space-y-6">
+      <!-- Basic Information -->
+      <div>
+        <h4 class="text-sm font-semibold text-discord-text-muted uppercase tracking-wider mb-3">Basic Information</h4>
+        <div class="space-y-4">
+          <!-- Role Name -->
+          <div>
+            <label class="block text-sm font-medium text-discord-text-muted mb-2">Role Name</label>
+            <input 
+              type="text" 
+              [(ngModel)]="roleName"
+              class="w-full bg-discord-light text-discord-text-light border border-discord-border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-discord-blue/50 transition-all duration-200"
+              placeholder="Enter role name"
+              maxlength="100"
+            />
+          </div>
+
+          <!-- Role Color -->
+          <div>
+            <label class="block text-sm font-medium text-discord-text-muted mb-2">Role Color</label>
+            <div class="flex items-center space-x-3">
+              <input 
+                type="color" 
+                [value]="roleColor()"
+                (change)="onColorChange($event)"
+                class="w-12 h-12 rounded border border-discord-border cursor-pointer"
+              />
+              <input 
+                type="text" 
+                [value]="roleColor()"
+                (change)="onColorChange($event)"
+                class="flex-1 bg-discord-light text-discord-text-light border border-discord-border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-discord-blue/50 transition-all duration-200"
+                placeholder="#99aab5"
+              />
+            </div>
+          </div>
+
+          <!-- Role Options -->
+          <div class="space-y-3">
+            <label class="flex items-center space-x-3 cursor-pointer">
+              <input 
+                type="checkbox" 
+                [(ngModel)]="hoistRole"
+                class="w-4 h-4 text-discord-blue focus:ring-discord-blue border-discord-border rounded"
+              />
+              <div>
+                <span class="text-discord-text-light font-medium">Display role members separately from online members</span>
+                <p class="text-sm text-discord-text-muted">Members with this role will appear in a separate section above other members</p>
+              </div>
+            </label>
+
+            <label class="flex items-center space-x-3 cursor-pointer">
+              <input 
+                type="checkbox" 
+                [(ngModel)]="mentionableRole"
+                class="w-4 h-4 text-discord-blue focus:ring-discord-blue border-discord-border rounded"
+              />
+              <div>
+                <span class="text-discord-text-light font-medium">Allow anyone to &#64;mention this role</span>
+                <p class="text-sm text-discord-text-muted">Members can mention this role even if they don't have permission to mention everyone</p>
+              </div>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Permissions -->
+      <div>
+        <h4 class="text-sm font-semibold text-discord-text-muted uppercase tracking-wider mb-3">Permissions</h4>
+        <p class="text-sm text-discord-text-muted mb-4">Select the permissions that members with this role will have.</p>
+        
+        <div class="space-y-4">
+          @for (category of permissionCategories; track category) {
+            <div class="border border-discord-border rounded-lg p-4">
+              <h5 class="text-sm font-medium text-discord-text-light mb-3">{{ category }} Permissions</h5>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                @for (permission of getPermissionsByCategory(category); track permission.id) {
+                  <label class="flex items-start space-x-3 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      [checked]="isPermissionSelected(permission.id)"
+                      (change)="togglePermission(permission.id)"
+                      class="w-4 h-4 text-discord-blue focus:ring-discord-blue border-discord-border rounded mt-0.5"
+                    />
+                    <div class="flex-1">
+                      <span class="text-discord-text-light text-sm font-medium">{{ permission.name }}</span>
+                      <p class="text-xs text-discord-text-muted">{{ permission.description }}</p>
+                    </div>
+                  </label>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="px-6 py-4 border-t border-discord-border flex items-center justify-end space-x-3">
+      <button 
+        (click)="close()"
+        class="px-4 py-2 bg-discord-medium hover:bg-discord-hover text-discord-text-light font-medium rounded-md transition-colors duration-150"
+      >
+        Cancel
+      </button>
+      <button 
+        (click)="save()"
+        class="px-4 py-2 bg-discord-blue hover:bg-discord-blue-dark text-white font-medium rounded-md transition-colors duration-150"
+      >
+        {{ isEditing ? 'Save Changes' : 'Create Role' }}
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output, signal, WritableSignal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, signal, WritableSignal, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Server } from '../../models/server/server';
 import { AlertService } from '../../services/alert-service/alert-service';
@@ -21,8 +21,11 @@ export interface ServerStats {
   imports: [CommonModule]
 })
 export class ServerOverviewModalComponent implements OnInit {
-  @Input() server: Server | null = null;
-  @Output() closeModal = new EventEmitter<void>();
+  // Input Signals
+  server = input<Server | null>(null);
+
+  // Output Signals
+  closeModal = output<void>();
 
   // Server statistics (mock data for now)
   serverStats: WritableSignal<ServerStats> = signal({
@@ -40,7 +43,7 @@ export class ServerOverviewModalComponent implements OnInit {
   constructor(private alertService: AlertService) {}
 
   ngOnInit(): void {
-    if (this.server) {
+    if (this.server()) {
       this.loadServerStats();
     }
   }
@@ -101,30 +104,6 @@ export class ServerOverviewModalComponent implements OnInit {
   }
 
   /**
-   * Copy server invite link
-   */
-  copyInviteLink(): void {
-    // TODO: Generate actual invite link
-    const inviteLink = `https://discord.gg/${Math.random().toString(36).substring(2, 8)}`;
-    navigator.clipboard.writeText(inviteLink).then(() => {
-      this.alertService.success('Invite Link Copied', 'Server invite link has been copied to clipboard!');
-    }).catch(() => {
-      this.alertService.error('Copy Failed', 'Failed to copy invite link to clipboard.');
-    });
-  }
-
-  /**
-   * Leave server
-   */
-  leaveServer(): void {
-    if (confirm(`Are you sure you want to leave "${this.server?.serverName}"?`)) {
-      // TODO: Implement actual server leave functionality
-      this.alertService.info('Server Left', `You have left ${this.server?.serverName}`);
-      this.closeModal.emit();
-    }
-  }
-
-  /**
    * Close the modal
    */
   close(): void {
@@ -132,10 +111,79 @@ export class ServerOverviewModalComponent implements OnInit {
   }
 
   /**
-   * Handle escape key
+   * Get server initials for avatar fallback
+   */
+  getServerInitials(server: Server): string {
+    return server.serverName
+      .split(' ')
+      .map(word => word.charAt(0))
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
+  }
+
+  /**
+   * Check if server has custom icon
+   */
+  hasCustomIcon(server: Server): boolean {
+    return server.iconURL && server.iconURL.trim() !== '';
+  }
+
+  /**
+   * Get member count display text
+   */
+  getMemberCountText(count: number): string {
+    if (count >= 1000000) {
+      return (count / 1000000).toFixed(1) + 'M';
+    } else if (count >= 1000) {
+      return (count / 1000).toFixed(1) + 'K';
+    }
+    return count.toString();
+  }
+
+  /**
+   * Get channel count display text
+   */
+  getChannelCountText(count: number): string {
+    return count.toString();
+  }
+
+  /**
+   * Get role count display text
+   */
+  getRoleCountText(count: number): string {
+    return count.toString();
+  }
+
+  /**
+   * Handle keyboard events
    */
   onKeydown(event: KeyboardEvent): void {
     if (event.key === 'Escape') {
+      this.close();
+    }
+  }
+
+  /**
+   * Copy server invite link
+   */
+  copyInviteLink(): void {
+    // TODO: Generate actual invite link
+    const inviteLink = `https://discord.gg/${Math.random().toString(36).substring(2, 8)}`;
+    navigator.clipboard.writeText(inviteLink).then(() => {
+      console.log('Invite link copied to clipboard:', inviteLink);
+    }).catch(() => {
+      console.error('Failed to copy invite link to clipboard.');
+    });
+  }
+
+  /**
+   * Leave server
+   */
+  leaveServer(): void {
+    if (confirm(`Are you sure you want to leave "${this.server()?.serverName}"?`)) {
+      // TODO: Implement actual server leave functionality
+      console.log('Leaving server:', this.server()?.serverName);
       this.close();
     }
   }

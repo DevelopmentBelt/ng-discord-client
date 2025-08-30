@@ -1,0 +1,151 @@
+// Channel Management Modal Styles
+
+// Custom scrollbar for modal content
+.overflow-y-auto {
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #4f545c;
+    border-radius: 4px;
+    
+    &:hover {
+      background: #5d6269;
+    }
+  }
+}
+
+// Radio button styling
+input[type="radio"] {
+  &:checked {
+    background-color: #5865f2;
+    border-color: #5865f2;
+  }
+  
+  &:focus {
+    outline: 2px solid #5865f2;
+    outline-offset: 2px;
+  }
+}
+
+// Checkbox styling
+input[type="checkbox"] {
+  &:checked {
+    background-color: #5865f2;
+    border-color: #5865f2;
+  }
+  
+  &:focus {
+    outline: 2px solid #5865f2;
+    outline-offset: 2px;
+  }
+}
+
+// Form input styling
+.form-input {
+  transition: all 0.15s ease-in-out;
+  
+  &:focus {
+    box-shadow: 0 0 0 2px rgba(88, 101, 242, 0.3);
+    border-color: #5865f2;
+  }
+}
+
+// Button hover effects
+.action-button {
+  transition: all 0.15s ease-in-out;
+  
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+}
+
+// Modal animations
+.modal-enter {
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+// Channel type selection styling
+.channel-type-option {
+  transition: all 0.15s ease-in-out;
+  
+  &:hover {
+    background-color: rgba(88, 101, 242, 0.1);
+  }
+}
+
+// Form section styling
+.form-section {
+  border-color: #40444b;
+  
+  &:hover {
+    border-color: #4f545c;
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .modal-container {
+    margin: 1rem;
+    max-width: calc(100vw - 2rem);
+  }
+  
+  .form-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .channel-type-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+// Focus states for accessibility
+button:focus,
+input:focus,
+textarea:focus,
+select:focus {
+  outline: 2px solid #5865f2;
+  outline-offset: 2px;
+}
+
+// Input validation styling
+.input-error {
+  border-color: #ed4245;
+  
+  &:focus {
+    border-color: #ed4245;
+    box-shadow: 0 0 0 2px rgba(237, 66, 69, 0.3);
+  }
+}
+
+// Success styling
+.input-success {
+  border-color: #43b581;
+  
+  &:focus {
+    border-color: #43b581;
+    box-shadow: 0 0 0 2px rgba(67, 181, 129, 0.3);
+  }
+}

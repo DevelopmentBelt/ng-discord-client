@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output, signal, WritableSignal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, signal, WritableSignal, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Message } from '../../models/message/message';
@@ -22,12 +22,15 @@ export interface SearchResult {
   imports: [CommonModule, FormsModule]
 })
 export class SearchComponent implements OnInit {
-  @Input() serverId: string = '';
-  @Input() channelId: string = '';
-  @Input() serverName: string = '';
-  @Input() channelName: string = '';
-  @Output() closeSearch = new EventEmitter<void>();
-  @Output() messageSelected = new EventEmitter<Message>();
+  // Input Signals
+  serverId = input<string>('');
+  channelId = input<string>('');
+  serverName = input<string>('');
+  channelName = input<string>('');
+
+  // Output Signals
+  closeSearch = output<void>();
+  messageSelected = output<Message>();
 
   // Search state
   searchQuery: WritableSignal<string> = signal('');
@@ -75,8 +78,8 @@ export class SearchComponent implements OnInit {
     this.currentPage.set(1);
 
     const searchMethod = this.searchInChannel() 
-      ? this.messageService.searchMessages(this.serverId, this.channelId, query, this.resultsPerPage, 0)
-      : this.messageService.searchServerMessages(this.serverId, query, this.resultsPerPage, 0);
+      ? this.messageService.searchMessages(this.serverId(), this.channelId(), query, this.resultsPerPage, 0)
+      : this.messageService.searchServerMessages(this.serverId(), query, this.resultsPerPage, 0);
 
     searchMethod.subscribe({
       next: (results) => {
@@ -98,83 +101,63 @@ export class SearchComponent implements OnInit {
     const processedResults: SearchResult[] = results.map(message => ({
       message,
       highlightText: this.highlightSearchTerms(message.text, query),
-      channelName: this.channelName,
-      serverName: this.serverName
+      channelName: this.channelName(),
+      serverName: this.serverName()
     }));
 
     this.searchResults.set(processedResults);
     this.totalResults.set(processedResults.length);
-
-    if (processedResults.length === 0) {
-      this.alertService.info('No Results', `No messages found containing "${query}"`);
-    }
   }
 
   /**
-   * Highlight search terms in the message text
+   * Highlight search terms in text
    */
   private highlightSearchTerms(text: string, query: string): string {
-    if (!this.caseSensitive()) {
-      query = query.toLowerCase();
-      text = text.toLowerCase();
-    }
-
-    const regex = new RegExp(`(${this.escapeRegex(query)})`, this.caseSensitive() ? 'g' : 'gi');
-    return text.replace(regex, '<mark class="bg-yellow-200 text-black px-1 rounded">$1</mark>');
+    if (!query || !text) return text;
+    
+    const regex = new RegExp(`(${query})`, this.caseSensitive() ? 'g' : 'gi');
+    return text.replace(regex, '<mark>$1</mark>');
   }
 
   /**
-   * Escape special regex characters
-   */
-  private escapeRegex(string: string): string {
-    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  }
-
-  /**
-   * Load more results (pagination)
+   * Load more results for pagination
    */
   loadMoreResults(): void {
     const query = this.searchQuery().trim();
     if (!query) return;
 
-    const offset = this.currentPage() * this.resultsPerPage;
-    this.currentPage.set(this.currentPage() + 1);
+    const nextPage = this.currentPage() + 1;
+    const offset = (nextPage - 1) * this.resultsPerPage;
 
-    const searchMethod = this.searchInChannel()
-      ? this.messageService.searchMessages(this.serverId, this.channelId, query, this.resultsPerPage, offset)
-      : this.messageService.searchServerMessages(this.serverId, query, this.resultsPerPage, offset);
+    this.isSearching.set(true);
+
+    const searchMethod = this.searchInChannel() 
+      ? this.messageService.searchMessages(this.serverId(), this.channelId(), query, this.resultsPerPage, offset)
+      : this.messageService.searchServerMessages(this.serverId(), query, this.resultsPerPage, offset);
 
     searchMethod.subscribe({
       next: (results) => {
         const newResults = results.map(message => ({
           message,
           highlightText: this.highlightSearchTerms(message.text, query),
-          channelName: this.channelName,
-          serverName: this.serverName
+          channelName: this.channelName(),
+          serverName: this.serverName()
         }));
 
         this.searchResults.set([...this.searchResults(), ...newResults]);
+        this.currentPage.set(nextPage);
+        this.isSearching.set(false);
       },
       error: (error) => {
-        console.error('Load more error:', error);
-        this.alertService.error('Load Failed', 'Failed to load more results.');
+        console.error('Error loading more results:', error);
+        this.alertService.error('Load Failed', 'Failed to load more results. Please try again.');
+        this.isSearching.set(false);
       }
     });
   }
 
   /**
-   * Handle search input keydown events
-   */
-  onSearchKeydown(event: KeyboardEvent): void {
-    if (event.key === 'Enter') {
-      this.performSearch();
-    } else if (event.key === 'Escape') {
-      this.closeSearch.emit();
-    }
-  }
-
-  /**
-   * Clear search and results
+   * Clear search and reset state
    */
   clearSearch(): void {
     this.searchQuery.set('');
@@ -185,27 +168,59 @@ export class SearchComponent implements OnInit {
   }
 
   /**
+   * Close search modal
+   */
+  close(): void {
+    this.closeSearch.emit();
+  }
+
+  /**
    * Select a message from search results
    */
   selectMessage(message: Message): void {
     this.messageSelected.emit(message);
-    this.closeSearch.emit();
+    this.close();
+  }
+
+  /**
+   * Get formatted timestamp for message
+   */
+  getFormattedTimestamp(timestamp: string): string {
+    return moment(timestamp).format('MMM D, YYYY [at] h:mm A');
+  }
+
+  /**
+   * Check if there are more results to load
+   */
+  get hasMoreResults(): boolean {
+    return this.searchResults().length < this.totalResults();
+  }
+
+  /**
+   * Get current page results
+   */
+  get currentPageResults(): SearchResult[] {
+    const startIndex = (this.currentPage() - 1) * this.resultsPerPage;
+    const endIndex = startIndex + this.resultsPerPage;
+    return this.searchResults().slice(startIndex, endIndex);
+  }
+
+  /**
+   * Handle search input keydown events
+   */
+  onSearchKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Enter') {
+      this.performSearch();
+    } else if (event.key === 'Escape') {
+      this.close();
+    }
   }
 
   /**
    * Format timestamp for display
    */
   formatTimestamp(timestamp: any): string {
-    if (moment.isMoment(timestamp)) {
-      return timestamp.format('MMM D, YYYY h:mm A');
-    }
+    if (!timestamp) return '';
     return moment(timestamp).format('MMM D, YYYY h:mm A');
-  }
-
-  /**
-   * Close the search component
-   */
-  close(): void {
-    this.closeSearch.emit();
   }
 }

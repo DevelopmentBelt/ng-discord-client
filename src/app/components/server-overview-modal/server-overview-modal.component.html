@@ -10,7 +10,7 @@
         </div>
         <div>
           <h3 class="text-lg font-semibold text-discord-text-lighter">Server Overview</h3>
-          <p class="text-sm text-discord-text-muted">{{ server?.serverName || 'Unknown Server' }}</p>
+          <p class="text-sm text-discord-text-muted">{{ server()?.serverName || 'Unknown Server' }}</p>
         </div>
       </div>
       <button 
@@ -65,7 +65,7 @@
           <!-- Server Description -->
           <div>
             <h4 class="text-sm font-semibold text-discord-text-muted uppercase tracking-wider mb-2">Description</h4>
-            <p class="text-discord-text-light">{{ server?.serverDescription || 'No description available.' }}</p>
+            <p class="text-discord-text-light">{{ server()?.serverDescription || 'No description available.' }}</p>
           </div>
 
           <!-- Server Statistics -->
@@ -109,7 +109,7 @@
               </div>
               <div class="flex items-center justify-between">
                 <span class="text-discord-text-muted">Owner ID</span>
-                <span class="text-discord-text-light font-mono text-sm">{{ server?.ownerId || 'Unknown' }}</span>
+                <span class="text-discord-text-light font-mono text-sm">{{ server()?.ownerId || 'Unknown' }}</span>
               </div>
             </div>
           </div>
