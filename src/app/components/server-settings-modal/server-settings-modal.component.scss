@@ -1,0 +1,177 @@
+// Server settings modal specific styles
+.server-settings-modal {
+  // Custom scrollbar for modal content
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #202225;
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #40444b;
+  }
+}
+
+// Tab navigation styling
+.tab-button {
+  transition: all 0.15s ease-in-out;
+  
+  &:hover:not(.active) {
+    transform: translateY(-1px);
+  }
+  
+  &.active {
+    box-shadow: 0 2px 8px rgba(88, 101, 242, 0.3);
+  }
+}
+
+// Form input styling
+.form-input {
+  transition: all 0.15s ease-in-out;
+  
+  &:focus {
+    box-shadow: 0 0 0 2px rgba(88, 101, 242, 0.3);
+    border-color: #5865f2;
+  }
+}
+
+// Role and channel items
+.list-item {
+  transition: all 0.15s ease-in-out;
+  
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+}
+
+// Permission tags
+.permission-tag {
+  transition: all 0.15s ease-in-out;
+  
+  &:hover {
+    background-color: #40444b;
+    transform: scale(1.05);
+  }
+}
+
+// Danger zone styling
+.danger-zone {
+  border-color: rgba(239, 68, 68, 0.2);
+  background-color: rgba(239, 68, 68, 0.05);
+  
+  &:hover {
+    border-color: rgba(239, 68, 68, 0.3);
+    background-color: rgba(239, 68, 68, 0.08);
+  }
+}
+
+// Modal animations
+.modal-enter {
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+// Button hover effects
+.action-button {
+  transition: all 0.15s ease-in-out;
+  
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+}
+
+// Radio button styling
+.radio-input {
+  &:checked {
+    background-color: #5865f2;
+    border-color: #5865f2;
+  }
+  
+  &:focus {
+    outline: 2px solid #5865f2;
+    outline-offset: 2px;
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .modal-container {
+    margin: 1rem;
+    max-width: calc(100vw - 2rem);
+  }
+  
+  .tab-navigation {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+
+// Focus states for accessibility
+button:focus,
+input:focus,
+textarea:focus {
+  outline: 2px solid #5865f2;
+  outline-offset: 2px;
+}
+
+// Loading states
+.loading {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+// Channel type icons
+.channel-icon {
+  transition: all 0.15s ease-in-out;
+  
+  &:hover {
+    color: #5865f2;
+    transform: scale(1.1);
+  }
+}
+
+// Role color indicators
+.role-color {
+  transition: all 0.15s ease-in-out;
+  
+  &:hover {
+    transform: scale(1.2);
+    box-shadow: 0 0 8px currentColor;
+  }
+}
