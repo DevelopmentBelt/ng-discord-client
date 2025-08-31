@@ -160,6 +160,33 @@ export class InboxModalComponent implements OnInit {
   }
 
   /**
+   * Toggle priority filter
+   */
+  togglePriorityFilter(priority: string): void {
+    const currentFilters = this.filters();
+    const priorityEnum = priority as InboxPriority;
+    
+    if (currentFilters.priority.includes(priorityEnum)) {
+      const updatedPriority = currentFilters.priority.filter(p => p !== priorityEnum);
+      this.filters.set({ ...currentFilters, priority: updatedPriority });
+    } else {
+      const updatedPriority = [...currentFilters.priority, priorityEnum];
+      this.filters.set({ ...currentFilters, priority: updatedPriority });
+    }
+    
+    this.applyFilters();
+  }
+
+  /**
+   * Check if priority is included in filters
+   */
+  isPriorityIncluded(priority: string): boolean {
+    const currentFilters = this.filters();
+    const priorityEnum = priority as InboxPriority;
+    return currentFilters.priority.includes(priorityEnum);
+  }
+
+  /**
    * Clear all filters
    */
   clearFilters(): void {

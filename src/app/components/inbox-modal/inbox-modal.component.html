@@ -1,6 +1,6 @@
 <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" (click)="close()">
   <div class="bg-discord-dark border border-discord-border rounded-lg shadow-xl w-full max-w-4xl h-[80vh] flex flex-col" (click)="$event.stopPropagation()" (keydown)="onKeydown($event)">
-    
+
     <!-- Header -->
     <div class="flex items-center justify-between p-6 border-b border-discord-border">
       <div class="flex items-center space-x-3">
@@ -15,9 +15,9 @@
           <p class="text-sm text-discord-text-muted">Manage your messages and notifications</p>
         </div>
       </div>
-      
+
       <div class="flex items-center space-x-2">
-        <button 
+        <button
           (click)="toggleFilters()"
           class="p-2 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded-md transition-colors duration-150"
           [class.bg-discord-hover]="showFilters()"
@@ -26,7 +26,7 @@
             <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd"/>
           </svg>
         </button>
-        <button 
+        <button
           (click)="close()"
           class="p-2 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded-md transition-colors duration-150"
         >
@@ -52,8 +52,8 @@
             <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
           </svg>
         </div>
-        
-        <button 
+
+        <button
           (click)="markAllAsRead()"
           class="px-4 py-2 bg-discord-blue hover:bg-discord-blue-dark text-white font-medium rounded-md transition-colors duration-150"
         >
@@ -70,8 +70,8 @@
             <label class="block text-sm font-medium text-discord-text-light mb-2">Show</label>
             <div class="space-y-2">
               <label class="flex items-center">
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   [(ngModel)]="filters().showRead"
                   (change)="applyFilters()"
                   class="mr-2 text-discord-blue focus:ring-discord-blue"
@@ -79,8 +79,8 @@
                 <span class="text-sm text-discord-text">Read</span>
               </label>
               <label class="flex items-center">
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   [(ngModel)]="filters().showUnread"
                   (change)="applyFilters()"
                   class="mr-2 text-discord-blue focus:ring-discord-blue"
@@ -89,16 +89,16 @@
               </label>
             </div>
           </div>
-          
+
           <div>
             <label class="block text-sm font-medium text-discord-text-light mb-2">Priority</label>
             <div class="space-y-2">
               @for (priority of ['low', 'medium', 'high', 'urgent']; track priority) {
                 <label class="flex items-center">
-                  <input 
-                    type="checkbox" 
-                    [checked]="filters().priority.includes(priority)"
-                    (change)="updateFilters({priority: filters().priority.includes(priority) ? filters().priority.filter(p => p !== priority) : [...filters().priority, priority]})"
+                  <input
+                    type="checkbox"
+                    [checked]="isPriorityIncluded(priority)"
+                    (change)="togglePriorityFilter(priority)"
                     class="mr-2 text-discord-blue focus:ring-discord-blue"
                   >
                   <span class="text-sm text-discord-text capitalize">{{ priority }}</span>
@@ -106,9 +106,9 @@
               }
             </div>
           </div>
-          
+
           <div class="col-span-2">
-            <button 
+            <button
               (click)="clearFilters()"
               class="px-3 py-1 text-sm bg-discord-medium hover:bg-discord-hover text-discord-text-light rounded-md transition-colors duration-150"
             >
@@ -158,19 +158,18 @@
       } @else {
         <div class="overflow-y-auto h-full">
           @for (item of filteredItems(); track item.id) {
-            <div 
+            <div
               class="p-4 hover:bg-discord-hover border-b border-discord-border cursor-pointer transition-colors duration-150"
-              [class.bg-discord-hover/50]="!item.isRead"
               (click)="selectItem(item)"
             >
               <div class="flex items-start space-x-3">
                 <!-- Icon -->
                 <div class="flex-shrink-0 w-10 h-10 bg-discord-medium rounded-full flex items-center justify-center">
                   <svg class="w-5 h-5 text-discord-text-muted" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="{{ getTypeIcon(item.type) }}"/>
+                    <path [attr.d]="getTypeIcon(item.type)"/>
                   </svg>
                 </div>
-                
+
                 <!-- Content -->
                 <div class="flex-1 min-w-0">
                   <div class="flex items-start justify-between">
@@ -186,9 +185,9 @@
                           </span>
                         }
                       </h4>
-                      
+
                       <p class="text-sm text-discord-text mb-2 line-clamp-2">{{ item.content }}</p>
-                      
+
                       <div class="flex items-center space-x-4 text-xs text-discord-text-muted">
                         <span>{{ getRelativeTime(item.timestamp) }}</span>
                         @if (item.sender) {
@@ -199,11 +198,11 @@
                         }
                       </div>
                     </div>
-                    
+
                     <!-- Actions -->
                     <div class="flex items-center space-x-1">
                       @if (!item.isRead) {
-                        <button 
+                        <button
                           (click)="markAsRead(item); $event.stopPropagation()"
                           class="p-1 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-medium rounded transition-colors duration-150"
                           title="Mark as read"
@@ -213,7 +212,7 @@
                           </svg>
                         </button>
                       }
-                      <button 
+                      <button
                         (click)="deleteItem(item); $event.stopPropagation()"
                         class="p-1 text-discord-text-muted hover:text-red-400 hover:bg-discord-medium rounded transition-colors duration-150"
                         title="Delete"
