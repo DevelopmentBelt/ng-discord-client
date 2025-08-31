@@ -80,6 +80,18 @@
           </svg>
         </button>
         
+        <!-- GIF Button -->
+        <button 
+          class="p-1.5 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150"
+          (click)="openGifPicker()"
+          title="Open GIF picker"
+        >
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+            <rect x="2" y="4" width="20" height="16" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="1.5"/>
+            <text x="12" y="14" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="currentColor">GIF</text>
+          </svg>
+        </button>
+        
         <!-- Emoji Button -->
         <button 
           class="p-1.5 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150"
@@ -117,4 +129,12 @@
     (emojiSelected)="onEmojiSelected($event)"
     (closed)="onCloseEmojiPicker()"
   ></app-emoji-picker>
+
+  <!-- GIF Picker Component -->
+  <app-gif-picker
+    [isOpen]="isGifPickerOpen()"
+    [position]="'top'"
+    (gifSelected)="onGifSelected($event)"
+    (closed)="onCloseGifPicker()"
+  ></app-gif-picker>
 </div>

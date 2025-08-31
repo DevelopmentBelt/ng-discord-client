@@ -1,0 +1,478 @@
+// GIF Picker Component Styles
+.gif-picker-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.gif-picker-container {
+  background-color: var(--discord-lighter);
+  border: 1px solid var(--discord-border);
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  width: 100%;
+  max-width: 600px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: gif-picker-slide-in 0.2s ease-out;
+
+  &.position-top {
+    animation: gif-picker-slide-in-top 0.2s ease-out;
+  }
+
+  &.position-bottom {
+    animation: gif-picker-slide-in-bottom 0.2s ease-out;
+  }
+}
+
+// Animations
+@keyframes gif-picker-slide-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes gif-picker-slide-in-top {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes gif-picker-slide-in-bottom {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+// Header
+.gif-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--discord-border);
+  background-color: var(--discord-medium);
+  border-radius: 12px 12px 0 0;
+
+  .header-left {
+    .header-title {
+      margin: 0;
+      color: var(--discord-text-lighter);
+      font-size: 18px;
+      font-weight: 600;
+      font-family: 'Whitney', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    .header-hint {
+      color: var(--discord-text-muted);
+      font-size: 11px;
+      font-family: 'Whitney', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin-top: 2px;
+      display: block;
+    }
+  }
+
+  .header-right {
+    .close-button {
+      background: none;
+      border: none;
+      color: var(--discord-text-muted);
+      padding: 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease-in-out;
+      font-family: 'Whitney', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+      &:hover {
+        color: var(--discord-text-light);
+        background-color: var(--discord-hover);
+      }
+
+      &:focus {
+        outline: 2px solid var(--discord-blue);
+        outline-offset: 2px;
+      }
+
+      svg {
+        width: 16px;
+        height: 16px;
+      }
+    }
+  }
+}
+
+// Search
+.search-container {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--discord-border);
+
+  .search-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      color: var(--discord-text-muted);
+      pointer-events: none;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 12px 12px 12px 40px;
+      background-color: var(--discord-dark);
+      border: 1px solid var(--discord-border);
+      border-radius: 8px;
+      color: var(--discord-text-light);
+      font-size: 14px;
+      font-family: 'Whitney', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      transition: all 0.15s ease-in-out;
+
+      &::placeholder {
+        color: var(--discord-text-muted);
+      }
+
+      &:focus {
+        outline: none;
+        border-color: var(--discord-blue);
+        box-shadow: 0 0 0 2px rgba(88, 101, 242, 0.3);
+      }
+    }
+  }
+
+  .search-hint {
+    color: var(--discord-text-muted);
+    font-size: 12px;
+    text-align: center;
+    font-family: 'Whitney', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-style: italic;
+  }
+}
+
+// Categories
+.gif-picker-categories {
+  display: flex;
+  padding: 12px 20px;
+  gap: 8px;
+  border-bottom: 1px solid var(--discord-border);
+  background-color: var(--discord-medium);
+  overflow-x: auto;
+
+  &::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--discord-border);
+    border-radius: 2px;
+  }
+
+  .category-tab {
+    background: none;
+    border: none;
+    color: var(--discord-text-muted);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-width: 60px;
+    height: 60px;
+    transition: all 0.15s ease-in-out;
+    flex-shrink: 0;
+
+    &:hover {
+      background-color: var(--discord-hover);
+      color: var(--discord-text-light);
+    }
+
+    &.active {
+      background-color: var(--discord-blue);
+      color: white;
+    }
+
+    &:focus {
+      outline: 2px solid var(--discord-blue);
+      outline-offset: 2px;
+    }
+
+    .category-preview {
+      width: 32px;
+      height: 32px;
+      border-radius: 4px;
+      object-fit: cover;
+    }
+
+    .category-name {
+      font-size: 10px;
+      font-weight: 500;
+      font-family: 'Whitney', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      text-align: center;
+      line-height: 1;
+    }
+  }
+}
+
+// GIF Grid
+.gif-grid-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  background-color: var(--discord-dark);
+
+  .loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    color: var(--discord-text-muted);
+
+    .loading-spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid var(--discord-border);
+      border-top: 3px solid var(--discord-blue);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 16px;
+    }
+
+    .loading-text {
+      font-size: 14px;
+      font-family: 'Whitney', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+  }
+
+  .gif-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 12px;
+    align-items: start;
+
+    .gif-item {
+      position: relative;
+      cursor: pointer;
+      border-radius: 8px;
+      overflow: hidden;
+      background-color: var(--discord-medium);
+      border: 2px solid transparent;
+      transition: all 0.15s ease-in-out;
+      aspect-ratio: 1;
+
+      &:hover {
+        border-color: var(--discord-blue);
+        transform: scale(1.05);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+
+        .gif-overlay {
+          opacity: 1;
+        }
+      }
+
+      &:active {
+        transform: scale(0.98);
+      }
+
+      &:focus {
+        outline: 2px solid var(--discord-blue);
+        outline-offset: 2px;
+      }
+
+      &.gif-selected-feedback {
+        border-color: var(--discord-blue);
+        transform: scale(1.1);
+        box-shadow: 0 0 20px rgba(88, 101, 242, 0.6);
+      }
+
+      .gif-preview {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      .gif-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+        color: white;
+        padding: 8px;
+        opacity: 0;
+        transition: opacity 0.15s ease-in-out;
+
+        .gif-title {
+          font-size: 10px;
+          font-family: 'Whitney', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          display: block;
+          text-align: center;
+          line-height: 1.2;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+      }
+    }
+  }
+
+  .no-results {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    color: var(--discord-text-muted);
+    text-align: center;
+
+    .no-results-text {
+      font-size: 16px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      font-family: 'Whitney', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    .no-results-hint {
+      font-size: 14px;
+      font-family: 'Whitney', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+  }
+}
+
+// Footer
+.gif-picker-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-top: 1px solid var(--discord-border);
+  background-color: var(--discord-medium);
+  border-radius: 0 0 12px 12px;
+
+  .footer-info {
+    .footer-text {
+      color: var(--discord-text-muted);
+      font-size: 12px;
+      font-family: 'Whitney', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+  }
+
+  .footer-actions {
+    .close-button {
+      background-color: var(--discord-blue);
+      border: none;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      font-family: 'Whitney', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      transition: all 0.15s ease-in-out;
+
+      &:hover {
+        background-color: var(--discord-blue-dark);
+        transform: translateY(-1px);
+      }
+
+      &:active {
+        transform: translateY(0);
+      }
+
+      &:focus {
+        outline: 2px solid var(--discord-blue);
+        outline-offset: 2px;
+      }
+    }
+  }
+}
+
+// Loading animation
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .gif-picker-container {
+    max-width: 95vw;
+    max-height: 90vh;
+  }
+
+  .gif-picker-categories {
+    padding: 8px 16px;
+    
+    .category-tab {
+      min-width: 50px;
+      height: 50px;
+      
+      .category-preview {
+        width: 24px;
+        height: 24px;
+      }
+      
+      .category-name {
+        font-size: 9px;
+      }
+    }
+  }
+
+  .gif-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .gif-picker-overlay {
+    padding: 10px;
+  }
+
+  .gif-picker-container {
+    max-width: 100vw;
+    max-height: 95vh;
+  }
+
+  .gif-grid {
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 6px;
+  }
+}

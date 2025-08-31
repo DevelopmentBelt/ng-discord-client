@@ -12,6 +12,7 @@ import {User} from "../../../models/user/user";
 import {DatetimeFormatterPipe} from "../../../pipes/datetimeFormatter/datetime-formatter.pipe";
 import {SearchComponent} from "../../search/search.component";
 import {EmojiPickerComponent, Emoji} from "../../emoji-picker/emoji-picker.component";
+import {GifPickerComponent, GifResult} from "../../gif-picker/gif-picker.component";
 import * as moment from "moment";
 
 @Component({
@@ -22,6 +23,7 @@ import * as moment from "moment";
     DatetimeFormatterPipe,
     SearchComponent,
     EmojiPickerComponent,
+    GifPickerComponent,
     FormsModule
   ],
   standalone: true
@@ -38,6 +40,9 @@ export class AngcordContentComponent implements OnInit, OnDestroy {
 
   // Emoji picker state
   isEmojiPickerOpen: WritableSignal<boolean> = signal(false);
+
+  // GIF picker state
+  isGifPickerOpen: WritableSignal<boolean> = signal(false);
 
   private subs: Subscription = new Subscription();
 
@@ -204,6 +209,35 @@ export class AngcordContentComponent implements OnInit, OnDestroy {
     
     // Don't close the emoji picker - keep it open for multiple selections
     // this.isEmojiPickerOpen.set(false);
+  }
+
+  openGifPicker(): void {
+    console.log('🎬 Opening GIF picker...');
+    this.isGifPickerOpen.set(true);
+  }
+
+  onCloseGifPicker(): void {
+    console.log('🔒 Closing GIF picker...');
+    this.isGifPickerOpen.set(false);
+  }
+
+  onGifSelected(gif: GifResult): void {
+    console.log('✅ GIF selected:', gif);
+    // Add the GIF to the message input (you might want to handle this differently)
+    if (this.messageBox && this.messageBox.nativeElement) {
+      const currentValue = this.messageBox.nativeElement.value;
+      const newValue = currentValue + ` [GIF: ${gif.title}]`;
+      this.messageBox.nativeElement.value = newValue;
+      
+      // Focus back to the input
+      this.messageBox.nativeElement.focus();
+      
+      // Trigger change detection
+      this.cdr.detectChanges();
+    }
+    
+    // Don't close the GIF picker - keep it open for multiple selections
+    // this.isGifPickerOpen.set(false);
   }
 
   public handleKeyDownEvent($event: KeyboardEvent) {
