@@ -9,8 +9,8 @@
 
   <!-- Main content area with resizable panels -->
   <div class="flex-1 flex overflow-hidden">
-    <!-- Left sidebar: Server list and channels -->
-    <div class="bg-discord-dark border-r border-discord-border min-w-[200px] max-w-[40%] flex-shrink-0" [style.width.%]="leftSidebarWidth()">
+    <!-- Left sidebar: Server list and channels (fixed server sidebar + resizable channel area) -->
+    <div class="bg-discord-dark border-r border-discord-border min-w-[272px] max-w-[40%] flex-shrink-0" [style.width.%]="leftSidebarWidth()">
       <channel-sidebar
         (selectedServerChange)="handleServerChange($event)"
         (selectedChannelChange)="handleChannelChange($event)"

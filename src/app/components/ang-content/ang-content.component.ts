@@ -23,15 +23,16 @@ export class AngContentComponent implements OnInit {
   selectedChannel: WritableSignal<Channel> = signal(null);
 
   // Resizable layout signals
-  leftSidebarWidth: WritableSignal<number> = signal(20);
-  mainContentWidth: WritableSignal<number> = signal(60);
+  // Note: Server sidebar is fixed at 72px, so leftSidebarWidth includes both server + channel areas
+  leftSidebarWidth: WritableSignal<number> = signal(25);
+  mainContentWidth: WritableSignal<number> = signal(55);
   rightSidebarWidth: WritableSignal<number> = signal(20);
 
   // Resize state
   private isResizing: boolean = false;
   private resizeType: 'left' | 'right' | null = null;
   private startX: number = 0;
-  private startWidths: { left: number; main: number; right: number } = { left: 20, main: 60, right: 20 };
+  private startWidths: { left: number; main: number; right: number } = { left: 25, main: 55, right: 20 };
 
   constructor(private elementRef: ElementRef) {}
 
@@ -77,19 +78,19 @@ export class AngContentComponent implements OnInit {
     const deltaPercent = (deltaX / containerWidth) * 100;
 
     if (this.resizeType === 'left') {
-      // Resizing between left sidebar and main content
+      // Resizing between left sidebar (server + channels) and main content
       let newLeftWidth = this.startWidths.left + deltaPercent;
       let newMainWidth = this.startWidths.main - deltaPercent;
 
-      // Constrain widths between 15% and 35% for left sidebar
-      newLeftWidth = Math.max(15, Math.min(35, newLeftWidth));
-      newMainWidth = Math.max(25, Math.min(70, newMainWidth));
+      // Constrain widths - left sidebar must be at least 20% (to accommodate fixed server sidebar + channels)
+      newLeftWidth = Math.max(20, Math.min(40, newLeftWidth));
+      newMainWidth = Math.max(30, Math.min(70, newMainWidth));
 
       // Ensure total doesn't exceed 100%
       const totalLeftMain = newLeftWidth + newMainWidth;
-      if (totalLeftMain > 85) {
+      if (totalLeftMain > 90) {
         newLeftWidth = 35;
-        newMainWidth = 50;
+        newMainWidth = 55;
       }
 
       this.leftSidebarWidth.set(newLeftWidth);
@@ -101,12 +102,12 @@ export class AngContentComponent implements OnInit {
 
       // Constrain widths between 15% and 35% for right sidebar
       newRightWidth = Math.max(15, Math.min(35, newRightWidth));
-      newMainWidth = Math.max(25, Math.min(70, newMainWidth));
+      newMainWidth = Math.max(30, Math.min(70, newMainWidth));
 
       // Ensure total doesn't exceed 100%
       const totalMainRight = newMainWidth + newRightWidth;
-      if (totalMainRight > 85) {
-        newMainWidth = 50;
+      if (totalMainRight > 90) {
+        newMainWidth = 55;
         newRightWidth = 35;
       }
 
@@ -143,8 +144,8 @@ export class AngContentComponent implements OnInit {
       const saved = localStorage.getItem('discord-layout-widths');
       if (saved) {
         const widths = JSON.parse(saved);
-        this.leftSidebarWidth.set(widths.left || 20);
-        this.mainContentWidth.set(widths.main || 60);
+        this.leftSidebarWidth.set(widths.left || 25);
+        this.mainContentWidth.set(widths.main || 55);
         this.rightSidebarWidth.set(widths.right || 20);
       }
     } catch (error) {
@@ -158,8 +159,8 @@ export class AngContentComponent implements OnInit {
     const totalWidth = this.leftSidebarWidth() + this.mainContentWidth() + this.rightSidebarWidth();
     if (totalWidth !== 100) {
       // Reset to default if corrupted
-      this.leftSidebarWidth.set(20);
-      this.mainContentWidth.set(60);
+      this.leftSidebarWidth.set(25);
+      this.mainContentWidth.set(55);
       this.rightSidebarWidth.set(20);
       this.saveWidths();
     }

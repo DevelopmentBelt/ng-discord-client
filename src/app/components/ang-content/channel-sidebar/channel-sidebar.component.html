@@ -1,19 +1,11 @@
-<div class="h-full flex bg-discord-medium text-discord-text relative" [class.select-none]="isInternalResizing">
-  <!-- Server List (Left Section) -->
-  <div class="h-full overflow-y-auto border-r border-discord-border min-w-[60px] max-w-[70%] bg-discord-dark" [style.width.%]="serverListWidth()">
+<div class="h-full flex bg-discord-medium text-discord-text relative">
+  <!-- Server List (Left Section) - Fixed Width -->
+  <div class="h-full overflow-y-auto border-r border-discord-border w-[72px] bg-discord-dark flex-shrink-0">
     <app-sidebar (serverSelected)="onServerChange($event)"></app-sidebar>
   </div>
 
-  <!-- Internal Resize Handle -->
-  <div
-    class="w-1 bg-discord-border cursor-col-resize hover:bg-discord-blue transition-colors duration-200 flex-shrink-0 relative z-10 group"
-    (mousedown)="startInternalResizing($event)"
-  >
-    <div class="absolute inset-0 bg-transparent group-hover:bg-discord-blue/20 transition-colors duration-200"></div>
-  </div>
-
-  <!-- Channel List (Right Section) -->
-  <div class="h-full flex flex-col overflow-hidden min-w-[200px] max-w-[80%] w-full bg-discord-medium" [style.width.%]="channelListWidth()">
+  <!-- Channel List (Right Section) - Resizable -->
+  <div class="h-full flex flex-col overflow-hidden flex-1 bg-discord-medium">
     <!-- Server Header -->
     <div class="px-4 py-3 border-b border-discord-border bg-discord-lighter flex-shrink-0 overflow-hidden">
       <div class="flex items-center justify-between">
