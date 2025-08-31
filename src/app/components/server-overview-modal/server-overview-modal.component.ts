@@ -323,7 +323,10 @@ export class ServerOverviewModalComponent implements OnInit {
       message: `Are you sure you want to kick "${member.memberName}" from the server? This action cannot be undone.`,
       confirmText: 'Kick Member',
       cancelText: 'Cancel',
-      isDestructive: true
+      isDestructive: true,
+      showReasonInput: true,
+      reasonPlaceholder: 'Enter reason for kicking this member...',
+      reasonRequired: true
     });
     this.pendingAction.set({ type: 'kick', data: member });
     this.isConfirmationModalOpen.set(true);
@@ -338,7 +341,10 @@ export class ServerOverviewModalComponent implements OnInit {
       message: `Are you sure you want to ban "${member.memberName}" from the server? This action cannot be undone.`,
       confirmText: 'Ban Member',
       cancelText: 'Cancel',
-      isDestructive: true
+      isDestructive: true,
+      showReasonInput: true,
+      reasonPlaceholder: 'Enter reason for banning this member...',
+      reasonRequired: true
     });
     this.pendingAction.set({ type: 'ban', data: member });
     this.isConfirmationModalOpen.set(true);
@@ -359,19 +365,19 @@ export class ServerOverviewModalComponent implements OnInit {
   /**
    * Handle confirmation modal result
    */
-  onConfirmationResult(confirmed: boolean): void {
-    if (confirmed && this.pendingAction()) {
+  onConfirmationResult(result: { confirmed: boolean; reason?: string }): void {
+    if (result.confirmed && this.pendingAction()) {
       const action = this.pendingAction()!;
       
       switch (action.type) {
         case 'kick':
-          this.executeKickMember(action.data);
+          this.executeKickMember(action.data, result.reason);
           break;
         case 'ban':
-          this.executeBanMember(action.data);
+          this.executeBanMember(action.data, result.reason);
           break;
         case 'deleteChannel':
-          this.executeDeleteChannel(action.data);
+          this.executeDeleteChannel(action.data, result.reason);
           break;
       }
     }
@@ -384,10 +390,10 @@ export class ServerOverviewModalComponent implements OnInit {
   /**
    * Execute kick member action
    */
-  private executeKickMember(member: Member): void {
+  private executeKickMember(member: Member, reason?: string): void {
     if (!this.server()) return;
     
-    this.serverWebService.kickMember(this.server()!.serverId, member.memberId).subscribe({
+    this.serverWebService.kickMember(this.server()!.serverId, member.memberId, reason).subscribe({
       next: () => {
         console.log('Member kicked successfully');
         this.loadServerMembers();
@@ -402,10 +408,10 @@ export class ServerOverviewModalComponent implements OnInit {
   /**
    * Execute ban member action
    */
-  private executeBanMember(member: Member): void {
+  private executeBanMember(member: Member, reason?: string): void {
     if (!this.server()) return;
     
-    this.serverWebService.banMember(this.server()!.serverId, member.memberId).subscribe({
+    this.serverWebService.banMember(this.server()!.serverId, member.memberId, reason).subscribe({
       next: () => {
         console.log('Member banned successfully');
         this.loadServerMembers();
@@ -420,10 +426,10 @@ export class ServerOverviewModalComponent implements OnInit {
   /**
    * Execute delete channel action
    */
-  private executeDeleteChannel(channel: Channel): void {
+  private executeDeleteChannel(channel: Channel, reason?: string): void {
     if (!this.server()) return;
     
-    this.serverWebService.deleteChannel(this.server()!.serverId, channel.channelId).subscribe({
+    this.serverWebService.deleteChannel(this.server()!.serverId, channel.channelId, reason).subscribe({
       next: () => {
         console.log('Channel deleted successfully');
         this.loadServerChannels();
@@ -525,7 +531,10 @@ export class ServerOverviewModalComponent implements OnInit {
       message: `Are you sure you want to delete the channel "#${channel.channelName}"? This action cannot be undone.`,
       confirmText: 'Delete Channel',
       cancelText: 'Cancel',
-      isDestructive: true
+      isDestructive: true,
+      showReasonInput: true,
+      reasonPlaceholder: 'Enter reason for deleting this channel...',
+      reasonRequired: true
     });
     this.pendingAction.set({ type: 'deleteChannel', data: channel });
     this.isConfirmationModalOpen.set(true);

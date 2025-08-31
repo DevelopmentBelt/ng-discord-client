@@ -89,8 +89,9 @@ export class ServerWebService {
   /**
    * Kick a member from the server
    */
-  kickMember(serverId: string, memberId: string): Observable<any> {
-    return this.serverService.sendDeleteRequest(`servers/${serverId}/members/${memberId}`, {});
+  kickMember(serverId: string, memberId: string, reason?: string): Observable<any> {
+    const data = reason ? { reason } : {};
+    return this.serverService.sendPostReq(`servers/${serverId}/members/${memberId}/kick`, data, {});
   }
 
   /**
@@ -140,8 +141,9 @@ export class ServerWebService {
   /**
    * Delete a channel
    */
-  deleteChannel(serverId: string, channelId: number): Observable<any> {
-    return this.serverService.sendDeleteRequest(`servers/${serverId}/channels/${channelId}`, {});
+  deleteChannel(serverId: string, channelId: number, reason?: string): Observable<any> {
+    const data = reason ? { reason } : {};
+    return this.serverService.sendPostReq(`servers/${serverId}/channels/${channelId}/delete`, data, {});
   }
 
   /**

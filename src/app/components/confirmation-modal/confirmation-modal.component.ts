@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output, WritableSignal, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 
 export interface ConfirmationData {
   title: string;
@@ -8,6 +9,9 @@ export interface ConfirmationData {
   cancelText?: string;
   confirmButtonClass?: string;
   isDestructive?: boolean;
+  showReasonInput?: boolean;
+  reasonPlaceholder?: string;
+  reasonRequired?: boolean;
 }
 
 @Component({
@@ -16,7 +20,7 @@ export interface ConfirmationData {
   styleUrls: ['./confirmation-modal.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [CommonModule]
+  imports: [CommonModule, FormsModule]
 })
 export class ConfirmationModalComponent {
   // Input Signals
@@ -24,14 +28,37 @@ export class ConfirmationModalComponent {
   isOpen = input.required<boolean>();
   
   // Output Signals
-  confirmed = output<void>();
+  confirmed = output<{ confirmed: boolean; reason?: string }>();
   cancelled = output<void>();
+
+  // Form data
+  reasonInput: WritableSignal<string> = signal('');
 
   /**
    * Handle confirmation
    */
   onConfirm(): void {
-    this.confirmed.emit();
+    const reason = this.data()?.showReasonInput ? this.reasonInput() : undefined;
+    this.confirmed.emit({ confirmed: true, reason });
+  }
+
+  /**
+   * Check if confirm button should be disabled
+   */
+  isConfirmDisabled(): boolean {
+    if (this.data()?.showReasonInput && this.data()?.reasonRequired) {
+      return this.reasonInput().trim().length === 0;
+    }
+    return false;
+  }
+
+  /**
+   * Reset reason input when modal opens
+   */
+  ngOnChanges(): void {
+    if (this.data()?.showReasonInput) {
+      this.reasonInput.set('');
+    }
   }
 
   /**

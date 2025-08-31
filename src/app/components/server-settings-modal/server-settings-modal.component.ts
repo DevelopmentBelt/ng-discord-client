@@ -241,20 +241,21 @@ export class ServerSettingsModalComponent implements OnInit {
   }
 
   /**
-   * Delete role
+   * Delete role with confirmation modal
    */
   deleteRole(role: ServerRole): void {
-    if (role.managed) {
-      this.alertService.warning('Cannot Delete', 'This role is managed by an integration and cannot be deleted.');
-      return;
-    }
-
-    if (confirm(`Are you sure you want to delete the role "${role.name}"? This action cannot be undone.`)) {
-      // TODO: Implement actual role deletion
-      const updatedRoles = this.serverRoles().filter(r => r.id !== role.id);
-      this.serverRoles.set(updatedRoles);
-      this.alertService.success('Role Deleted', `Role "${role.name}" has been deleted successfully.`);
-    }
+    this.confirmationData.set({
+      title: 'Delete Role',
+      message: `Are you sure you want to delete the role "${role.name}"? This action cannot be undone.`,
+      confirmText: 'Delete Role',
+      cancelText: 'Cancel',
+      isDestructive: true,
+      showReasonInput: true,
+      reasonPlaceholder: 'Enter reason for deleting this role...',
+      reasonRequired: true
+    });
+    this.pendingAction.set({ type: 'deleteRole', data: role });
+    this.isConfirmationModalOpen.set(true);
   }
 
   /**
@@ -335,15 +336,21 @@ export class ServerSettingsModalComponent implements OnInit {
   }
 
   /**
-   * Delete channel
+   * Delete channel with confirmation modal
    */
   deleteChannel(channel: ServerChannel): void {
-    if (confirm(`Are you sure you want to delete the channel "${channel.name}"? This action cannot be undone.`)) {
-      // TODO: Implement actual channel deletion
-      const updatedChannels = this.serverChannels().filter(c => c.id !== channel.id);
-      this.serverChannels.set(updatedChannels);
-      this.alertService.success('Channel Deleted', `Channel "${channel.name}" has been deleted successfully.`);
-    }
+    this.confirmationData.set({
+      title: 'Delete Channel',
+      message: `Are you sure you want to delete the channel "${channel.name}"? This action cannot be undone.`,
+      confirmText: 'Delete Channel',
+      cancelText: 'Cancel',
+      isDestructive: true,
+      showReasonInput: true,
+      reasonPlaceholder: 'Enter reason for deleting this channel...',
+      reasonRequired: true
+    });
+    this.pendingAction.set({ type: 'deleteChannel', data: channel });
+    this.isConfirmationModalOpen.set(true);
   }
 
   /**
@@ -459,16 +466,16 @@ export class ServerSettingsModalComponent implements OnInit {
   /**
    * Handle confirmation modal result
    */
-  onConfirmationResult(confirmed: boolean): void {
-    if (confirmed && this.pendingAction()) {
+  onConfirmationResult(result: { confirmed: boolean; reason?: string }): void {
+    if (result.confirmed && this.pendingAction()) {
       const action = this.pendingAction()!;
       
       switch (action.type) {
         case 'deleteRole':
-          this.executeDeleteRole(action.data);
+          this.executeDeleteRole(action.data, result.reason);
           break;
         case 'deleteChannel':
-          this.executeDeleteChannel(action.data);
+          this.executeDeleteChannel(action.data, result.reason);
           break;
       }
     }
@@ -481,18 +488,18 @@ export class ServerSettingsModalComponent implements OnInit {
   /**
    * Execute delete role action
    */
-  private executeDeleteRole(role: ServerRole): void {
+  private executeDeleteRole(role: ServerRole, reason?: string): void {
     const updatedRoles = this.serverRoles().filter(r => r.id !== role.id);
     this.serverRoles.set(updatedRoles);
-    console.log('Role deleted successfully');
+    console.log('Role deleted successfully', reason ? `with reason: ${reason}` : '');
   }
 
   /**
    * Execute delete channel action
    */
-  private executeDeleteChannel(channel: ServerChannel): void {
+  private executeDeleteChannel(channel: ServerChannel, reason?: string): void {
     const updatedChannels = this.serverChannels().filter(c => c.id !== channel.id);
     this.serverChannels.set(updatedChannels);
-    console.log('Channel deleted successfully');
+    console.log('Channel deleted successfully', reason ? `with reason: ${reason}` : '');
   }
 }

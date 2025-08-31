@@ -298,8 +298,8 @@
       <app-confirmation-modal
         [data]="confirmationData()!"
         [isOpen]="isConfirmationModalOpen()"
-        (confirmed)="onConfirmationResult(true)"
-        (cancelled)="onConfirmationResult(false)"
+        (confirmed)="onConfirmationResult($event)"
+        (cancelled)="isConfirmationModalOpen.set(false)"
       ></app-confirmation-modal>
     }
 
