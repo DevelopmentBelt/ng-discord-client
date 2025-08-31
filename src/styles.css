@@ -93,3 +93,20 @@ input:focus, textarea:focus {
               opacity 0.15s ease-in-out,
               transform 0.15s ease-in-out;
 }
+
+/* Status color utility classes */
+.bg-green-500 {
+  background-color: #10b981;
+}
+
+.bg-yellow-500 {
+  background-color: #f59e0b;
+}
+
+.bg-red-500 {
+  background-color: #ef4444;
+}
+
+.bg-gray-500 {
+  background-color: #6b7280;
+}
