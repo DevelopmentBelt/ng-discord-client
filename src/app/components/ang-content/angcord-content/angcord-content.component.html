@@ -96,13 +96,25 @@
 
   <!-- Search Component Overlay -->
   @if (showSearch) {
-    <app-search
-      [serverId]="server()?.serverId || ''"
-      [channelId]="(channel()?.channelId || '').toString()"
-      [serverName]="server()?.serverName || ''"
-      [channelName]="channel()?.channelName || ''"
-      (closeSearch)="closeSearch()"
-      (messageSelected)="onMessageSelected($event)"
-    ></app-search>
+    <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" (click)="closeSearch()">
+      <div class="bg-discord-lighter border border-discord-border rounded-lg shadow-xl w-full max-w-4xl h-[80vh] flex flex-col" (click)="$event.stopPropagation()">
+        <app-search
+          [serverId]="server()?.serverId || ''"
+          [channelId]="(channel()?.channelId || '').toString()"
+          [serverName]="server()?.serverName || ''"
+          [channelName]="channel()?.channelName || ''"
+          (closeSearch)="closeSearch()"
+          (messageSelected)="onMessageSelected($event)"
+        ></app-search>
+      </div>
+    </div>
   }
+
+  <!-- Emoji Picker Component -->
+  <app-emoji-picker
+    [isOpen]="isEmojiPickerOpen()"
+    [position]="'top'"
+    (emojiSelected)="onEmojiSelected($event)"
+    (closed)="onCloseEmojiPicker()"
+  ></app-emoji-picker>
 </div>

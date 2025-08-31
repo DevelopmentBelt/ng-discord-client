@@ -1,24 +1,18 @@
-import {
-  ChangeDetectionStrategy, ChangeDetectorRef,
-  Component, effect,
-  ElementRef,
-  input,
-  Input,
-  InputSignal, OnDestroy,
-  OnInit,
-  ViewChild
-} from '@angular/core';
-import {Author, Mention, Message} from "../../../models/message/message";
-import * as moment from "moment";
+import {ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, ElementRef, InputSignal, OnInit, OnDestroy, ViewChild, effect, inject, signal, WritableSignal, input} from '@angular/core';
+import {CommonModule} from "@angular/common";
+import {FormsModule} from "@angular/forms";
+import {Subscription, take} from "rxjs";
 import {MessageWebService} from "../../../services/message-web-service/message-web.service";
+import {ChannelSocketService} from "../../../services/socket-service/channel-socket.service";
+import {AlertService} from "../../../services/alert-service/alert-service";
+import {Message, Author, Mention} from "../../../models/message/message";
+import {Server} from "../../../models/server/server";
+import {Channel} from "../../../models/channel/channel";
 import {User} from "../../../models/user/user";
 import {DatetimeFormatterPipe} from "../../../pipes/datetimeFormatter/datetime-formatter.pipe";
-import {Subscription, take} from "rxjs";
-import {ChannelSocketService} from "../../../services/socket-service/channel-socket.service";
-import {Channel} from "../../../models/channel/channel";
-import {Server} from "../../../models/server/server";
-import {AlertService} from "../../../services/alert-service/alert-service";
 import {SearchComponent} from "../../search/search.component";
+import {EmojiPickerComponent, Emoji} from "../../emoji-picker/emoji-picker.component";
+import * as moment from "moment";
 
 @Component({
   selector: 'angcord-content',
@@ -26,19 +20,24 @@ import {SearchComponent} from "../../search/search.component";
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     DatetimeFormatterPipe,
-    SearchComponent
+    SearchComponent,
+    EmojiPickerComponent,
+    FormsModule
   ],
   standalone: true
 })
 export class AngcordContentComponent implements OnInit, OnDestroy {
-  server: InputSignal<Server> = input(); // TODO Get rid of 1
-  channel: InputSignal<Channel> = input(); // TODO Get rid of 1
+  server = input<Server>(); // TODO Get rid of 1
+  channel = input<Channel>(); // TODO Get rid of 1
 
   @ViewChild('messageBox') private messageBox!: ElementRef;
   public messageList: Message[] = [] as Message[];
   
   // Search state
   showSearch: boolean = false;
+
+  // Emoji picker state
+  isEmojiPickerOpen: WritableSignal<boolean> = signal(false);
 
   private subs: Subscription = new Subscription();
 
@@ -178,15 +177,33 @@ export class AngcordContentComponent implements OnInit, OnDestroy {
     fileInput.click();
   }
 
-  /**
-   * Open emoji picker functionality
-   */
   openEmojiPicker(): void {
-    console.log('Opening emoji picker');
+    console.log('🎯 Opening emoji picker...');
+    this.isEmojiPickerOpen.set(true);
+  }
+
+  onCloseEmojiPicker(): void {
+    console.log('🔒 Closing emoji picker...');
+    this.isEmojiPickerOpen.set(false);
+  }
+
+  onEmojiSelected(emoji: Emoji): void {
+    console.log('✅ Emoji selected:', emoji);
+    // Add the emoji to the message input
+    if (this.messageBox && this.messageBox.nativeElement) {
+      const currentValue = this.messageBox.nativeElement.value;
+      const newValue = currentValue + emoji.char;
+      this.messageBox.nativeElement.value = newValue;
+      
+      // Focus back to the input
+      this.messageBox.nativeElement.focus();
+      
+      // Trigger change detection
+      this.cdr.detectChanges();
+    }
     
-    // TODO: Implement emoji picker modal/overlay
-    // This could show a grid of emojis organized by category
-    this.alertService.featureComingSoon('Emoji Picker');
+    // Close the emoji picker
+    this.isEmojiPickerOpen.set(false);
   }
 
   public handleKeyDownEvent($event: KeyboardEvent) {

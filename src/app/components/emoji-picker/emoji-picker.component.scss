@@ -1,0 +1,389 @@
+.emoji-picker-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.emoji-picker-container {
+  background-color: var(--discord-lighter);
+  border: 1px solid var(--discord-border);
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  width: 350px;
+  max-height: 500px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: emoji-picker-slide-in 0.2s ease-out;
+}
+
+.emoji-picker-top {
+  animation: emoji-picker-slide-in-top 0.2s ease-out;
+}
+
+.emoji-picker-bottom {
+  animation: emoji-picker-slide-in-bottom 0.2s ease-out;
+}
+
+@keyframes emoji-picker-slide-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes emoji-picker-slide-in-top {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes emoji-picker-slide-in-bottom {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+// Header
+.emoji-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid var(--discord-border);
+  background-color: var(--discord-medium);
+}
+
+.emoji-picker-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--discord-text-lighter);
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.emoji-icon {
+  font-size: 20px;
+}
+
+.title-text {
+  font-family: 'Whitney', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.emoji-picker-close {
+  background: none;
+  border: none;
+  color: var(--discord-text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease-in-out;
+
+  &:hover {
+    background-color: var(--discord-hover);
+    color: var(--discord-text-light);
+  }
+
+  &:focus {
+    outline: 2px solid var(--discord-blue);
+    outline-offset: 2px;
+  }
+}
+
+// Search
+.emoji-picker-search {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--discord-border);
+}
+
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--discord-text-muted);
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding: 8px 12px 8px 36px;
+  background-color: var(--discord-dark);
+  border: 1px solid var(--discord-border);
+  border-radius: 4px;
+  color: var(--discord-text-light);
+  font-size: 14px;
+  transition: all 0.15s ease-in-out;
+
+  &::placeholder {
+    color: var(--discord-text-muted);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--discord-blue);
+    box-shadow: 0 0 0 2px rgba(88, 101, 242, 0.3);
+  }
+}
+
+.search-clear {
+  position: absolute;
+  right: 8px;
+  background: none;
+  border: none;
+  color: var(--discord-text-muted);
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease-in-out;
+
+  &:hover {
+    color: var(--discord-text-light);
+    background-color: var(--discord-hover);
+  }
+}
+
+// Categories
+.emoji-picker-categories {
+  display: flex;
+  padding: 8px 16px;
+  gap: 4px;
+  border-bottom: 1px solid var(--discord-border);
+  background-color: var(--discord-medium);
+  overflow-x: auto;
+
+  &::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--discord-border);
+    border-radius: 2px;
+  }
+}
+
+.category-tab {
+  background: none;
+  border: none;
+  color: var(--discord-text-muted);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 40px;
+  transition: all 0.15s ease-in-out;
+  flex-shrink: 0;
+
+  &:hover {
+    background-color: var(--discord-hover);
+    color: var(--discord-text-light);
+  }
+
+  &.active {
+    background-color: var(--discord-blue);
+    color: white;
+  }
+
+  &:focus {
+    outline: 2px solid var(--discord-blue);
+    outline-offset: 2px;
+  }
+}
+
+.category-icon {
+  font-size: 20px;
+}
+
+// Content
+.emoji-picker-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--discord-border);
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: var(--discord-light);
+  }
+}
+
+.emoji-category {
+  margin-bottom: 20px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.category-header {
+  margin-bottom: 12px;
+}
+
+.category-name {
+  color: var(--discord-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+  font-family: 'Whitney', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 4px;
+}
+
+.emoji-item {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease-in-out;
+  min-width: 32px;
+  height: 32px;
+
+  &:hover {
+    background-color: var(--discord-hover);
+    transform: scale(1.1);
+  }
+
+  &:focus {
+    outline: 2px solid var(--discord-blue);
+    outline-offset: 2px;
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+.emoji-char {
+  font-size: 20px;
+  line-height: 1;
+  user-select: none;
+}
+
+// Footer
+.emoji-picker-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--discord-border);
+  background-color: var(--discord-medium);
+}
+
+.emoji-picker-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.info-text {
+  color: var(--discord-text-muted);
+  font-size: 12px;
+  font-family: 'Whitney', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+// Responsive adjustments
+@media (max-width: 480px) {
+  .emoji-picker-container {
+    width: 90vw;
+    max-width: 350px;
+    max-height: 80vh;
+  }
+
+  .emoji-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+
+  .emoji-item {
+    min-width: 28px;
+    height: 28px;
+  }
+
+  .emoji-char {
+    font-size: 18px;
+  }
+}
+
+// Dark theme enhancements
+@media (prefers-color-scheme: dark) {
+  .emoji-picker-container {
+    background-color: #2f3136;
+    border-color: #202225;
+  }
+
+  .emoji-picker-header {
+    background-color: #292b2f;
+    border-color: #202225;
+  }
+
+  .search-input {
+    background-color: #202225;
+    border-color: #40444b;
+  }
+
+  .emoji-picker-categories {
+    background-color: #292b2f;
+    border-color: #202225;
+  }
+
+  .emoji-picker-footer {
+    background-color: #292b2f;
+    border-color: #202225;
+  }
+}
