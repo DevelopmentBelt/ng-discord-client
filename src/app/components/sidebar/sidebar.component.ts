@@ -9,6 +9,7 @@ import { NotificationBadgeComponent } from '../notification-badge/notification-b
 import { Server } from '../../models/server/server';
 import { ServerConnectivityService } from '../../services/server-connectivity.service';
 import { InboxService } from '../../services/inbox-service/inbox.service';
+import { ServerWebService } from '../../services/server-web-service/server-web.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -44,7 +45,8 @@ export class SidebarComponent implements OnInit {
 
   constructor(
     private serverService: ServerConnectivityService,
-    private inboxService: InboxService
+    private inboxService: InboxService,
+    private serverWebService: ServerWebService
   ) {}
 
   ngOnInit(): void {
@@ -52,39 +54,34 @@ export class SidebarComponent implements OnInit {
   }
 
   /**
-   * Load user's servers
+   * Load user's servers from the backend
    */
   loadServers(): void {
     this.isLoading.set(true);
     
-    // For now, load mock data since the service doesn't have getUserServers method
-    this.loadMockServers();
-    this.isLoading.set(false);
-  }
-
-  /**
-   * Load mock servers for development
-   */
-  private loadMockServers(): void {
-    const mockServers: Server[] = [
-      {
-        serverId: '1',
-        serverName: 'My Gaming Server',
-        iconURL: 'https://via.placeholder.com/64/7289da/ffffff?text=G',
-        ownerId: '123',
-        serverDescription: 'A server for my gaming community'
+    this.serverWebService.getUserServers().subscribe({
+      next: (servers: any[]) => {
+        // Backend now returns data in the correct format
+        const transformedServers = servers.map(server => ({
+          serverId: server.serverId?.toString() || '',
+          serverName: server.serverName || '',
+          iconURL: server.iconURL || '',
+          ownerId: server.ownerId?.toString() || '',
+          serverDescription: server.serverDescription || ''
+        }));
+        
+        this.servers.set(transformedServers);
+        this.sidebarServers.set(transformedServers);
+        this.isLoading.set(false);
       },
-      {
-        serverId: '2',
-        serverName: 'Project Team',
-        iconURL: 'https://via.placeholder.com/64/43b581/ffffff?text=P',
-        ownerId: '123',
-        serverDescription: 'Collaboration space for our project'
+      error: (error: any) => {
+        console.error('Failed to load servers:', error);
+        // Fallback to empty array on error
+        this.servers.set([]);
+        this.sidebarServers.set([]);
+        this.isLoading.set(false);
       }
-    ];
-    
-    this.servers.set(mockServers);
-    this.sidebarServers.set(mockServers);
+    });
   }
 
   /**
@@ -160,23 +157,29 @@ export class SidebarComponent implements OnInit {
    * Handle server creation
    */
   onServerCreated(serverData: any): void {
-    // TODO: Implement actual server creation with backend API
-    console.log('Server created:', serverData);
-    
-    // For now, create a mock server and add it to the list
-    const newServer: Server = {
-      serverId: Math.random().toString(36).substring(2, 15),
-      serverName: serverData.serverName,
-      serverDescription: serverData.serverDescription,
-      iconURL: serverData.serverIcon ? URL.createObjectURL(serverData.serverIcon) : '',
-      ownerId: 'current-user-id' // TODO: Get actual user ID
-    };
-    
-    this.servers.set([...this.servers(), newServer]);
-    this.sidebarServers.set([...this.sidebarServers(), newServer]);
-    
-    // Close the modal
-    this.closeServerCreation();
+    this.serverWebService.createServer(serverData).subscribe({
+      next: (newServer: any) => {
+        // Backend now returns data in the correct format
+        const transformedServer = {
+          serverId: newServer.serverId?.toString() || '',
+          serverName: newServer.serverName || '',
+          serverDescription: newServer.serverDescription || '',
+          iconURL: newServer.iconURL || '',
+          ownerId: newServer.ownerId?.toString() || ''
+        };
+        
+        // Add to local servers list
+        this.servers.set([...this.servers(), transformedServer]);
+        this.sidebarServers.set([...this.sidebarServers(), transformedServer]);
+        
+        // Close the modal
+        this.closeServerCreation();
+      },
+      error: (error: any) => {
+        console.error('Failed to create server:', error);
+        // TODO: Show error message to user
+      }
+    });
   }
 
   /**

@@ -58,18 +58,18 @@
 
           <!-- Channel Name -->
           <div>
-            <label class="block text-sm font-medium text-discord-text-muted mb-2">Channel Name</label>
-            <div class="flex items-center space-x-2">
-              <span class="text-discord-text-muted">#</span>
-              <input 
-                type="text" 
-                [(ngModel)]="channelName"
-                class="flex-1 bg-discord-light text-discord-text-light border border-discord-border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-discord-blue/50 transition-all duration-200"
-                placeholder="new-channel"
-                maxlength="100"
-              />
-            </div>
-            <p class="text-xs text-discord-text-muted mt-1">Channel names can only contain lowercase letters, numbers, and hyphens</p>
+            <label class="block text-sm font-medium text-discord-text-light mb-2">Channel Name</label>
+            <input 
+              type="text" 
+              [(ngModel)]="channelName"
+              placeholder="e.g. general"
+              class="w-full px-3 py-2 bg-discord-medium border border-discord-border rounded-md text-discord-text-light placeholder-discord-text-muted focus:outline-none focus:ring-2 focus:ring-discord-blue focus:border-transparent"
+              [class.border-red-500]="getValidationError() && channelName().trim().length > 0"
+            >
+            @if (getValidationError() && channelName().trim().length > 0) {
+              <p class="text-red-400 text-sm mt-1">{{ getValidationError() }}</p>
+            }
+            <p class="text-xs text-discord-text-muted mt-1">Channel names can only contain lowercase letters, numbers, and hyphens.</p>
           </div>
 
           <!-- Category Selection -->

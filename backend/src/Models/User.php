@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use PDO;
+use Exception;
 
 class User
 {
@@ -37,13 +38,20 @@ class User
   }
 
   public function getServers(): array {
-    $query = "SELECT `servers`.* FROM `servers` s
-                  INNER JOIN `members` m ON m.server_id = s.server_id
-                  INNER JOIN `users` u ON m.user_id = u.user_id
-                  WHERE u.user_id = ?";
-    $stmt = $this->pdo->prepare($query);
-    $stmt->execute([$this->user_id]);
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    try {
+      $query = "SELECT s.* FROM `servers` s
+                    INNER JOIN `members` m ON m.server_id = s.server_id
+                    INNER JOIN `users` u ON m.user_id = u.user_id
+                    WHERE u.user_id = ?";
+      $stmt = $this->pdo->prepare($query);
+      $stmt->execute([$this->user_id]);
+      $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+      error_log("User::getServers query executed, found " . count($result) . " servers");
+      return $result;
+    } catch (Exception $e) {
+      error_log("Error in User::getServers: " . $e->getMessage());
+      return [];
+    }
   }
 
   public function getUserId(): int {

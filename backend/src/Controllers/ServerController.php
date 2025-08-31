@@ -19,30 +19,45 @@ class ServerController extends Routes {
     $this->app->post('/api/servers/{serverId}/join', [$this, 'joinServer']);
     $this->app->delete('/api/servers/{serverId}/leave', [$this, 'leaveServer']);
     $this->app->delete('/api/servers/', [$this, 'archiveServer']);
+    $this->app->get('/api/servers/test/', [$this, 'testEndpoint']);
+  }
+
+  public function testEndpoint(Request $request, Response $response, $args) {
+    return $response->withJson(['message' => 'Server controller is working', 'timestamp' => date('Y-m-d H:i:s')]);
   }
 
   public function getServersForUser(Request $request, Response $response, $args) {
-    $userId = $_SESSION['user_id'];
-    if ($userId) {
-      $pdo = $this->dbService->getConnection();
-      $user = new User($userId, $pdo, false);
-      $servers = $user->getServers();
-      $serverObjs = [];
-      foreach ($servers as $server) {
-        $s = new Server(
-          $server['server_id'],
-          $pdo,
-          false,
-          $server['server_name'],
-          $server['server_description'],
-          $server['server_icon'],
-          $server['owner_id']
-        );
-        $serverObjs[] = $s;
+    try {
+      $userId = $_SESSION['user_id'];
+      error_log("getServersForUser called with user_id: " . $userId);
+      
+      if ($userId) {
+        $pdo = $this->dbService->getConnection();
+        $user = new User($userId, $pdo, false);
+        $servers = $user->getServers();
+        error_log("Found " . count($servers) . " servers for user");
+        
+        $serverObjs = [];
+        foreach ($servers as $server) {
+          $serverData = [
+            'serverId' => $server['server_id'],
+            'serverName' => $server['server_name'],
+            'serverDescription' => $server['server_description'],
+            'iconURL' => $server['server_icon'],
+            'ownerId' => $server['owner_id']
+          ];
+          $serverObjs[] = $serverData;
+        }
+        
+        error_log("Returning " . count($serverObjs) . " servers");
+        return $response->withJson($serverObjs);
+      } else {
+        error_log("User not authenticated");
+        return $response->withStatus(401)->withJson(['error' => 'User not authenticated']);
       }
-      return $response->withJson($serverObjs);
-    } else {
-      // TODO Not logged in, error...
+    } catch (Exception $e) {
+      error_log("Error in getServersForUser: " . $e->getMessage());
+      return $response->withStatus(500)->withJson(['error' => 'Internal server error: ' . $e->getMessage()]);
     }
   }
 
@@ -159,6 +174,48 @@ class ServerController extends Routes {
     }
   }
 
-  public function createServer(Request $request, Response $response, $args) {}
+  public function createServer(Request $request, Response $response, $args) {
+    try {
+      $userId = $_SESSION['user_id'];
+      if (!$userId) {
+        return $response->withStatus(401)->withJson(['error' => 'User not authenticated']);
+      }
+
+      $data = $request->getParsedBody();
+      $serverName = $data['serverName'] ?? '';
+      $serverDescription = $data['serverDescription'] ?? '';
+      
+      if (empty($serverName)) {
+        return $response->withStatus(400)->withJson(['error' => 'Server name is required']);
+      }
+
+      $pdo = $this->dbService->getConnection();
+      
+      // Create the server
+      $insertQuery = "INSERT INTO servers (server_name, server_description, owner_id) VALUES (?, ?, ?)";
+      $insertStmt = $pdo->prepare($insertQuery);
+      $insertStmt->execute([$serverName, $serverDescription, $userId]);
+      
+      $serverId = $pdo->lastInsertId();
+      
+      // Add the creator as a member
+      $memberQuery = "INSERT INTO members (user_id, server_id, joined_at) VALUES (?, ?, NOW())";
+      $memberStmt = $pdo->prepare($memberQuery);
+      $memberStmt->execute([$userId, $serverId]);
+      
+      // Return the created server data
+      $serverData = [
+        'serverId' => $serverId,
+        'serverName' => $serverName,
+        'serverDescription' => $serverDescription,
+        'iconURL' => '', // Default empty icon
+        'ownerId' => $userId
+      ];
+      
+      return $response->withJson($serverData);
+    } catch (Exception $e) {
+      return $response->withStatus(500)->withJson(['error' => 'Failed to create server']);
+    }
+  }
   public function archiveServer(Request $request, Response $response, $args) {}
 }

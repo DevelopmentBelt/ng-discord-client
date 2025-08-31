@@ -120,18 +120,35 @@ export class ChannelManagementModalComponent implements OnInit {
   validateChannelName(): boolean {
     const name = this.channelName().trim();
     if (name.length === 0) {
-      alert('Channel name cannot be empty');
+      // Show error in UI instead of alert
       return false;
     }
     if (name.length > 100) {
-      alert('Channel name cannot exceed 100 characters');
+      // Show error in UI instead of alert
       return false;
     }
     if (!/^[a-z0-9-]+$/.test(name)) {
-      alert('Channel name can only contain lowercase letters, numbers, and hyphens');
+      // Show error in UI instead of alert
       return false;
     }
     return true;
+  }
+
+  /**
+   * Get validation error message
+   */
+  getValidationError(): string {
+    const name = this.channelName().trim();
+    if (name.length === 0) {
+      return 'Channel name cannot be empty';
+    }
+    if (name.length > 100) {
+      return 'Channel name cannot exceed 100 characters';
+    }
+    if (!/^[a-z0-9-]+$/.test(name)) {
+      return 'Channel name can only contain lowercase letters, numbers, and hyphens';
+    }
+    return '';
   }
 
   /**

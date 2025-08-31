@@ -1,10 +1,11 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, OnInit, signal, WritableSignal, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, signal, WritableSignal, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Server } from '../../models/server/server';
 import { AlertService } from '../../services/alert-service/alert-service';
 import { RoleManagementModalComponent } from '../role-management-modal/role-management-modal.component';
 import { ChannelManagementModalComponent } from '../channel-management-modal/channel-management-modal.component';
+import { ConfirmationModalComponent, ConfirmationData } from '../confirmation-modal/confirmation-modal.component';
 
 export interface ServerRole {
   id: string;
@@ -44,7 +45,7 @@ export interface Permission {
   styleUrls: ['./server-settings-modal.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [CommonModule, FormsModule, RoleManagementModalComponent, ChannelManagementModalComponent]
+  imports: [CommonModule, FormsModule, RoleManagementModalComponent, ChannelManagementModalComponent, ConfirmationModalComponent]
 })
 export class ServerSettingsModalComponent implements OnInit {
   // Input Signals
@@ -77,6 +78,11 @@ export class ServerSettingsModalComponent implements OnInit {
   verificationLevel: WritableSignal<string> = signal('Low');
   explicitContentFilter: WritableSignal<string> = signal('Medium');
 
+  // Modal states for new UI components
+  isConfirmationModalOpen: WritableSignal<boolean> = signal(false);
+  confirmationData: WritableSignal<ConfirmationData | null> = signal(null);
+  pendingAction: WritableSignal<{ type: string; data: any } | null> = signal(null);
+
   // Available permissions
   availablePermissions: Permission[] = [
     { id: 'admin', name: 'Administrator', description: 'Gives all permissions', category: 'General' },
@@ -97,73 +103,73 @@ export class ServerSettingsModalComponent implements OnInit {
 
   ngOnInit(): void {
     if (this.server()) {
-      this.serverName.set(this.server()!.serverName);
-      this.serverDescription.set(this.server()!.serverDescription || '');
-      this.loadServerData();
+      this.initializeForm();
+      this.loadMockData();
     }
   }
 
   /**
-   * Load server data (roles, channels, etc.)
+   * Initialize form with server data
    */
-  private loadServerData(): void {
-    // TODO: Replace with actual API calls
+  initializeForm(): void {
+    if (this.server()) {
+      this.serverName.set(this.server()!.serverName);
+      this.serverDescription.set(this.server()!.serverDescription || '');
+    }
+  }
+
+  /**
+   * Load mock data for development
+   */
+  loadMockData(): void {
+    // Mock roles
     const mockRoles: ServerRole[] = [
-      { 
-        id: '1', 
-        name: 'Owner', 
-        color: '#ff6b6b', 
-        permissions: ['Administrator'], 
-        memberCount: 1, 
-        position: 0, 
-        hoist: true, 
-        mentionable: true, 
-        managed: false 
+      {
+        id: '1',
+        name: 'Admin',
+        color: '#ff0000',
+        permissions: ['admin'],
+        hoist: true,
+        mentionable: true,
+        managed: false,
+        memberCount: 2,
+        position: 0
       },
-      { 
-        id: '2', 
-        name: 'Admin', 
-        color: '#4ecdc4', 
-        permissions: ['Manage Server', 'Manage Roles', 'Manage Channels'], 
-        memberCount: 3, 
-        position: 1, 
-        hoist: true, 
-        mentionable: true, 
-        managed: false 
-      },
-      { 
-        id: '3', 
-        name: 'Moderator', 
-        color: '#45b7d1', 
-        permissions: ['Manage Messages', 'Kick Members'], 
-        memberCount: 5, 
-        position: 2, 
-        hoist: true, 
-        mentionable: false, 
-        managed: false 
-      },
-      { 
-        id: '4', 
-        name: 'Member', 
-        color: '#96ceb4', 
-        permissions: ['Send Messages', 'Read Messages', 'Connect', 'Speak'], 
-        memberCount: 150, 
-        position: 3, 
-        hoist: false, 
-        mentionable: false, 
-        managed: false 
+      {
+        id: '2',
+        name: 'Moderator',
+        color: '#00ff00',
+        permissions: ['kick_members', 'ban_members', 'manage_messages'],
+        hoist: true,
+        mentionable: false,
+        managed: false,
+        memberCount: 5,
+        position: 1
       }
     ];
-
-    const mockChannels: ServerChannel[] = [
-      { id: '1', name: 'Information', type: 'category', position: 0, nsfw: false },
-      { id: '2', name: 'general', type: 'text', position: 1, parentId: '1', topic: 'General discussion', nsfw: false, slowmode: 0 },
-      { id: '3', name: 'announcements', type: 'text', position: 2, parentId: '1', topic: 'Server announcements', nsfw: false, slowmode: 0 },
-      { id: '4', name: 'Voice Channels', type: 'category', position: 3, nsfw: false },
-      { id: '5', name: 'General Voice', type: 'voice', position: 4, parentId: '4', nsfw: false, userLimit: 10, bitrate: 64000 }
-    ];
-
     this.serverRoles.set(mockRoles);
+
+    // Mock channels
+    const mockChannels: ServerChannel[] = [
+      {
+        id: '1',
+        name: 'general',
+        type: 'text',
+        topic: 'General discussion',
+        parentId: '1',
+        position: 0,
+        nsfw: false
+      },
+      {
+        id: '2',
+        name: 'announcements',
+        type: 'text',
+        topic: 'Server announcements',
+        parentId: '1',
+        position: 1,
+        nsfw: false
+      }
+    ];
     this.serverChannels.set(mockChannels);
   }
 
@@ -448,5 +454,45 @@ export class ServerSettingsModalComponent implements OnInit {
     if (event.key === 'Escape') {
       this.close();
     }
+  }
+
+  /**
+   * Handle confirmation modal result
+   */
+  onConfirmationResult(confirmed: boolean): void {
+    if (confirmed && this.pendingAction()) {
+      const action = this.pendingAction()!;
+      
+      switch (action.type) {
+        case 'deleteRole':
+          this.executeDeleteRole(action.data);
+          break;
+        case 'deleteChannel':
+          this.executeDeleteChannel(action.data);
+          break;
+      }
+    }
+    
+    this.isConfirmationModalOpen.set(false);
+    this.confirmationData.set(null);
+    this.pendingAction.set(null);
+  }
+
+  /**
+   * Execute delete role action
+   */
+  private executeDeleteRole(role: ServerRole): void {
+    const updatedRoles = this.serverRoles().filter(r => r.id !== role.id);
+    this.serverRoles.set(updatedRoles);
+    console.log('Role deleted successfully');
+  }
+
+  /**
+   * Execute delete channel action
+   */
+  private executeDeleteChannel(channel: ServerChannel): void {
+    const updatedChannels = this.serverChannels().filter(c => c.id !== channel.id);
+    this.serverChannels.set(updatedChannels);
+    console.log('Channel deleted successfully');
   }
 }

@@ -1,0 +1,96 @@
+@if (isOpen()) {
+  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" (click)="close()">
+    <div class="bg-discord-lighter border border-discord-border rounded-lg shadow-xl w-full max-w-lg" (click)="$event.stopPropagation()">
+      <!-- Modal Header -->
+      <div class="px-6 py-4 border-b border-discord-border">
+        <h3 class="text-lg font-semibold text-discord-text-lighter">
+          Edit Roles for {{ data()?.member?.memberName }}
+        </h3>
+        <p class="text-sm text-discord-text-muted mt-1">
+          Manage member roles and permissions
+        </p>
+      </div>
+
+      <!-- Modal Content -->
+      <div class="px-6 py-4 space-y-4">
+        <!-- Available Roles -->
+        <div>
+          <h4 class="text-sm font-medium text-discord-text-light mb-3">Available Roles</h4>
+          <div class="space-y-2">
+            @for (role of data()?.availableRoles; track role) {
+              <label class="flex items-center space-x-3 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  [checked]="isRoleSelected(role)"
+                  (change)="toggleRole(role)"
+                  class="text-discord-blue focus:ring-discord-blue rounded border-discord-border"
+                />
+                <span class="text-discord-text-light">{{ role }}</span>
+              </label>
+            }
+          </div>
+        </div>
+
+        <!-- Custom Role Input -->
+        <div>
+          <h4 class="text-sm font-medium text-discord-text-light mb-3">Add Custom Role</h4>
+          <div class="flex space-x-2">
+            <input 
+              type="text" 
+              [(ngModel)]="newRoleInput"
+              placeholder="Enter custom role name"
+              class="flex-1 px-3 py-2 bg-discord-medium border border-discord-border rounded-md text-discord-text-light placeholder-discord-text-muted focus:outline-none focus:ring-2 focus:ring-discord-blue focus:border-transparent"
+              (keydown.enter)="addCustomRole()"
+            >
+            <button 
+              (click)="addCustomRole()"
+              class="px-3 py-2 bg-discord-blue hover:bg-discord-blue-dark text-white text-sm font-medium rounded-md transition-colors duration-150"
+            >
+              Add
+            </button>
+          </div>
+        </div>
+
+        <!-- Selected Roles -->
+        <div>
+          <h4 class="text-sm font-medium text-discord-text-light mb-3">Selected Roles</h4>
+          <div class="space-y-2">
+            @for (role of selectedRoles(); track role) {
+              <div class="flex items-center justify-between p-2 bg-discord-medium rounded-md">
+                <span class="text-discord-text-light">{{ role }}</span>
+                <button 
+                  (click)="removeRole(role)"
+                  class="p-1 text-discord-text-muted hover:text-red-400 hover:bg-discord-hover rounded transition-colors duration-150"
+                  title="Remove Role"
+                >
+                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                  </svg>
+                </button>
+              </div>
+            }
+            @if (selectedRoles().length === 0) {
+              <p class="text-discord-text-muted text-sm italic">No roles selected</p>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-6 py-4 border-t border-discord-border flex items-center justify-end space-x-3">
+        <button 
+          (click)="close()"
+          class="px-4 py-2 bg-discord-medium hover:bg-discord-hover text-discord-text-light font-medium rounded-md transition-colors duration-150"
+        >
+          Cancel
+        </button>
+        <button 
+          (click)="save()"
+          class="px-4 py-2 bg-discord-blue hover:bg-discord-blue-dark text-white font-medium rounded-md transition-colors duration-150"
+        >
+          Save Changes
+        </button>
+      </div>
+    </div>
+  </div>
+}

@@ -1,12 +1,14 @@
 import { ChangeDetectionStrategy, Component, OnInit, signal, WritableSignal, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ChannelManagementModalComponent } from '../channel-management-modal/channel-management-modal.component';
+import { ConfirmationModalComponent, ConfirmationData } from '../confirmation-modal/confirmation-modal.component';
+import { RoleEditingModalComponent, RoleEditingData } from '../role-editing-modal/role-editing-modal.component';
 import { Server } from '../../models/server/server';
 import { Member } from '../../models/member/member';
 import { Channel } from '../../models/channel/channel';
-import { AlertService } from '../../services/alert-service/alert-service';
+import { AlertService } from '../../services/alert-service/alert.service';
 import { ServerWebService } from '../../services/server-web-service/server-web.service';
-import { ChannelManagementModalComponent } from '../channel-management-modal/channel-management-modal.component';
 
 export interface ServerStats {
   memberCount: number;
@@ -23,7 +25,7 @@ export interface ServerStats {
   styleUrls: ['./server-overview-modal.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [CommonModule, FormsModule, ChannelManagementModalComponent]
+  imports: [CommonModule, FormsModule, ChannelManagementModalComponent, ConfirmationModalComponent, RoleEditingModalComponent]
 })
 export class ServerOverviewModalComponent implements OnInit {
   // Input Signals
@@ -63,6 +65,13 @@ export class ServerOverviewModalComponent implements OnInit {
   // Available roles for filtering
   availableRoles: string[] = [];
 
+  // Modal states for new UI components
+  isConfirmationModalOpen: WritableSignal<boolean> = signal(false);
+  isRoleEditingModalOpen: WritableSignal<boolean> = signal(false);
+  confirmationData: WritableSignal<ConfirmationData | null> = signal(null);
+  roleEditingData: WritableSignal<RoleEditingData | null> = signal(null);
+  pendingAction: WritableSignal<{ type: string; data: any } | null> = signal(null);
+
   constructor(
     private alertService: AlertService,
     private serverWebService: ServerWebService
@@ -70,212 +79,141 @@ export class ServerOverviewModalComponent implements OnInit {
 
   ngOnInit(): void {
     if (this.server()) {
-      this.loadServerStats();
-      this.loadServerMembers();
-      this.loadServerChannels();
+      this.loadServerData();
     }
   }
 
   /**
-   * Load server statistics
+   * Load server data
    */
-  private loadServerStats(): void {
-    // TODO: Replace with actual API call to get server statistics
-    // For now, generate mock data
-    const mockStats: ServerStats = {
-      memberCount: Math.floor(Math.random() * 1000) + 50,
-      channelCount: Math.floor(Math.random() * 20) + 5,
-      roleCount: Math.floor(Math.random() * 10) + 3,
-      boostLevel: Math.floor(Math.random() * 3),
-      verificationLevel: ['None', 'Low', 'Medium', 'High', 'Very High'][Math.floor(Math.random() * 5)],
-      createdAt: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toLocaleDateString()
-    };
-    
-    this.serverStats.set(mockStats);
+  loadServerData(): void {
+    this.loadServerMembers();
+    this.loadServerChannels();
+    this.updateServerStats();
   }
 
   /**
    * Load server members
    */
-  private loadServerMembers(): void {
+  loadServerMembers(): void {
     if (!this.server()) return;
     
     this.isLoadingMembers.set(true);
-    this.serverWebService.getServerMembers(this.server()!.serverId).subscribe({
-      next: (members) => {
-        this.serverMembers.set(members);
-        this.updateAvailableRoles(members);
-        this.isLoadingMembers.set(false);
-        this.updateServerStatsAfterMemberChange(0); // Refresh stats
-      },
-      error: (error) => {
-        console.error('Failed to load members:', error);
-        this.loadMockMembers();
-        this.isLoadingMembers.set(false);
-      }
-    });
-  }
-
-  /**
-   * Load mock members for development
-   */
-  private loadMockMembers(): void {
+    // TODO: Implement actual member loading from backend
+    // For now, using mock data
     const mockMembers: Member[] = [
       {
         memberId: '1',
-        memberName: 'John Doe',
+        memberName: 'Badger',
         userId: 1,
-        username: 'johndoe',
-        userPic: 'https://via.placeholder.com/40/7289da/ffffff?text=J',
+        username: 'badger',
+        userPic: 'https://avatars.githubusercontent.com/u/8027457',
         status: 'online',
-        roles: ['Admin', 'Moderator'],
-        joinedAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-        lastSeen: new Date(),
+        roles: ['Admin', 'Owner'],
+        joinedAt: new Date('2024-01-01'),
         isOwner: true,
         isAdmin: true,
+        canManageRoles: true,
         canManageMembers: true,
-        canManageChannels: true,
-        canManageRoles: true
+        canManageChannels: true
       },
       {
         memberId: '2',
-        memberName: 'Jane Smith',
+        memberName: 'John Doe',
         userId: 2,
-        username: 'janesmith',
-        userPic: 'https://via.placeholder.com/40/43b581/ffffff?text=J',
+        username: 'johndoe',
+        userPic: '',
         status: 'idle',
         roles: ['Moderator'],
-        joinedAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
-        lastSeen: new Date(Date.now() - 2 * 60 * 60 * 1000),
+        joinedAt: new Date('2024-01-15'),
         isOwner: false,
         isAdmin: false,
+        canManageRoles: true,
         canManageMembers: true,
-        canManageChannels: false,
-        canManageRoles: false
-      },
-      {
-        memberId: '3',
-        memberName: 'Bob Johnson',
-        userId: 3,
-        username: 'bobjohnson',
-        userPic: 'https://via.placeholder.com/40/faa61a/ffffff?text=B',
-        status: 'offline',
-        roles: ['Member'],
-        joinedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-        lastSeen: new Date(Date.now() - 24 * 60 * 60 * 1000),
-        isOwner: false,
-        isAdmin: false,
-        canManageMembers: false,
-        canManageChannels: false,
-        canManageRoles: false
+        canManageChannels: false
       }
     ];
     
     this.serverMembers.set(mockMembers);
-    this.updateAvailableRoles(mockMembers);
-    this.updateServerStatsAfterMemberChange(0); // Refresh stats
+    this.isLoadingMembers.set(false);
+    
+    // Extract available roles
+    const allRoles = mockMembers.flatMap(member => member.roles);
+    this.availableRoles = [...new Set(allRoles)];
   }
 
   /**
    * Load server channels
    */
-  private loadServerChannels(): void {
+  loadServerChannels(): void {
     if (!this.server()) return;
     
     this.isLoadingChannels.set(true);
-    this.serverWebService.getServerChannels(this.server()!.serverId).subscribe({
-      next: (channels) => {
-        this.serverChannels.set(channels);
-        this.isLoadingChannels.set(false);
-        this.updateServerStatsAfterChannelChange(0); // Refresh stats
-      },
-      error: (error) => {
-        console.error('Failed to load channels:', error);
-        this.loadMockChannels();
-        this.isLoadingChannels.set(false);
-      }
-    });
-  }
-
-  /**
-   * Load mock channels for development
-   */
-  private loadMockChannels(): void {
+    // TODO: Implement actual channel loading from backend
+    // For now, using mock data
     const mockChannels: Channel[] = [
       {
         channelId: 1,
         channelName: 'general',
-        categoryId: 0,
         type: 'text',
+        topic: 'General discussion',
+        categoryId: 1,
         position: 0,
-        topic: 'General discussion for the server',
         nsfw: false,
-        slowmode: 0,
         isPrivate: false,
         permissions: ['read', 'send'],
         memberCount: 150,
-        createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-        lastActivity: new Date()
+        createdAt: new Date('2024-01-01')
       },
       {
         channelId: 2,
         channelName: 'announcements',
-        categoryId: 0,
         type: 'text',
+        topic: 'Server announcements',
+        categoryId: 1,
         position: 1,
-        topic: 'Important server announcements',
         nsfw: false,
-        slowmode: 0,
         isPrivate: false,
         permissions: ['read'],
         memberCount: 150,
-        createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-        lastActivity: new Date(Date.now() - 2 * 60 * 60 * 1000)
-      },
-      {
-        channelId: 3,
-        channelName: 'General Voice',
-        categoryId: 0,
-        type: 'voice',
-        position: 2,
-        topic: 'Voice chat for general discussion',
-        nsfw: false,
-        userLimit: 10,
-        bitrate: 64000,
-        isPrivate: false,
-        permissions: ['connect', 'speak'],
-        memberCount: 25,
-        createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-        lastActivity: new Date()
+        createdAt: new Date('2024-01-01')
       }
     ];
     
     this.serverChannels.set(mockChannels);
-    this.updateServerStatsAfterChannelChange(0); // Refresh stats
+    this.isLoadingChannels.set(false);
   }
 
   /**
-   * Update available roles for filtering
+   * Update server statistics
    */
-  private updateAvailableRoles(members: Member[]): void {
-    const roles = new Set<string>();
-    members.forEach(member => {
-      member.roles.forEach(role => roles.add(role));
+  updateServerStats(): void {
+    const stats: ServerStats = {
+      memberCount: this.serverMembers().length,
+      channelCount: this.serverChannels().length,
+      roleCount: this.availableRoles.length,
+      boostLevel: 0,
+      verificationLevel: 'None',
+      createdAt: '2024-01-01'
+    };
+    this.serverStats.set(stats);
+  }
+
+  /**
+   * Update server stats after channel changes
+   */
+  updateServerStatsAfterChannelChange(delta: number): void {
+    const currentStats = this.serverStats();
+    this.serverStats.set({
+      ...currentStats,
+      channelCount: currentStats.channelCount + delta
     });
-    this.availableRoles = Array.from(roles);
   }
 
   /**
-   * Switch between tabs
+   * Get filtered members
    */
-  switchTab(tab: string): void {
-    this.activeTab.set(tab);
-  }
-
-  /**
-   * Get filtered members based on search and filters
-   */
-  getFilteredMembers(): Member[] {
+  get filteredMembers(): Member[] {
     let members = this.serverMembers();
     const query = this.memberSearchQuery().toLowerCase();
     const roleFilter = this.memberFilterRole();
@@ -283,8 +221,7 @@ export class ServerOverviewModalComponent implements OnInit {
 
     if (query) {
       members = members.filter(member => 
-        member.memberName.toLowerCase().includes(query) ||
-        member.username.toLowerCase().includes(query)
+        member.memberName.toLowerCase().includes(query)
       );
     }
 
@@ -306,37 +243,37 @@ export class ServerOverviewModalComponent implements OnInit {
   /**
    * Get filtered channels
    */
-  getFilteredChannels(): Channel[] {
-    return this.serverChannels().sort((a, b) => a.position - b.position);
+  get filteredChannels(): Channel[] {
+    return this.serverChannels();
   }
 
   /**
-   * Convert Channel to ServerChannel for compatibility
+   * Get filtered channels as server channels for compatibility
+   */
+  getFilteredChannelsAsServerChannels(): any[] {
+    return this.filteredChannels.map(channel => ({
+      id: channel.channelId,
+      name: channel.channelName,
+      type: channel.type,
+      topic: channel.topic,
+      categoryId: channel.categoryId,
+      position: channel.position
+    }));
+  }
+
+  /**
+   * Convert channel to server channel format
    */
   convertToServerChannel(channel: Channel | null): any {
     if (!channel) return null;
-    
     return {
-      id: channel.channelId.toString(),
+      id: channel.channelId,
       name: channel.channelName,
       type: channel.type,
-      position: channel.position,
-      parentId: channel.categoryId ? channel.categoryId.toString() : undefined,
       topic: channel.topic,
-      nsfw: channel.nsfw,
-      slowmode: channel.slowmode,
-      userLimit: channel.userLimit,
-      bitrate: channel.bitrate
+      categoryId: channel.categoryId,
+      position: channel.position
     };
-  }
-
-  /**
-   * Get filtered channels as ServerChannel format for the modal
-   */
-  getFilteredChannelsAsServerChannels(): any[] {
-    return this.getFilteredChannels()
-      .filter(c => c.type === 'category')
-      .map(channel => this.convertToServerChannel(channel));
   }
 
   /**
@@ -350,28 +287,6 @@ export class ServerOverviewModalComponent implements OnInit {
       'offline': 'M10 12a2 2 0 100-4 2 2 0 000 4z M10 2a8 8 0 100 16 8 8 0 000-16z'
     };
     return icons[status] || icons['offline'];
-  }
-
-  /**
-   * Update server stats after member changes
-   */
-  private updateServerStatsAfterMemberChange(change: number): void {
-    const currentStats = this.serverStats();
-    this.serverStats.set({
-      ...currentStats,
-      memberCount: Math.max(0, currentStats.memberCount + change)
-    });
-  }
-
-  /**
-   * Update server stats after channel changes
-   */
-  private updateServerStatsAfterChannelChange(change: number): void {
-    const currentStats = this.serverStats();
-    this.serverStats.set({
-      ...currentStats,
-      channelCount: Math.max(0, currentStats.channelCount + change)
-    });
   }
 
   /**
@@ -400,68 +315,153 @@ export class ServerOverviewModalComponent implements OnInit {
   }
 
   /**
-   * Kick member
+   * Kick member with confirmation modal
    */
   kickMember(member: Member): void {
-    if (!this.server()) return;
-    
-    if (confirm(`Are you sure you want to kick "${member.memberName}" from the server?`)) {
-      this.serverWebService.kickMember(this.server()!.serverId, member.memberId).subscribe({
-        next: () => {
-          this.alertService.success('Member Kicked', `${member.memberName} has been kicked from the server.`);
-          this.loadServerMembers();
-          this.updateServerStatsAfterMemberChange(-1);
-        },
-        error: (error) => {
-          console.error('Failed to kick member:', error);
-          this.alertService.error('Kick Failed', 'Failed to kick member from the server.');
-        }
-      });
-    }
+    this.confirmationData.set({
+      title: 'Kick Member',
+      message: `Are you sure you want to kick "${member.memberName}" from the server? This action cannot be undone.`,
+      confirmText: 'Kick Member',
+      cancelText: 'Cancel',
+      isDestructive: true
+    });
+    this.pendingAction.set({ type: 'kick', data: member });
+    this.isConfirmationModalOpen.set(true);
   }
 
   /**
-   * Ban member
+   * Ban member with confirmation modal
    */
   banMember(member: Member): void {
-    if (!this.server()) return;
-    
-    const reason = prompt('Enter ban reason (optional):');
-    if (reason !== null) { // User didn't cancel
-      this.serverWebService.banMember(this.server()!.serverId, member.memberId, reason || undefined).subscribe({
-        next: () => {
-          this.alertService.success('Member Banned', `${member.memberName} has been banned from the server.`);
-          this.loadServerMembers();
-          this.updateServerStatsAfterMemberChange(-1);
-        },
-        error: (error) => {
-          console.error('Failed to ban member:', error);
-          this.alertService.error('Ban Failed', 'Failed to ban member from the server.');
-        }
-      });
-    }
+    this.confirmationData.set({
+      title: 'Ban Member',
+      message: `Are you sure you want to ban "${member.memberName}" from the server? This action cannot be undone.`,
+      confirmText: 'Ban Member',
+      cancelText: 'Cancel',
+      isDestructive: true
+    });
+    this.pendingAction.set({ type: 'ban', data: member });
+    this.isConfirmationModalOpen.set(true);
   }
 
   /**
-   * Update member roles
+   * Update member roles with role editing modal
    */
   updateMemberRoles(member: Member): void {
+    this.roleEditingData.set({
+      member: member,
+      currentRoles: member.roles,
+      availableRoles: this.availableRoles
+    });
+    this.isRoleEditingModalOpen.set(true);
+  }
+
+  /**
+   * Handle confirmation modal result
+   */
+  onConfirmationResult(confirmed: boolean): void {
+    if (confirmed && this.pendingAction()) {
+      const action = this.pendingAction()!;
+      
+      switch (action.type) {
+        case 'kick':
+          this.executeKickMember(action.data);
+          break;
+        case 'ban':
+          this.executeBanMember(action.data);
+          break;
+        case 'deleteChannel':
+          this.executeDeleteChannel(action.data);
+          break;
+      }
+    }
+    
+    this.isConfirmationModalOpen.set(false);
+    this.confirmationData.set(null);
+    this.pendingAction.set(null);
+  }
+
+  /**
+   * Execute kick member action
+   */
+  private executeKickMember(member: Member): void {
     if (!this.server()) return;
     
-    const newRoles = prompt('Enter new roles (comma-separated):', member.roles.join(', '));
-    if (newRoles !== null) {
-      const roles = newRoles.split(',').map(role => role.trim()).filter(role => role);
+    this.serverWebService.kickMember(this.server()!.serverId, member.memberId).subscribe({
+      next: () => {
+        console.log('Member kicked successfully');
+        this.loadServerMembers();
+        this.updateServerStats();
+      },
+      error: (error) => {
+        console.error('Failed to kick member:', error);
+      }
+    });
+  }
+
+  /**
+   * Execute ban member action
+   */
+  private executeBanMember(member: Member): void {
+    if (!this.server()) return;
+    
+    this.serverWebService.banMember(this.server()!.serverId, member.memberId).subscribe({
+      next: () => {
+        console.log('Member banned successfully');
+        this.loadServerMembers();
+        this.updateServerStats();
+      },
+      error: (error) => {
+        console.error('Failed to ban member:', error);
+      }
+    });
+  }
+
+  /**
+   * Execute delete channel action
+   */
+  private executeDeleteChannel(channel: Channel): void {
+    if (!this.server()) return;
+    
+    this.serverWebService.deleteChannel(this.server()!.serverId, channel.channelId).subscribe({
+      next: () => {
+        console.log('Channel deleted successfully');
+        this.loadServerChannels();
+        this.updateServerStatsAfterChannelChange(-1);
+      },
+      error: (error) => {
+        console.error('Failed to delete channel:', error);
+      }
+    });
+  }
+
+  /**
+   * Handle role editing modal result
+   */
+  onRoleEditingResult(roles: string[]): void {
+    if (this.roleEditingData()?.member) {
+      const member = this.roleEditingData()!.member;
       this.serverWebService.updateMemberRoles(this.server()!.serverId, member.memberId, roles).subscribe({
         next: () => {
-          this.alertService.success('Roles Updated', `${member.memberName}'s roles have been updated.`);
+          console.log('Roles updated successfully');
           this.loadServerMembers();
         },
         error: (error) => {
           console.error('Failed to update roles:', error);
-          this.alertService.error('Update Failed', 'Failed to update member roles.');
         }
       });
     }
+    
+    this.isRoleEditingModalOpen.set(false);
+    this.roleEditingData.set(null);
+  }
+
+  /**
+   * Close role editing modal
+   */
+  closeRoleEditingModal(): void {
+    this.isRoleEditingModalOpen.set(false);
+    this.roleEditingData.set(null);
   }
 
   /**
@@ -474,77 +474,61 @@ export class ServerOverviewModalComponent implements OnInit {
   }
 
   /**
-   * Open channel modal for creating
-   */
-  createChannel(): void {
-    this.selectedChannel.set(null);
-    this.isEditingChannel.set(false);
-    this.isChannelModalOpen.set(true);
-  }
-
-  /**
    * Close channel modal
    */
   closeChannelModal(): void {
     this.isChannelModalOpen.set(false);
     this.selectedChannel.set(null);
+    this.isEditingChannel.set(false);
   }
 
   /**
-   * Save channel (create or update)
+   * Save channel
    */
   saveChannel(channelData: Partial<Channel>): void {
     if (!this.server()) return;
     
-    if (this.isEditingChannel() && this.selectedChannel()) {
+    if (this.isEditingChannel()) {
       // Update existing channel
       this.serverWebService.updateChannel(this.server()!.serverId, this.selectedChannel()!.channelId, channelData).subscribe({
         next: () => {
-          this.alertService.success('Channel Updated', 'Channel has been updated successfully.');
+          console.log('Channel updated successfully');
           this.loadServerChannels();
           this.closeChannelModal();
         },
         error: (error) => {
           console.error('Failed to update channel:', error);
-          this.alertService.error('Update Failed', 'Failed to update channel.');
         }
       });
     } else {
       // Create new channel
       this.serverWebService.createChannel(this.server()!.serverId, channelData).subscribe({
         next: () => {
-          this.alertService.success('Channel Created', 'New channel has been created successfully.');
+          console.log('Channel created successfully');
           this.loadServerChannels();
-          this.closeChannelModal();
           this.updateServerStatsAfterChannelChange(1);
+          this.closeChannelModal();
         },
         error: (error) => {
           console.error('Failed to create channel:', error);
-          this.alertService.error('Creation Failed', 'Failed to create channel.');
         }
       });
     }
   }
 
   /**
-   * Delete channel
+   * Delete channel with confirmation modal
    */
   deleteChannel(channel: Channel): void {
-    if (!this.server()) return;
-    
-    if (confirm(`Are you sure you want to delete the channel "#${channel.channelName}"? This action cannot be undone.`)) {
-      this.serverWebService.deleteChannel(this.server()!.serverId, channel.channelId).subscribe({
-        next: () => {
-          this.alertService.success('Channel Deleted', `Channel #${channel.channelName} has been deleted.`);
-          this.loadServerChannels();
-          this.updateServerStatsAfterChannelChange(-1);
-        },
-        error: (error) => {
-          console.error('Failed to delete channel:', error);
-          this.alertService.error('Deletion Failed', 'Failed to delete channel.');
-        }
-      });
-    }
+    this.confirmationData.set({
+      title: 'Delete Channel',
+      message: `Are you sure you want to delete the channel "#${channel.channelName}"? This action cannot be undone.`,
+      confirmText: 'Delete Channel',
+      cancelText: 'Cancel',
+      isDestructive: true
+    });
+    this.pendingAction.set({ type: 'deleteChannel', data: channel });
+    this.isConfirmationModalOpen.set(true);
   }
 
   /**
@@ -552,7 +536,7 @@ export class ServerOverviewModalComponent implements OnInit {
    */
   getBoostLevelText(level: number): string {
     const levels = ['No Boost', 'Level 1', 'Level 2', 'Level 3'];
-    return levels[level] || 'No Boost';
+    return levels[level] || 'Unknown';
   }
 
   /**
@@ -564,21 +548,21 @@ export class ServerOverviewModalComponent implements OnInit {
   }
 
   /**
-   * Get verification level color
+   * Get verification level display text
    */
-  getVerificationLevelColor(level: string): string {
-    const colors: { [key: string]: string } = {
-      'None': 'text-discord-text-muted',
-      'Low': 'text-green-400',
-      'Medium': 'text-yellow-400',
-      'High': 'text-orange-400',
-      'Very High': 'text-red-400'
+  getVerificationLevelText(level: string): string {
+    const levels: { [key: string]: string } = {
+      'None': 'None',
+      'Low': 'Low',
+      'Medium': 'Medium',
+      'High': 'High',
+      'Very High': 'Very High'
     };
-    return colors[level] || 'text-discord-text-muted';
+    return levels[level] || level;
   }
 
   /**
-   * Close the modal
+   * Close modal
    */
   close(): void {
     this.closeModal.emit();

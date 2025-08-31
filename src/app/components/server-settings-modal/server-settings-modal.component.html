@@ -498,4 +498,14 @@
       (saveChannel)="saveChannel($event)"
     ></app-channel-management-modal>
   }
+
+  <!-- Confirmation Modal -->
+  @if (isConfirmationModalOpen()) {
+    <app-confirmation-modal
+      [data]="confirmationData()!"
+      [isOpen]="isConfirmationModalOpen()"
+      (confirmed)="onConfirmationResult(true)"
+      (cancelled)="onConfirmationResult(false)"
+    ></app-confirmation-modal>
+  }
 </div>

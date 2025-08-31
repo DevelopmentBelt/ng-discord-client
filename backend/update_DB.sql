@@ -25,3 +25,12 @@ VALUES ('Music Producers', 1, 'https://via.placeholder.com/64/faa61a/ffffff?text
 
 INSERT INTO `servers` (`server_name`, `owner_id`, `server_icon`, `server_description`, `is_public`)
 VALUES ('Art & Design', 1, 'https://via.placeholder.com/64/ed4245/ffffff?text=A', 'Showcase your artwork, get inspired by others, and participate in creative challenges.', TRUE);
+
+-- Add current user (user_id = 1) as a member of existing servers
+INSERT INTO `members` (`user_id`, `server_id`, `status`) VALUES (1, 1, 'active');
+INSERT INTO `members` (`user_id`, `server_id`, `status`) VALUES (1, 2, 'active');
+INSERT INTO `members` (`user_id`, `server_id`, `status`) VALUES (1, 3, 'active');
+INSERT INTO `members` (`user_id`, `server_id`, `status`) VALUES (1, 4, 'active');
+INSERT INTO `members` (`user_id`, `server_id`, `status`) VALUES (1, 5, 'active');
+INSERT INTO `members` (`user_id`, `server_id`, `status`) VALUES (1, 6, 'active');
+INSERT INTO `members` (`user_id`, `server_id`, `status`) VALUES (1, 7, 'active');
