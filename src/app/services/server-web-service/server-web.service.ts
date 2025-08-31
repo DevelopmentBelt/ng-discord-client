@@ -147,7 +147,14 @@ export class ServerWebService {
   }
 
   /**
-   * Reorder channels
+   * Reorder roles in the server
+   */
+  reorderRoles(serverId: string, roleOrder: { roleId: string; position: number }[]): Observable<any> {
+    return this.serverService.sendPatchReq(`servers/${serverId}/roles/reorder`, { roleOrder }, {});
+  }
+
+  /**
+   * Reorder channels in the server
    */
   reorderChannels(serverId: string, channelOrder: { channelId: number; position: number }[]): Observable<any> {
     return this.serverService.sendPatchReq(`servers/${serverId}/channels/reorder`, { channelOrder }, {});

@@ -51,28 +51,56 @@
           </div>
         </div>
 
-        <!-- Selected Roles -->
-        <div>
-          <h4 class="text-sm font-medium text-discord-text-light mb-3">Selected Roles</h4>
-          <div class="space-y-2">
-            @for (role of selectedRoles(); track role) {
-              <div class="flex items-center justify-between p-2 bg-discord-medium rounded-md">
-                <span class="text-discord-text-light">{{ role }}</span>
-                <button 
-                  (click)="removeRole(role)"
-                  class="p-1 text-discord-text-muted hover:text-red-400 hover:bg-discord-hover rounded transition-colors duration-150"
-                  title="Remove Role"
-                >
-                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                  </svg>
-                </button>
-              </div>
-            }
-            @if (selectedRoles().length === 0) {
-              <p class="text-discord-text-muted text-sm italic">No roles selected</p>
-            }
-          </div>
+        <!-- Current Roles -->
+        <div class="mb-4">
+          <h4 class="text-lg font-semibold text-discord-text-light mb-3">Current Roles</h4>
+          @if (selectedRoles().length > 0) {
+            <div class="space-y-2">
+              @for (role of selectedRoles(); track role; let i = $index) {
+                <div class="flex items-center justify-between p-3 bg-discord-medium rounded-lg border border-discord-border">
+                  <span class="text-discord-text-light font-medium">{{ role }}</span>
+                  <div class="flex items-center space-x-2">
+                    <!-- Move Up Button -->
+                    <button 
+                      (click)="moveRoleUpByIndex(i)"
+                      [disabled]="i === 0"
+                      class="p-1 text-discord-text-muted hover:text-discord-text-light disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Move Up"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                      </svg>
+                    </button>
+                    
+                    <!-- Move Down Button -->
+                    <button 
+                      (click)="moveRoleDownByIndex(i)"
+                      [disabled]="i === selectedRoles().length - 1"
+                      class="p-1 text-discord-text-muted hover:text-discord-text-light disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Move Down"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                      </svg>
+                    </button>
+                    
+                    <!-- Remove Role Button -->
+                    <button 
+                      (click)="removeRole(role)"
+                      class="p-1 text-red-400 hover:text-red-300"
+                      title="Remove Role"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="text-discord-text-muted text-sm">No roles assigned</p>
+          }
         </div>
       </div>
 

@@ -2,11 +2,13 @@ import { ChangeDetectionStrategy, Component, OnInit, signal, WritableSignal, inp
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Member } from '../../models/member/member';
+import { ServerRole } from '../server-settings-modal/server-settings-modal.component';
 
 export interface RoleEditingData {
   member: Member;
   currentRoles: string[];
   availableRoles: string[];
+  allRoles?: ServerRole[]; // Add this to support reordering
 }
 
 @Component({
@@ -102,6 +104,88 @@ export class RoleEditingModalComponent implements OnInit {
   onKeydown(event: KeyboardEvent): void {
     if (event.key === 'Escape') {
       this.close();
+    }
+  }
+
+  /**
+   * Move role up in hierarchy
+   */
+  moveRoleUp(role: ServerRole): void {
+    const roles = this.data()?.allRoles || [];
+    const currentIndex = roles.findIndex(r => r.id === role.id);
+    
+    if (currentIndex > 0) {
+      const newRoles = [...roles];
+      [newRoles[currentIndex], newRoles[currentIndex - 1]] = [newRoles[currentIndex - 1], newRoles[currentIndex]];
+      
+      // Update positions
+      newRoles.forEach((r, index) => {
+        r.position = index + 1;
+      });
+      
+      // Emit updated roles
+      this.saveRoles.emit(newRoles.map(r => r.name));
+    }
+  }
+
+  /**
+   * Move role down in hierarchy
+   */
+  moveRoleDown(role: ServerRole): void {
+    const roles = this.data()?.allRoles || [];
+    const currentIndex = roles.findIndex(r => r.id === role.id);
+    
+    if (currentIndex < roles.length - 1) {
+      const newRoles = [...roles];
+      [newRoles[currentIndex], newRoles[currentIndex + 1]] = [newRoles[currentIndex + 1], newRoles[currentIndex]];
+      
+      // Update positions
+      newRoles.forEach((r, index) => {
+        r.position = index + 1;
+      });
+      
+      // Emit updated roles
+      this.saveRoles.emit(newRoles.map(r => r.name));
+    }
+  }
+
+  /**
+   * Check if role can move up
+   */
+  canMoveUp(role: ServerRole): boolean {
+    const roles = this.data()?.allRoles || [];
+    const currentIndex = roles.findIndex(r => r.id === role.id);
+    return currentIndex > 0;
+  }
+
+  /**
+   * Check if role can move down
+   */
+  canMoveDown(role: ServerRole): boolean {
+    const roles = this.data()?.allRoles || [];
+    const currentIndex = roles.findIndex(r => r.id === role.id);
+    return currentIndex < roles.length - 1;
+  }
+
+  /**
+   * Move role up in hierarchy by index
+   */
+  moveRoleUpByIndex(index: number): void {
+    if (index > 0) {
+      const roles = [...this.selectedRoles()];
+      [roles[index], roles[index - 1]] = [roles[index - 1], roles[index]];
+      this.selectedRoles.set(roles);
+    }
+  }
+
+  /**
+   * Move role down in hierarchy by index
+   */
+  moveRoleDownByIndex(index: number): void {
+    if (index < this.selectedRoles().length - 1) {
+      const roles = [...this.selectedRoles()];
+      [roles[index], roles[index + 1]] = [roles[index + 1], roles[index]];
+      this.selectedRoles.set(roles);
     }
   }
 }

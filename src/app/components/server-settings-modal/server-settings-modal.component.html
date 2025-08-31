@@ -192,6 +192,30 @@
                     }
                   </div>
                   <div class="flex space-x-2">
+                    <!-- Move Up Button -->
+                    <button 
+                      (click)="moveRoleUp(role)"
+                      [disabled]="!canMoveUp(role)"
+                      class="p-1 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Move Up"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                      </svg>
+                    </button>
+                    
+                    <!-- Move Down Button -->
+                    <button 
+                      (click)="moveRoleDown(role)"
+                      [disabled]="!canMoveDown(role)"
+                      class="p-1 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Move Down"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                      </svg>
+                    </button>
+                    
                     <button 
                       (click)="editRole(role)"
                       class="p-1 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150"
@@ -256,6 +280,30 @@
                       <span class="font-medium text-discord-text-light">{{ channel.name }}</span>
                     </div>
                     <div class="flex space-x-2">
+                      <!-- Move Up Button -->
+                      <button 
+                        (click)="moveChannelUp(channel)"
+                        [disabled]="!canMoveChannelUp(channel)"
+                        class="p-1 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Move Up"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                        </svg>
+                      </button>
+                      
+                      <!-- Move Down Button -->
+                      <button 
+                        (click)="moveChannelDown(channel)"
+                        [disabled]="!canMoveChannelDown(channel)"
+                        class="p-1 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Move Down"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                      </button>
+                      
                       <button 
                         (click)="editChannel(channel)"
                         class="p-1 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150"
@@ -319,6 +367,30 @@
                             <span class="text-sm text-discord-text-muted">Limit: {{ subChannel.userLimit }}</span>
                           }
                           <div class="flex space-x-2">
+                            <!-- Move Up Button -->
+                            <button 
+                              (click)="moveChannelUp(subChannel)"
+                              [disabled]="!canMoveChannelUp(subChannel)"
+                              class="p-1 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                              title="Move Up"
+                            >
+                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                              </svg>
+                            </button>
+                            
+                            <!-- Move Down Button -->
+                            <button 
+                              (click)="moveChannelDown(subChannel)"
+                              [disabled]="!canMoveChannelDown(subChannel)"
+                              class="p-1 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                              title="Move Down"
+                            >
+                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                              </svg>
+                            </button>
+                            
                             <button 
                               (click)="editChannel(subChannel)"
                               class="p-1 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150"
@@ -375,6 +447,30 @@
                     <div class="flex items-center space-x-4">
                       <span class="text-sm text-discord-text-muted">Position: {{ channel.position }}</span>
                       <div class="flex space-x-2">
+                        <!-- Move Up Button -->
+                        <button 
+                          (click)="moveChannelUp(channel)"
+                          [disabled]="!canMoveChannelUp(channel)"
+                          class="p-1 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Move Up"
+                        >
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                          </svg>
+                        </button>
+                        
+                        <!-- Move Down Button -->
+                        <button 
+                          (click)="moveChannelDown(channel)"
+                          [disabled]="!canMoveChannelDown(channel)"
+                          class="p-1 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Move Down"
+                        >
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                          </svg>
+                        </button>
+                        
                         <button 
                           (click)="editChannel(channel)"
                           class="p-1 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150"

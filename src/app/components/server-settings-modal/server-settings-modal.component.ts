@@ -6,6 +6,7 @@ import { AlertService } from '../../services/alert-service/alert-service';
 import { RoleManagementModalComponent } from '../role-management-modal/role-management-modal.component';
 import { ChannelManagementModalComponent } from '../channel-management-modal/channel-management-modal.component';
 import { ConfirmationModalComponent, ConfirmationData } from '../confirmation-modal/confirmation-modal.component';
+import { ServerWebService } from '../../services/server-web-service/server-web.service';
 
 export interface ServerRole {
   id: string;
@@ -20,7 +21,7 @@ export interface ServerRole {
 }
 
 export interface ServerChannel {
-  id: string;
+  id: number;
   name: string;
   type: 'text' | 'voice' | 'category';
   position: number;
@@ -99,7 +100,7 @@ export class ServerSettingsModalComponent implements OnInit {
     { id: 'use_voice_activity', name: 'Use Voice Activity', description: 'Use voice activity detection', category: 'Voice' }
   ];
 
-  constructor(private alertService: AlertService) {}
+  constructor(private alertService: AlertService, private serverWebService: ServerWebService) {}
 
   ngOnInit(): void {
     if (this.server()) {
@@ -152,7 +153,7 @@ export class ServerSettingsModalComponent implements OnInit {
     // Mock channels
     const mockChannels: ServerChannel[] = [
       {
-        id: '1',
+        id: 1,
         name: 'general',
         type: 'text',
         topic: 'General discussion',
@@ -161,7 +162,7 @@ export class ServerSettingsModalComponent implements OnInit {
         nsfw: false
       },
       {
-        id: '2',
+        id: 2,
         name: 'announcements',
         type: 'text',
         topic: 'Server announcements',
@@ -316,6 +317,76 @@ export class ServerSettingsModalComponent implements OnInit {
     this.isEditingRole.set(false);
   }
 
+  /**
+   * Move role up in hierarchy
+   */
+  moveRoleUp(role: ServerRole): void {
+    const roles = [...this.serverRoles()];
+    const currentIndex = roles.findIndex(r => r.id === role.id);
+    
+    if (currentIndex > 0) {
+      [roles[currentIndex], roles[currentIndex - 1]] = [roles[currentIndex - 1], roles[currentIndex]];
+      
+      // Update positions
+      roles.forEach((r, index) => {
+        r.position = index + 1;
+      });
+      
+      this.serverRoles.set(roles);
+      
+      // Call backend API to update role positions
+      const roleOrder = roles.map(r => ({ roleId: r.id, position: r.position }));
+      this.serverWebService.reorderRoles(this.server()!.serverId, roleOrder).subscribe({
+        next: () => console.log('Role moved up successfully'),
+        error: (error: any) => console.error('Failed to move role up:', error)
+      });
+    }
+  }
+
+  /**
+   * Move role down in hierarchy
+   */
+  moveRoleDown(role: ServerRole): void {
+    const roles = [...this.serverRoles()];
+    const currentIndex = roles.findIndex(r => r.id === role.id);
+    
+    if (currentIndex < roles.length - 1) {
+      [roles[currentIndex], roles[currentIndex + 1]] = [roles[currentIndex + 1], roles[currentIndex]];
+      
+      // Update positions
+      roles.forEach((r, index) => {
+        r.position = index + 1;
+      });
+      
+      this.serverRoles.set(roles);
+      
+      // Call backend API to update role positions
+      const roleOrder = roles.map(r => ({ roleId: r.id, position: r.position }));
+      this.serverWebService.reorderRoles(this.server()!.serverId, roleOrder).subscribe({
+        next: () => console.log('Role moved down successfully'),
+        error: (error: any) => console.error('Failed to move role down:', error)
+      });
+    }
+  }
+
+  /**
+   * Check if role can move up
+   */
+  canMoveUp(role: ServerRole): boolean {
+    const roles = this.serverRoles();
+    const currentIndex = roles.findIndex(r => r.id === role.id);
+    return currentIndex > 0;
+  }
+
+  /**
+   * Check if role can move down
+   */
+  canMoveDown(role: ServerRole): boolean {
+    const roles = this.serverRoles();
+    const currentIndex = roles.findIndex(r => r.id === role.id);
+    return currentIndex < roles.length - 1;
+  }
+
   // Channel Management Methods
   /**
    * Open channel creation modal
@@ -359,7 +430,7 @@ export class ServerSettingsModalComponent implements OnInit {
   duplicateChannel(channel: ServerChannel): void {
     const newChannel: ServerChannel = {
       ...channel,
-      id: Math.random().toString(36).substring(2, 15),
+      id: Math.floor(Math.random() * 10000) + 1000, // Generate numeric ID
       name: `${channel.name}-copy`,
       position: this.serverChannels().length
     };
@@ -383,7 +454,7 @@ export class ServerSettingsModalComponent implements OnInit {
     } else {
       // Create new channel
       const newChannel: ServerChannel = {
-        id: Math.random().toString(36).substring(2, 15),
+        id: Math.floor(Math.random() * 10000) + 1000, // Generate numeric ID
         name: channelData.name || 'new-channel',
         type: channelData.type || 'text',
         position: this.serverChannels().length,
@@ -410,6 +481,76 @@ export class ServerSettingsModalComponent implements OnInit {
     this.isChannelModalOpen.set(false);
     this.selectedChannel.set(null);
     this.isEditingChannel.set(false);
+  }
+
+  /**
+   * Move channel up in hierarchy
+   */
+  moveChannelUp(channel: ServerChannel): void {
+    const channels = [...this.serverChannels()];
+    const currentIndex = channels.findIndex(c => c.id === channel.id);
+    
+    if (currentIndex > 0) {
+      [channels[currentIndex], channels[currentIndex - 1]] = [channels[currentIndex - 1], channels[currentIndex]];
+      
+      // Update positions
+      channels.forEach((c, index) => {
+        c.position = index + 1;
+      });
+      
+      this.serverChannels.set(channels);
+      
+      // Call backend API to update channel positions
+      const channelOrder = channels.map(c => ({ channelId: c.id, position: c.position }));
+      this.serverWebService.reorderChannels(this.server()!.serverId, channelOrder).subscribe({
+        next: () => console.log('Channel moved up successfully'),
+        error: (error: any) => console.error('Failed to move channel up:', error)
+      });
+    }
+  }
+
+  /**
+   * Move channel down in hierarchy
+   */
+  moveChannelDown(channel: ServerChannel): void {
+    const channels = [...this.serverChannels()];
+    const currentIndex = channels.findIndex(c => c.id === channel.id);
+    
+    if (currentIndex < channels.length - 1) {
+      [channels[currentIndex], channels[currentIndex + 1]] = [channels[currentIndex + 1], channels[currentIndex]];
+      
+      // Update positions
+      channels.forEach((c, index) => {
+        c.position = index + 1;
+      });
+      
+      this.serverChannels.set(channels);
+      
+      // Call backend API to update channel positions
+      const channelOrder = channels.map(c => ({ channelId: c.id, position: c.position }));
+      this.serverWebService.reorderChannels(this.server()!.serverId, channelOrder).subscribe({
+        next: () => console.log('Channel moved down successfully'),
+        error: (error: any) => console.error('Failed to move channel down:', error)
+      });
+    }
+  }
+
+  /**
+   * Check if channel can move up
+   */
+  canMoveChannelUp(channel: ServerChannel): boolean {
+    const channels = this.serverChannels();
+    const currentIndex = channels.findIndex(c => c.id === channel.id);
+    return currentIndex > 0;
+  }
+
+  /**
+   * Check if channel can move down
+   */
+  canMoveChannelDown(channel: ServerChannel): boolean {
+    const channels = this.serverChannels();
+    const currentIndex = channels.findIndex(c => c.id === channel.id);
+    return currentIndex < channels.length - 1;
   }
 
   /**
