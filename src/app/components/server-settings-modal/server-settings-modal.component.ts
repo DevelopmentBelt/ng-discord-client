@@ -2,10 +2,12 @@ import { ChangeDetectionStrategy, Component, OnInit, signal, WritableSignal, inp
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Server } from '../../models/server/server';
+import { Member } from '../../models/member/member';
 import { AlertService } from '../../services/alert-service/alert-service';
 import { RoleManagementModalComponent } from '../role-management-modal/role-management-modal.component';
 import { ChannelManagementModalComponent } from '../channel-management-modal/channel-management-modal.component';
 import { ConfirmationModalComponent, ConfirmationData } from '../confirmation-modal/confirmation-modal.component';
+import { UserProfileModalComponent } from '../user-profile-modal/user-profile-modal.component';
 import { ServerWebService } from '../../services/server-web-service/server-web.service';
 
 export interface ServerRole {
@@ -46,7 +48,7 @@ export interface Permission {
   styleUrls: ['./server-settings-modal.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [CommonModule, FormsModule, RoleManagementModalComponent, ChannelManagementModalComponent, ConfirmationModalComponent]
+  imports: [CommonModule, FormsModule, RoleManagementModalComponent, ChannelManagementModalComponent, ConfirmationModalComponent, UserProfileModalComponent]
 })
 export class ServerSettingsModalComponent implements OnInit {
   // Input Signals
@@ -74,6 +76,16 @@ export class ServerSettingsModalComponent implements OnInit {
   selectedChannel: WritableSignal<ServerChannel | null> = signal(null);
   isChannelModalOpen: WritableSignal<boolean> = signal(false);
   isEditingChannel: WritableSignal<boolean> = signal(false);
+
+  // User management
+  serverMembers: WritableSignal<Member[]> = signal([]);
+  selectedMember: WritableSignal<Member | null> = signal(null);
+  isUserProfileModalOpen: WritableSignal<boolean> = signal(false);
+  memberSearchQuery: WritableSignal<string> = signal('');
+  memberFilterRole: WritableSignal<string> = signal('all');
+  memberFilterStatus: WritableSignal<string> = signal('all');
+  availableRoles: WritableSignal<string[]> = signal([]);
+  isLoadingMembers: WritableSignal<boolean> = signal(false);
 
   // Settings states
   verificationLevel: WritableSignal<string> = signal('Low');
@@ -106,6 +118,7 @@ export class ServerSettingsModalComponent implements OnInit {
     if (this.server()) {
       this.initializeForm();
       this.loadMockData();
+      this.loadServerMembers();
     }
   }
 
@@ -172,6 +185,71 @@ export class ServerSettingsModalComponent implements OnInit {
       }
     ];
     this.serverChannels.set(mockChannels);
+  }
+
+  /**
+   * Load server members
+   */
+  loadServerMembers(): void {
+    if (!this.server()) return;
+    
+    this.isLoadingMembers.set(true);
+    // TODO: Implement actual member loading from backend
+    // For now, using mock data
+    const mockMembers: Member[] = [
+      {
+        memberId: '1',
+        memberName: 'Badger',
+        userId: 1,
+        username: 'badger',
+        userPic: 'https://avatars.githubusercontent.com/u/8027457',
+        status: 'online',
+        roles: ['Admin', 'Owner'],
+        joinedAt: new Date('2024-01-01'),
+        isOwner: true,
+        isAdmin: true,
+        canManageRoles: true,
+        canManageMembers: true,
+        canManageChannels: true
+      },
+      {
+        memberId: '2',
+        memberName: 'John Doe',
+        userId: 2,
+        username: 'johndoe',
+        userPic: '',
+        status: 'idle',
+        roles: ['Moderator'],
+        joinedAt: new Date('2024-01-15'),
+        isOwner: false,
+        isAdmin: false,
+        canManageRoles: true,
+        canManageMembers: true,
+        canManageChannels: false
+      },
+      {
+        memberId: '3',
+        memberName: 'Jane Smith',
+        userId: 3,
+        username: 'janesmith',
+        userPic: '',
+        status: 'online',
+        roles: ['Member'],
+        joinedAt: new Date('2024-02-01'),
+        isOwner: false,
+        isAdmin: false,
+        canManageRoles: false,
+        canManageMembers: false,
+        canManageChannels: false
+      }
+    ];
+    
+    this.serverMembers.set(mockMembers);
+    this.isLoadingMembers.set(false);
+    
+    // Extract available roles
+    const allRoles = mockMembers.flatMap(member => member.roles);
+    this.availableRoles.set([...new Set(allRoles)]);
   }
 
   /**
@@ -561,6 +639,19 @@ export class ServerSettingsModalComponent implements OnInit {
   }
 
   /**
+   * Get status color for member status indicator
+   */
+  getStatusColor(status: string): string {
+    const colors: { [key: string]: string } = {
+      'online': 'bg-green-500',
+      'idle': 'bg-yellow-500',
+      'dnd': 'bg-red-500',
+      'offline': 'bg-gray-500'
+    };
+    return colors[status] || 'bg-gray-500';
+  }
+
+  /**
    * Get verification level color
    */
   getVerificationLevelColor(level: string): string {
@@ -589,10 +680,58 @@ export class ServerSettingsModalComponent implements OnInit {
   }
 
   /**
+   * Get filtered members based on search and filters
+   */
+  get filteredMembers(): Member[] {
+    let members = this.serverMembers();
+    
+    // Apply search filter
+    if (this.memberSearchQuery()) {
+      const query = this.memberSearchQuery().toLowerCase();
+      members = members.filter(member => 
+        member.memberName.toLowerCase().includes(query) ||
+        member.username.toLowerCase().includes(query)
+      );
+    }
+    
+    // Apply role filter
+    if (this.memberFilterRole() !== 'all') {
+      members = members.filter(member => 
+        member.roles.includes(this.memberFilterRole())
+      );
+    }
+    
+    // Apply status filter
+    if (this.memberFilterStatus() !== 'all') {
+      members = members.filter(member => 
+        member.status === this.memberFilterStatus()
+      );
+    }
+    
+    return members;
+  }
+
+  /**
    * Close the modal
    */
   close(): void {
     this.closeModal.emit();
+  }
+
+  /**
+   * Open user profile modal
+   */
+  openUserProfile(member: Member): void {
+    this.selectedMember.set(member);
+    this.isUserProfileModalOpen.set(true);
+  }
+
+  /**
+   * Close user profile modal
+   */
+  closeUserProfileModal(): void {
+    this.isUserProfileModalOpen.set(false);
+    this.selectedMember.set(null);
   }
 
   /**
