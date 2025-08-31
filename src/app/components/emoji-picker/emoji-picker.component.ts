@@ -265,7 +265,27 @@ export class EmojiPickerComponent implements OnInit, OnDestroy {
 
   onEmojiSelect(emoji: Emoji): void {
     console.log('🎯 Emoji selected in picker:', emoji);
+    
+    // Add visual feedback that emoji was selected
+    this.showEmojiSelectionFeedback(emoji);
+    
+    // Emit the selected emoji
     this.emojiSelected.emit(emoji);
+  }
+
+  private showEmojiSelectionFeedback(emoji: Emoji): void {
+    // Find the emoji element and add a brief highlight effect
+    const emojiElements = document.querySelectorAll('.emoji-item');
+    for (let i = 0; i < emojiElements.length; i++) {
+      const element = emojiElements[i];
+      if (element.textContent?.includes(emoji.char)) {
+        element.classList.add('emoji-selected-feedback');
+        setTimeout(() => {
+          element.classList.remove('emoji-selected-feedback');
+        }, 300);
+        break;
+      }
+    }
   }
 
   onClose(): void {

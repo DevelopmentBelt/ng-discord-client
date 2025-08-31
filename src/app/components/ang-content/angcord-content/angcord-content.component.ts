@@ -202,8 +202,8 @@ export class AngcordContentComponent implements OnInit, OnDestroy {
       this.cdr.detectChanges();
     }
     
-    // Close the emoji picker
-    this.isEmojiPickerOpen.set(false);
+    // Don't close the emoji picker - keep it open for multiple selections
+    // this.isEmojiPickerOpen.set(false);
   }
 
   public handleKeyDownEvent($event: KeyboardEvent) {
