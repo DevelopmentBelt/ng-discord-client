@@ -145,28 +145,6 @@ export class AngcordContentComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Open inbox/messages functionality
-   */
-  openInbox(): void {
-    console.log('Opening inbox');
-    
-    // TODO: Implement inbox modal/overlay
-    // This could show direct messages, mentions, etc.
-    this.alertService.featureComingSoon('Inbox');
-  }
-
-  /**
-   * Open help and support functionality
-   */
-  openHelp(): void {
-    console.log('Opening help');
-    
-    // TODO: Implement help modal/overlay
-    // This could show help documentation, keyboard shortcuts, etc.
-    this.alertService.featureComingSoon('Help and Support');
-  }
-
-  /**
    * Handle file upload functionality
    */
   uploadFile(): void {
