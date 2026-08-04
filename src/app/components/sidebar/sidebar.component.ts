@@ -6,6 +6,7 @@ import { SidebarServerComponent } from '../sidebar-server/sidebar-server.compone
 import { ServerCreationModalComponent } from '../server-creation-modal/server-creation-modal.component';
 import { InboxModalComponent } from '../inbox-modal/inbox-modal.component';
 import { NotificationBadgeComponent } from '../notification-badge/notification-badge.component';
+import { UserSettingsModalComponent } from '../user-settings-modal/user-settings-modal.component';
 import { Server } from '../../models/server/server';
 import { ServerConnectivityService } from '../../services/server-connectivity.service';
 import { InboxService } from '../../services/inbox-service/inbox.service';
@@ -19,7 +20,7 @@ import { take } from 'rxjs';
 
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [CommonModule, FormsModule, ServerBrowserComponent, SidebarServerComponent, ServerCreationModalComponent, InboxModalComponent, NotificationBadgeComponent]
+  imports: [CommonModule, FormsModule, ServerBrowserComponent, SidebarServerComponent, ServerCreationModalComponent, InboxModalComponent, NotificationBadgeComponent, UserSettingsModalComponent]
 })
 export class SidebarComponent implements OnInit {
   // Input Signals
@@ -44,6 +45,7 @@ export class SidebarComponent implements OnInit {
   sidebarServers: WritableSignal<Server[]> = signal([]);
   showServerCreation: WritableSignal<boolean> = signal(false);
   showInboxModal: WritableSignal<boolean> = signal(false);
+  showUserSettings: WritableSignal<boolean> = signal(false);
 
   constructor(
     private serverService: ServerConnectivityService,
@@ -54,6 +56,18 @@ export class SidebarComponent implements OnInit {
 
   currentUsername(): string {
     return this.authService.currentUser()?.username || 'User';
+  }
+
+  currentUserPic(): string {
+    return this.authService.currentUser()?.userPic || '';
+  }
+
+  openUserSettings(): void {
+    this.showUserSettings.set(true);
+  }
+
+  closeUserSettings(): void {
+    this.showUserSettings.set(false);
   }
 
   logout(): void {

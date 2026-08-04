@@ -15,6 +15,7 @@ class UserController extends Routes
     $this->app->post('/api/users/login', [$this, 'login']);
     $this->app->post('/api/users/logout', [$this, 'logout']);
     $this->app->get('/api/users/me', [$this, 'me']);
+    $this->app->put('/api/users/me', [$this, 'updateProfile']);
     $this->app->get('/api/users/search', [$this, 'search']);
   }
 
@@ -136,6 +137,57 @@ class UserController extends Routes
 
     return $this->json($response, [
       'status' => 'success',
+      'user' => AuthService::userToArray($user),
+    ]);
+  }
+
+  public function updateProfile(Request $request, Response $response, $args): Response
+  {
+    $userId = AuthService::getUserId();
+    if (!$userId) {
+      return $this->json($response, ['status' => 'error', 'message' => 'Not authenticated'], 401);
+    }
+
+    $body = $request->getParsedBody() ?? [];
+    $username = trim((string) ($body['username'] ?? ''));
+    $userBio = trim((string) ($body['userBio'] ?? ''));
+    $userPic = trim((string) ($body['userPic'] ?? ''));
+
+    if ($username === '') {
+      return $this->json($response, ['status' => 'error', 'message' => 'Username is required'], 400);
+    }
+    if (strlen($username) < 3 || strlen($username) > 32) {
+      return $this->json($response, ['status' => 'error', 'message' => 'Username must be 3-32 characters'], 400);
+    }
+    if (!preg_match('/^[a-zA-Z0-9._-]+$/', $username)) {
+      return $this->json($response, ['status' => 'error', 'message' => 'Username may only contain letters, numbers, dots, underscores, and hyphens'], 400);
+    }
+    if (strlen($userBio) > 255) {
+      return $this->json($response, ['status' => 'error', 'message' => 'Bio must be 255 characters or less'], 400);
+    }
+    if ($userPic !== '' && !filter_var($userPic, FILTER_VALIDATE_URL)) {
+      return $this->json($response, ['status' => 'error', 'message' => 'Avatar must be a valid URL'], 400);
+    }
+    if (strlen($userPic) > 512) {
+      return $this->json($response, ['status' => 'error', 'message' => 'Avatar URL is too long'], 400);
+    }
+
+    $pdo = $this->dbService->getConnection();
+    $dup = $pdo->prepare('SELECT COUNT(*) FROM users WHERE user_name = ? AND user_id <> ?');
+    $dup->execute([$username, $userId]);
+    if ((int) $dup->fetchColumn() > 0) {
+      return $this->json($response, ['status' => 'error', 'message' => 'Username already taken'], 409);
+    }
+
+    $stmt = $pdo->prepare(
+      'UPDATE users SET user_name = ?, user_bio = ?, user_pic = ? WHERE user_id = ?'
+    );
+    $stmt->execute([$username, $userBio !== '' ? $userBio : null, $userPic !== '' ? $userPic : null, $userId]);
+
+    $user = AuthService::loadUser($pdo, $userId);
+    return $this->json($response, [
+      'status' => 'success',
+      'message' => 'Profile updated',
       'user' => AuthService::userToArray($user),
     ]);
   }

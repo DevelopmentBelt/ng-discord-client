@@ -79,12 +79,18 @@
 
   <!-- User / Logout -->
   <div class="w-12 flex flex-col items-center gap-2 pb-2">
-    <div
-      class="w-12 h-12 rounded-full bg-discord-blue flex items-center justify-center text-white text-sm font-semibold"
-      [title]="currentUsername()"
+    <button
+      type="button"
+      class="w-12 h-12 rounded-full bg-discord-blue flex items-center justify-center text-white text-sm font-semibold overflow-hidden hover:ring-2 hover:ring-discord-blue transition-all"
+      [title]="'Profile settings — ' + currentUsername()"
+      (click)="openUserSettings()"
     >
-      {{ currentUsername().charAt(0).toUpperCase() }}
-    </div>
+      @if (currentUserPic()) {
+        <img [src]="currentUserPic()" [alt]="currentUsername()" class="w-full h-full object-cover" />
+      } @else {
+        {{ currentUsername().charAt(0).toUpperCase() }}
+      }
+    </button>
     <button
       type="button"
       class="w-12 h-8 rounded-lg text-[10px] uppercase tracking-wide text-discord-text-muted hover:text-white hover:bg-red-500/80 transition-colors"
@@ -118,4 +124,11 @@
     (closeModal)="closeInboxModal()"
     (itemSelected)="onInboxItemSelected($event)"
   ></app-inbox-modal>
+}
+
+<!-- User Settings Modal -->
+@if (showUserSettings()) {
+  <app-user-settings-modal
+    (closeModal)="closeUserSettings()"
+  ></app-user-settings-modal>
 }
