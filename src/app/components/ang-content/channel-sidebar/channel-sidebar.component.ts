@@ -22,6 +22,7 @@ import { ServerOverviewModalComponent } from '../../server-overview-modal/server
 import { ServerSettingsModalComponent } from '../../server-settings-modal/server-settings-modal.component';
 import { ServerWebService } from '../../../services/server-web-service/server-web.service';
 import { DmWebService } from '../../../services/dm-web-service/dm-web.service';
+import { InboxService } from '../../../services/inbox-service/inbox.service';
 import { DmConversation } from '../../../models/dm/dm-conversation';
 
 @Component({
@@ -53,6 +54,8 @@ export class ChannelSidebarComponent implements OnInit {
   dmUsername = signal('');
   dmError = signal('');
   dmLoading = signal(false);
+  private pendingConversationId: string | null = null;
+  private pendingChannelId: string | null = null;
 
   servers: InputSignal<Server[]> = input([]);
 
@@ -60,10 +63,24 @@ export class ChannelSidebarComponent implements OnInit {
     private alertService: AlertService,
     private serverWebService: ServerWebService,
     private dmWebService: DmWebService,
+    private inboxService: InboxService,
     private cdr: ChangeDetectorRef
   ) {}
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.inboxService.openConversation$.subscribe((conversationId) => {
+      this.pendingConversationId = conversationId;
+      this.tryOpenPendingConversation();
+      if (this.isHomeSelected()) {
+        this.loadConversations();
+      }
+    });
+
+    this.inboxService.openChannel$.subscribe(({ channelId }) => {
+      this.pendingChannelId = channelId;
+      this.tryOpenPendingChannel();
+    });
+  }
 
   handleChannelSelect(chan: Channel) {
     this.selectedChannel.set(chan);
@@ -120,6 +137,7 @@ export class ChannelSidebarComponent implements OnInit {
     this.dmWebService.listConversations().pipe(take(1)).subscribe({
       next: (conversations) => {
         this.conversations.set(conversations || []);
+        this.tryOpenPendingConversation();
         this.cdr.markForCheck();
       },
       error: () => {
@@ -127,6 +145,35 @@ export class ChannelSidebarComponent implements OnInit {
         this.cdr.markForCheck();
       }
     });
+  }
+
+  private tryOpenPendingConversation(): void {
+    if (!this.pendingConversationId) {
+      return;
+    }
+    const conversation = this.conversations().find(
+      (c) => String(c.id) === String(this.pendingConversationId)
+    );
+    if (conversation) {
+      this.pendingConversationId = null;
+      this.handleConversationSelect(conversation);
+    }
+  }
+
+  private tryOpenPendingChannel(): void {
+    if (!this.pendingChannelId) {
+      return;
+    }
+    for (const category of this.categories()) {
+      const channel = category.channels?.find(
+        (c) => String(c.channelId) === String(this.pendingChannelId)
+      );
+      if (channel) {
+        this.pendingChannelId = null;
+        this.handleChannelSelect(channel);
+        return;
+      }
+    }
   }
 
   private loadChannelsForServer(server: Server): void {
@@ -141,9 +188,18 @@ export class ChannelSidebarComponent implements OnInit {
     this.serverWebService.getServerChannels(server.serverId).subscribe({
       next: (categories) => {
         this.categories.set(categories || []);
-        const firstChannel = categories?.find((c) => c.channels?.length)?.channels?.[0] || null;
-        this.selectedChannel.set(firstChannel);
-        this.selectedChannelChange.emit(firstChannel);
+        if (this.pendingChannelId) {
+          this.tryOpenPendingChannel();
+          if (this.pendingChannelId) {
+            const firstChannel = categories?.find((c) => c.channels?.length)?.channels?.[0] || null;
+            this.selectedChannel.set(firstChannel);
+            this.selectedChannelChange.emit(firstChannel);
+          }
+        } else {
+          const firstChannel = categories?.find((c) => c.channels?.length)?.channels?.[0] || null;
+          this.selectedChannel.set(firstChannel);
+          this.selectedChannelChange.emit(firstChannel);
+        }
         this.cdr.markForCheck();
       },
       error: (error) => {

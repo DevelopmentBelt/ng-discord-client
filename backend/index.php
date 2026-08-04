@@ -1,6 +1,7 @@
 <?php
 
 use App\Controllers\DirectMessageController;
+use App\Controllers\InboxController;
 use App\Controllers\MemberController;
 use App\Controllers\MessageController;
 use App\Controllers\ServerController;
@@ -43,6 +44,7 @@ $userController = new UserController($app, $dbService, $utils);
 $serverController = new ServerController($app, $dbService, $utils);
 $memberController = new MemberController($app, $dbService, $utils);
 $directMessageController = new DirectMessageController($app, $dbService, $utils);
+$inboxController = new InboxController($app, $dbService, $utils);
 
 $app->map(['GET', 'POST', 'PUT', 'DELETE', 'PATCH'], '/{routes:.+}', function ($request, $response) {
   throw new HttpNotFoundException($request);

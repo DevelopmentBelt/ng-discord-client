@@ -47,6 +47,7 @@ export class InboxModalComponent implements OnInit {
    */
   loadInboxItems(): void {
     this.isLoading.set(true);
+    this.inboxService.refresh();
     const items = this.inboxService.getInboxItems();
     this.inboxItems.set(items);
     this.applyFilters();

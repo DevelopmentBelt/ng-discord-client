@@ -20,6 +20,11 @@ export interface InboxItem {
   channel?: Channel;
   mentionCount?: number;
   notificationCount?: number;
+  conversationId?: string;
+  serverId?: string;
+  serverName?: string;
+  channelId?: number | string;
+  channelName?: string;
 }
 
 export enum InboxItemType {

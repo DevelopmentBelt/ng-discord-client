@@ -62,6 +62,7 @@ export class SidebarComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadServers();
+    this.inboxService.refresh();
     // Keep Home selection in sync with the main layout on first load
     this.selectHome();
   }
@@ -228,6 +229,7 @@ export class SidebarComponent implements OnInit {
    * Open inbox modal
    */
   openInbox(): void {
+    this.inboxService.refresh();
     this.showInboxModal.set(true);
   }
 
@@ -249,11 +251,22 @@ export class SidebarComponent implements OnInit {
    * Handle inbox item selection
    */
   onInboxItemSelected(item: any): void {
-    console.log('Inbox item selected:', item);
-    // TODO: Handle different types of inbox items
-    // - Direct messages: Open DM thread
-    // - Mentions: Navigate to message
-    // - Server invites: Show invite modal
-    // - etc.
+    this.closeInboxModal();
+
+    if (item?.type === 'direct_message' && item.conversationId) {
+      this.selectHome();
+      this.inboxService.requestOpenConversation(String(item.conversationId));
+      return;
+    }
+
+    if (item?.type === 'mention' && item.serverId) {
+      const server = this.sidebarServers().find((s) => String(s.serverId) === String(item.serverId));
+      if (server) {
+        this.selectServer(server);
+      }
+      if (item.channelId != null) {
+        this.inboxService.requestOpenChannel(item.serverId, item.channelId);
+      }
+    }
   }
 }
