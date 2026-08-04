@@ -82,7 +82,7 @@ class UserController extends Routes
 
     $pdo = $this->dbService->getConnection();
     $stmt = $pdo->prepare(
-      'SELECT user_id, user_name, user_bio, user_pic, email, email_verified, password
+      'SELECT user_id, user_name, user_bio, user_pic, profile_card, avatar_effect, email, email_verified, password
        FROM users
        WHERE email = :email OR user_name = :username
        LIMIT 1'
@@ -106,6 +106,8 @@ class UserController extends Routes
         'email' => $row['email'],
         'userPic' => $row['user_pic'] ?? '',
         'userBio' => $row['user_bio'] ?? '',
+        'profileCard' => $row['profile_card'] ?? 'classic',
+        'avatarEffect' => $row['avatar_effect'] ?? 'none',
         'emailVerified' => (bool) ($row['email_verified'] ?? false),
       ],
     ]);
@@ -152,6 +154,11 @@ class UserController extends Routes
     $username = trim((string) ($body['username'] ?? ''));
     $userBio = trim((string) ($body['userBio'] ?? ''));
     $userPic = trim((string) ($body['userPic'] ?? ''));
+    $profileCard = trim((string) ($body['profileCard'] ?? 'classic'));
+    $avatarEffect = trim((string) ($body['avatarEffect'] ?? 'none'));
+
+    $allowedCards = ['classic', 'midnight', 'aurora', 'ember', 'ocean', 'neon'];
+    $allowedEffects = ['none', 'ring', 'glow', 'pulse', 'rainbow', 'holo'];
 
     if ($username === '') {
       return $this->json($response, ['status' => 'error', 'message' => 'Username is required'], 400);
@@ -171,6 +178,12 @@ class UserController extends Routes
     if (strlen($userPic) > 512) {
       return $this->json($response, ['status' => 'error', 'message' => 'Avatar URL is too long'], 400);
     }
+    if (!in_array($profileCard, $allowedCards, true)) {
+      return $this->json($response, ['status' => 'error', 'message' => 'Invalid profile card'], 400);
+    }
+    if (!in_array($avatarEffect, $allowedEffects, true)) {
+      return $this->json($response, ['status' => 'error', 'message' => 'Invalid avatar effect'], 400);
+    }
 
     $pdo = $this->dbService->getConnection();
     $dup = $pdo->prepare('SELECT COUNT(*) FROM users WHERE user_name = ? AND user_id <> ?');
@@ -180,11 +193,21 @@ class UserController extends Routes
     }
 
     $stmt = $pdo->prepare(
-      'UPDATE users SET user_name = ?, user_bio = ?, user_pic = ? WHERE user_id = ?'
+      'UPDATE users SET user_name = ?, user_bio = ?, user_pic = ?, profile_card = ?, avatar_effect = ? WHERE user_id = ?'
     );
-    $stmt->execute([$username, $userBio !== '' ? $userBio : null, $userPic !== '' ? $userPic : null, $userId]);
+    $stmt->execute([
+      $username,
+      $userBio !== '' ? $userBio : null,
+      $userPic !== '' ? $userPic : null,
+      $profileCard,
+      $avatarEffect,
+      $userId,
+    ]);
 
     $user = AuthService::loadUser($pdo, $userId);
+    if (!$user) {
+      return $this->json($response, ['status' => 'error', 'message' => 'Failed to load updated profile'], 500);
+    }
     return $this->json($response, [
       'status' => 'success',
       'message' => 'Profile updated',

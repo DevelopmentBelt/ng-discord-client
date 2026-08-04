@@ -47,6 +47,8 @@ export class SidebarComponent implements OnInit {
   showInboxModal: WritableSignal<boolean> = signal(false);
   showUserSettings: WritableSignal<boolean> = signal(false);
 
+  readonly currentUser = this.authService.currentUser;
+
   constructor(
     private serverService: ServerConnectivityService,
     private inboxService: InboxService,
@@ -55,11 +57,15 @@ export class SidebarComponent implements OnInit {
   ) {}
 
   currentUsername(): string {
-    return this.authService.currentUser()?.username || 'User';
+    return this.currentUser()?.username || 'User';
   }
 
   currentUserPic(): string {
-    return this.authService.currentUser()?.userPic || '';
+    return this.currentUser()?.userPic || '';
+  }
+
+  currentAvatarEffect(): string {
+    return this.currentUser()?.avatarEffect || 'none';
   }
 
   openUserSettings(): void {

@@ -37,7 +37,13 @@ export class UserWebService {
     return this.serverConnectivityService.sendGetRequest(`${this.API_URL}/me`, {});
   }
 
-  public updateProfile(profile: { username: string; userBio?: string; userPic?: string }): Observable<AuthResponse> {
+  public updateProfile(profile: {
+    username: string;
+    userBio?: string;
+    userPic?: string;
+    profileCard?: string;
+    avatarEffect?: string;
+  }): Observable<AuthResponse> {
     return this.serverConnectivityService.sendPutReq(`${this.API_URL}/me`, profile, {});
   }
 }

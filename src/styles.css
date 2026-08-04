@@ -110,3 +110,132 @@ input:focus, textarea:focus {
 .bg-gray-500 {
   background-color: #6b7280;
 }
+
+/* Profile avatar effects (shared: settings preview + sidebar) */
+.avatar-effect {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  padding: 3px;
+  background: #1e1f22;
+}
+
+.avatar-effect--sm,
+.avatar-effect--sidebar {
+  width: 48px;
+  height: 48px;
+  padding: 2px;
+}
+
+.avatar-effect--sm {
+  width: 36px;
+  height: 36px;
+}
+
+.avatar-effect__inner {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #5865f2;
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.35rem;
+  position: relative;
+  z-index: 1;
+}
+
+.avatar-effect--sm .avatar-effect__inner,
+.avatar-effect--sidebar .avatar-effect__inner {
+  font-size: 0.8rem;
+}
+
+.avatar-effect__inner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-effect--none {
+  padding: 0;
+  box-shadow: 0 0 0 3px #1e1f22;
+}
+
+.avatar-effect--ring {
+  background: linear-gradient(135deg, #5865f2, #57f287);
+  box-shadow: 0 0 0 3px #1e1f22;
+}
+
+.avatar-effect--glow {
+  background: #1e1f22;
+  box-shadow: 0 0 0 3px #1e1f22, 0 0 18px 4px rgba(88, 101, 242, 0.65);
+}
+
+.avatar-effect--pulse {
+  background: #5865f2;
+  animation: avatar-pulse 1.8s ease-in-out infinite;
+}
+
+.avatar-effect--rainbow {
+  background: conic-gradient(from 0deg, #ef4444, #eab308, #22c55e, #06b6d4, #6366f1, #ec4899, #ef4444);
+  animation: avatar-hue 4s linear infinite;
+}
+
+.avatar-effect--holo {
+  background: linear-gradient(120deg, #67e8f9, #c084fc, #f472b6, #67e8f9);
+  background-size: 200% 200%;
+  animation: avatar-holo 3s ease infinite;
+  box-shadow: 0 0 0 3px #1e1f22, 0 0 16px rgba(192, 132, 252, 0.45);
+}
+
+.avatar-effect--holo .avatar-effect__inner::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 30%, rgba(255, 255, 255, 0.35) 50%, transparent 70%);
+  background-size: 200% 100%;
+  animation: avatar-shine 2.4s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes avatar-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 3px #1e1f22, 0 0 0 0 rgba(88, 101, 242, 0.55);
+  }
+  50% {
+    box-shadow: 0 0 0 3px #1e1f22, 0 0 0 8px rgba(88, 101, 242, 0);
+  }
+}
+
+@keyframes avatar-hue {
+  to {
+    filter: hue-rotate(360deg);
+  }
+}
+
+@keyframes avatar-holo {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes avatar-shine {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}

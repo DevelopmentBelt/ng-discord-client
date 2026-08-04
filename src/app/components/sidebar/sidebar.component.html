@@ -81,15 +81,18 @@
   <div class="w-12 flex flex-col items-center gap-2 pb-2">
     <button
       type="button"
-      class="w-12 h-12 rounded-full bg-discord-blue flex items-center justify-center text-white text-sm font-semibold overflow-hidden hover:ring-2 hover:ring-discord-blue transition-all"
-      [title]="'Profile settings — ' + currentUsername()"
+      class="avatar-effect avatar-effect--sidebar"
+      [ngClass]="'avatar-effect--' + (currentUser()?.avatarEffect || 'none')"
+      [title]="'Profile settings — ' + (currentUser()?.username || 'User')"
       (click)="openUserSettings()"
     >
-      @if (currentUserPic()) {
-        <img [src]="currentUserPic()" [alt]="currentUsername()" class="w-full h-full object-cover" />
-      } @else {
-        {{ currentUsername().charAt(0).toUpperCase() }}
-      }
+      <span class="avatar-effect__inner">
+        @if (currentUser()?.userPic) {
+          <img [src]="currentUser()?.userPic" [alt]="currentUser()?.username || 'User'" />
+        } @else {
+          {{ (currentUser()?.username || 'U').charAt(0).toUpperCase() }}
+        }
+      </span>
     </button>
     <button
       type="button"

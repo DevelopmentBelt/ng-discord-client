@@ -11,6 +11,8 @@ class User
   private ?string $user_name;
   private ?string $user_bio;
   private ?string $user_pic;
+  private string $profile_card = 'classic';
+  private string $avatar_effect = 'none';
   private ?string $email;
   private bool $email_verified;
 
@@ -33,6 +35,8 @@ class User
         $this->user_name = $row['user_name'] ?? null;
         $this->user_bio = $row['user_bio'] ?? null;
         $this->user_pic = $row['user_pic'] ?? null;
+        $this->profile_card = $row['profile_card'] ?? 'classic';
+        $this->avatar_effect = $row['avatar_effect'] ?? 'none';
         $this->email = $row['email'] ?? null;
         $this->email_verified = (bool)($row['email_verified'] ?? false);
       }
@@ -70,6 +74,14 @@ class User
 
   public function getPic(): ?string {
     return $this->user_pic;
+  }
+
+  public function getProfileCard(): string {
+    return $this->profile_card ?: 'classic';
+  }
+
+  public function getAvatarEffect(): string {
+    return $this->avatar_effect ?: 'none';
   }
 
   public function getEmail(): ?string {

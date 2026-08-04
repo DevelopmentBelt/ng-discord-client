@@ -1,3 +1,161 @@
 :host {
   display: contents;
 }
+
+.profile-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #1e1f22;
+}
+
+.profile-card__banner {
+  height: 72px;
+  background: linear-gradient(135deg, #5865f2, #3ba55d);
+}
+
+.profile-card__body {
+  display: flex;
+  gap: 14px;
+  padding: 0 16px 16px;
+  margin-top: -28px;
+  align-items: flex-end;
+}
+
+.profile-card__meta {
+  flex: 1;
+  min-width: 0;
+  padding-top: 28px;
+}
+
+.profile-card__name {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #f2f3f5;
+  line-height: 1.2;
+}
+
+.profile-card__handle {
+  font-size: 0.8rem;
+  color: #b5bac1;
+  margin-bottom: 6px;
+}
+
+.profile-card__bio {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #dbdee1;
+  line-height: 1.35;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.profile-card--classic .profile-card__banner {
+  background: linear-gradient(135deg, #5865f2, #404eed);
+}
+
+.profile-card--midnight .profile-card__banner {
+  background: linear-gradient(135deg, #0f172a, #312e81 55%, #1e1b4b);
+}
+
+.profile-card--aurora .profile-card__banner {
+  background: linear-gradient(120deg, #0ea5e9, #a78bfa 45%, #34d399);
+}
+
+.profile-card--ember .profile-card__banner {
+  background: linear-gradient(135deg, #7c2d12, #ea580c 50%, #fbbf24);
+}
+
+.profile-card--ocean .profile-card__banner {
+  background: linear-gradient(135deg, #0c4a6e, #0891b2 50%, #67e8f9);
+}
+
+.profile-card--neon .profile-card__banner {
+  background: linear-gradient(135deg, #111827, #22d3ee 40%, #e879f9 80%);
+}
+
+.profile-card--neon {
+  box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.25), 0 0 24px rgba(232, 121, 249, 0.15);
+}
+
+.card-option,
+.effect-option {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.2);
+  color: #dbdee1;
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+}
+
+.card-option:hover,
+.effect-option:hover {
+  border-color: rgba(88, 101, 242, 0.55);
+  transform: translateY(-1px);
+}
+
+.card-option--active,
+.effect-option--active {
+  border-color: #5865f2;
+  background: rgba(88, 101, 242, 0.15);
+}
+
+.card-option__swatch {
+  display: block;
+  height: 28px;
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+
+.card-option__swatch[data-card='classic'] {
+  background: linear-gradient(135deg, #5865f2, #404eed);
+}
+
+.card-option__swatch[data-card='midnight'] {
+  background: linear-gradient(135deg, #0f172a, #312e81);
+}
+
+.card-option__swatch[data-card='aurora'] {
+  background: linear-gradient(120deg, #0ea5e9, #a78bfa, #34d399);
+}
+
+.card-option__swatch[data-card='ember'] {
+  background: linear-gradient(135deg, #7c2d12, #ea580c, #fbbf24);
+}
+
+.card-option__swatch[data-card='ocean'] {
+  background: linear-gradient(135deg, #0c4a6e, #0891b2, #67e8f9);
+}
+
+.card-option__swatch[data-card='neon'] {
+  background: linear-gradient(135deg, #111827, #22d3ee, #e879f9);
+}
+
+.card-option__label,
+.effect-option__label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #f2f3f5;
+}
+
+.card-option__desc,
+.effect-option__desc {
+  font-size: 0.72rem;
+  color: #949ba4;
+}
+
+.effect-option {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.effect-option__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}

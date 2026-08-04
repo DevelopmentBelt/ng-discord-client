@@ -43,6 +43,8 @@ class AuthService
       'email' => $user->getEmail(),
       'userPic' => $user->getPic() ?? '',
       'userBio' => $user->getBio() ?? '',
+      'profileCard' => $user->getProfileCard(),
+      'avatarEffect' => $user->getAvatarEffect(),
       'emailVerified' => $user->getEmailVerified(),
     ];
   }

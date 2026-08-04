@@ -1,9 +1,15 @@
-import { ChangeDetectionStrategy, Component, OnInit, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { take } from 'rxjs';
 import { AuthService } from '../../services/auth-service/auth.service';
 import { UserWebService } from '../../services/user-web-service/user-web.service';
+import {
+  AVATAR_EFFECTS,
+  AvatarEffectId,
+  PROFILE_CARDS,
+  ProfileCardId
+} from '../../models/user/profile-style';
 
 @Component({
   selector: 'app-user-settings-modal',
@@ -16,13 +22,21 @@ import { UserWebService } from '../../services/user-web-service/user-web.service
 export class UserSettingsModalComponent implements OnInit {
   closeModal = output<void>();
 
+  readonly cards = PROFILE_CARDS;
+  readonly effects = AVATAR_EFFECTS;
+
   username = signal('');
   userBio = signal('');
   userPic = signal('');
   email = signal('');
+  profileCard = signal<ProfileCardId>('classic');
+  avatarEffect = signal<AvatarEffectId>('none');
   saving = signal(false);
   error = signal('');
   success = signal('');
+
+  readonly cardClass = computed(() => `profile-card--${this.profileCard()}`);
+  readonly effectClass = computed(() => `avatar-effect--${this.avatarEffect()}`);
 
   constructor(
     private authService: AuthService,
@@ -35,6 +49,16 @@ export class UserSettingsModalComponent implements OnInit {
     this.userBio.set(user?.userBio || '');
     this.userPic.set(user?.userPic || '');
     this.email.set(user?.email || '');
+    this.profileCard.set((user?.profileCard as ProfileCardId) || 'classic');
+    this.avatarEffect.set((user?.avatarEffect as AvatarEffectId) || 'none');
+  }
+
+  selectCard(id: ProfileCardId): void {
+    this.profileCard.set(id);
+  }
+
+  selectEffect(id: AvatarEffectId): void {
+    this.avatarEffect.set(id);
   }
 
   save(): void {
@@ -51,7 +75,9 @@ export class UserSettingsModalComponent implements OnInit {
     this.userWebService.updateProfile({
       username,
       userBio: this.userBio().trim(),
-      userPic: this.userPic().trim()
+      userPic: this.userPic().trim(),
+      profileCard: this.profileCard(),
+      avatarEffect: this.avatarEffect()
     }).pipe(take(1)).subscribe({
       next: (resp) => {
         this.saving.set(false);

@@ -15,6 +15,8 @@ CREATE TABLE IF NOT EXISTS `users` (
   `user_name` VARCHAR(255) NOT NULL,
   `user_bio` TEXT(1024),
   `user_pic` TEXT(1024),
+  `profile_card` VARCHAR(32) NOT NULL DEFAULT 'classic',
+  `avatar_effect` VARCHAR(32) NOT NULL DEFAULT 'none',
   `email` VARCHAR(255) NOT NULL,
   `email_verified` BOOLEAN DEFAULT FALSE,
   `password` VARCHAR(256) NOT NULL,
