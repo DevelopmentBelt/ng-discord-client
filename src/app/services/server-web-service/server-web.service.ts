@@ -4,6 +4,7 @@ import { Server } from '../../models/server/server';
 import { ServerConnectivityService } from '../server-connectivity.service';
 import { Member } from '../../models/member/member';
 import { Channel } from '../../models/channel/channel';
+import { Category } from '../../models/channel/category';
 
 export interface PublicServer extends Server {
   isJoined: boolean;
@@ -118,9 +119,9 @@ export class ServerWebService {
 
   // Channel Management Methods
   /**
-   * Get server channels
+   * Get categories (with nested channels) for a server
    */
-  getServerChannels(serverId: string): Observable<Channel[]> {
+  getServerChannels(serverId: string): Observable<Category[]> {
     return this.serverService.sendGetRequest(`servers/${serverId}/channels`, {});
   }
 

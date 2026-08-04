@@ -15,6 +15,7 @@ class ServerController extends Routes {
   protected function registerRoutes() {
     $this->app->get('/api/servers/', [$this, 'getServersForUser']);
     $this->app->get('/api/servers/public/', [$this, 'getPublicServers']);
+    $this->app->get('/api/servers/{serverId}/channels', [$this, 'getServerChannels']);
     $this->app->post('/api/servers/', [$this, 'createServer']);
     $this->app->post('/api/servers/{serverId}/join', [$this, 'joinServer']);
     $this->app->delete('/api/servers/{serverId}/leave', [$this, 'leaveServer']);
@@ -123,6 +124,68 @@ class ServerController extends Routes {
     }
   }
 
+  public function getServerChannels(Request $request, Response $response, $args) {
+    try {
+      $serverId = (int) $args['serverId'];
+      $pdo = $this->dbService->getConnection();
+
+      $categoryStmt = $pdo->prepare(
+        "SELECT category_id, server_id, category_name, category_icon
+         FROM categories
+         WHERE server_id = ?
+         ORDER BY category_id ASC"
+      );
+      $categoryStmt->execute([$serverId]);
+      $categories = $categoryStmt->fetchAll(PDO::FETCH_ASSOC);
+
+      // Ensure every server has at least a default text channel
+      if (count($categories) === 0) {
+        $pdo->prepare("INSERT INTO categories (server_id, category_name, category_icon) VALUES (?, 'Text Channels', NULL)")
+          ->execute([$serverId]);
+        $categoryId = (int) $pdo->lastInsertId();
+        $pdo->prepare("INSERT INTO channels (category_id, channel_name) VALUES (?, 'general')")
+          ->execute([$categoryId]);
+        $categoryStmt->execute([$serverId]);
+        $categories = $categoryStmt->fetchAll(PDO::FETCH_ASSOC);
+      }
+
+      $channelStmt = $pdo->prepare(
+        "SELECT channel_id, category_id, channel_name
+         FROM channels
+         WHERE category_id = ?
+         ORDER BY channel_id ASC"
+      );
+
+      $result = [];
+      foreach ($categories as $category) {
+        $channelStmt->execute([$category['category_id']]);
+        $channels = [];
+        foreach ($channelStmt->fetchAll(PDO::FETCH_ASSOC) as $channel) {
+          $channels[] = [
+            'channelId' => (int) $channel['channel_id'],
+            'categoryId' => (int) $channel['category_id'],
+            'channelName' => $channel['channel_name'],
+          ];
+        }
+
+        $result[] = [
+          'categoryId' => (int) $category['category_id'],
+          'serverId' => (int) $category['server_id'],
+          'categoryName' => $category['category_name'],
+          'categoryIcon' => $category['category_icon'],
+          'channels' => $channels,
+        ];
+      }
+
+      $response->getBody()->write(json_encode($result));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+    } catch (Exception $e) {
+      error_log('Error in getServerChannels: ' . $e->getMessage());
+      $response->getBody()->write(json_encode(['error' => 'Failed to fetch server channels']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+    }
+  }
+
   public function joinServer(Request $request, Response $response, $args) {
     try {
       $userId = $_SESSION['user_id'];
@@ -218,6 +281,13 @@ class ServerController extends Routes {
       $memberQuery = "INSERT INTO members (user_id, server_id, joined_at) VALUES (?, ?, NOW())";
       $memberStmt = $pdo->prepare($memberQuery);
       $memberStmt->execute([$userId, $serverId]);
+
+      // Default category + #general so the new server is immediately usable
+      $pdo->prepare("INSERT INTO categories (server_id, category_name, category_icon) VALUES (?, 'Text Channels', NULL)")
+        ->execute([$serverId]);
+      $categoryId = $pdo->lastInsertId();
+      $pdo->prepare("INSERT INTO channels (category_id, channel_name) VALUES (?, 'general')")
+        ->execute([$categoryId]);
       
       // Return the created server data
       $serverData = [

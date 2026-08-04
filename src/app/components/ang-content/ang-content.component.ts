@@ -42,10 +42,12 @@ export class AngContentComponent implements OnInit {
 
   handleServerChange(server: Server) {
     this.selectedServer.set(server);
+    // Channel list reloads asynchronously; clear chat until the new channel arrives
+    this.selectedChannel.set(null);
   }
 
   handleChannelChange(channel: Channel) {
-    this.selectedChannel.set(channel);
+    this.selectedChannel.set(channel || null);
   }
 
   startResizing(event: MouseEvent, type: 'left' | 'right'): void {

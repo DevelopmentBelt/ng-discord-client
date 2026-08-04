@@ -70,8 +70,14 @@ CREATE TABLE IF NOT EXISTS `categories` (
   `category_icon` TEXT(1024)
 );
 
-INSERT INTO `categories` (`category_id`, `server_id`, `category_name`, `category_icon`)
-VALUES (1, 2, 'Information', null);
+INSERT INTO `categories` (`category_id`, `server_id`, `category_name`, `category_icon`) VALUES
+  (1, 1, 'Text Channels', null),
+  (2, 2, 'Information', null),
+  (3, 3, 'Text Channels', null),
+  (4, 4, 'Text Channels', null),
+  (5, 5, 'Text Channels', null),
+  (6, 6, 'Text Channels', null),
+  (7, 7, 'Text Channels', null);
 
 CREATE TABLE IF NOT EXISTS `channels` (
   `channel_id` BIGINT(64) AUTO_INCREMENT PRIMARY KEY,
@@ -79,10 +85,17 @@ CREATE TABLE IF NOT EXISTS `channels` (
   `channel_name` VARCHAR(255)
 );
 
-INSERT INTO `channels` (`category_id`, `channel_name`) VALUES (1, 'general');
-INSERT INTO `channels` (`category_id`, `channel_name`) VALUES (1, 'my computer specs');
-INSERT INTO `channels` (`category_id`, `channel_name`) VALUES (1, 'school shit');
-INSERT INTO `channels` (`category_id`, `channel_name`) VALUES (1, 'car parts');
+INSERT INTO `channels` (`category_id`, `channel_name`) VALUES
+  (1, 'general'),
+  (2, 'general'),
+  (2, 'my computer specs'),
+  (2, 'school shit'),
+  (2, 'car parts'),
+  (3, 'general'),
+  (4, 'general'),
+  (5, 'general'),
+  (6, 'general'),
+  (7, 'general');
 
 CREATE TABLE IF NOT EXISTS `messages` (
   `message_id` BIGINT(64) AUTO_INCREMENT PRIMARY KEY,

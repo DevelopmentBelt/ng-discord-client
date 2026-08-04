@@ -57,36 +57,45 @@ export class AngcordContentComponent implements OnInit, OnDestroy {
       this.subs = new Subscription();
       const server = this.server();
       const channel = this.channel();
-      if (server && channel) {
-        const serverId = server.serverId;
-        const channelId = channel.channelId;
-        this.socketService.setChannelId(channelId + "");
+      this.messageList = [];
+      if (this.messageBox?.nativeElement) {
+        this.messageBox.nativeElement.value = '';
+      }
+      cdr.detectChanges();
+
+      if (server?.serverId && channel?.channelId) {
+        const serverId = server.serverId + '';
+        const channelId = channel.channelId + '';
+        const requestKey = `${serverId}:${channelId}`;
+        this.socketService.setChannelId(channelId);
         this.socketService.setUserId(1);
-        this.messageList = [];
-        if (this.messageBox?.nativeElement) {
-          this.messageBox.nativeElement.value = '';
-        }
-        // Need to get the latest messages from the web service
+
         this.subs.add(
-          this.webService.getLatestMessages(serverId + "", channelId + "").subscribe((resp) => {
-            resp.forEach((m) => {
+          this.webService.getLatestMessages(serverId, channelId).subscribe((resp) => {
+            // Ignore stale responses if the user already switched away
+            if (`${this.server()?.serverId}:${this.channel()?.channelId}` !== requestKey) {
+              return;
+            }
+            (resp || []).forEach((m) => {
               m.postedTimestamp = moment(m.postedTimestamp);
               m.editTimestamp = moment(m.editTimestamp);
             });
-            this.messageList.push(...resp);
+            this.messageList = resp || [];
             cdr.detectChanges();
           })
         );
         this.subs.add(
           this.socketService.onMessage().subscribe((msg) => {
             const message = JSON.parse(msg.data) as Message;
+            if (message.channelId != null && message.channelId + '' !== channelId) {
+              return;
+            }
             message.editTimestamp = moment(message.editTimestamp);
             message.postedTimestamp = moment(message.postedTimestamp);
-            this.messageList.push(message);
+            this.messageList = [...this.messageList, message];
             cdr.detectChanges();
           })
         );
-        cdr.detectChanges();
       }
     }, { allowSignalWrites: true });
   }
@@ -259,6 +268,7 @@ export class AngcordContentComponent implements OnInit, OnDestroy {
       edited: false,
       editTimestamp: moment(),
       attachments: [],
+      channelId: this.channel()?.channelId,
       author: {
         userId: 1,
         username: 'Badger',

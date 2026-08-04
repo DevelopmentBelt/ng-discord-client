@@ -19,11 +19,20 @@ class MessageController extends Routes {
   }
 
   public function getMessages(Request $request, Response $response, $args) {
+    $serverId = $args['serverId'];
     $channelId = $args['channelId'];
     $conn = $this->dbService->getConnection();
-    $stmt = $conn->prepare("SELECT *, user_name, user_pic FROM `messages` JOIN `users` ON (`messages`.posted_by_user_id = `users`.user_id)  WHERE `channel_id` = ?
-                         ORDER BY `timestamp_posted` LIMIT 100");
-    $success = $stmt->execute([$channelId]);
+    $stmt = $conn->prepare(
+      "SELECT m.*, u.user_name, u.user_pic
+       FROM messages m
+       JOIN users u ON m.posted_by_user_id = u.user_id
+       JOIN channels ch ON m.channel_id = ch.channel_id
+       JOIN categories cat ON ch.category_id = cat.category_id
+       WHERE m.channel_id = ? AND cat.server_id = ?
+       ORDER BY m.timestamp_posted
+       LIMIT 100"
+    );
+    $success = $stmt->execute([$channelId, $serverId]);
     if ($success) {
       $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
       $msgs = [];
@@ -31,9 +40,9 @@ class MessageController extends Routes {
         $msgs[] = $this->utils->toMessageModel($this->dbService, $message);
       }
       $response->getBody()->write(json_encode($msgs, JSON_PRETTY_PRINT));
-      return $response->withStatus(200);
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
     } else {
-      return $response->withStatus(500);
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
     }
   }
 

@@ -10,6 +10,7 @@ export interface Message {
   edited: boolean;
   editTimestamp: Moment;
   author: Author;
+  channelId?: number | string;
   hidden?: boolean;
 }
 

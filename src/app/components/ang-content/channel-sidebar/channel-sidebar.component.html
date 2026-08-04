@@ -40,7 +40,7 @@
 
     <!-- Channel List -->
     <div class="flex-1 overflow-y-auto overflow-x-hidden py-2 w-full">
-      @for (category of categories(); track category) {
+      @for (category of categories(); track category.categoryId) {
         <div class="mb-4 w-full overflow-hidden">
           <div class="px-4 py-1.5 text-xs font-semibold text-discord-text-muted uppercase tracking-wider whitespace-nowrap overflow-hidden text-ellipsis block w-full flex items-center justify-between group">
             <span>{{ category.categoryName }}</span>
@@ -50,10 +50,10 @@
               </svg>
             </button>
           </div>
-          @for (chan of category.channels; track chan) {
+          @for (chan of category.channels; track chan.channelId) {
             <div
               class="px-2 py-1.5 mx-2 rounded cursor-pointer text-sm text-discord-text hover:bg-discord-hover hover:text-discord-text-light transition-colors duration-100 flex items-center min-w-0 group"
-              [ngClass]="{'bg-discord-blue-dark text-discord-text-lighter hover:bg-discord-blue': selectedChannel() == chan}"
+              [ngClass]="{'bg-discord-blue-dark text-discord-text-lighter hover:bg-discord-blue': selectedChannel()?.channelId === chan.channelId}"
               (click)="handleChannelSelect(chan)"
             >
               <span class="flex-shrink-0 mr-2 font-bold text-base text-discord-text-muted group-hover:text-discord-text-light">#</span>
