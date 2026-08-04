@@ -38,13 +38,65 @@
       </div>
     </div>
 
-    <!-- Channel List -->
+    <!-- Channel / DM List -->
     <div class="flex-1 overflow-y-auto overflow-x-hidden py-2 w-full">
       @if (isHomeSelected()) {
-        <div class="px-4 py-6 text-sm text-discord-text-muted text-center leading-relaxed">
-          <p class="mb-2 font-medium text-discord-text-light">Home</p>
-          <p>Pick a server on the left to browse channels, or use + to create one.</p>
+        <div class="px-3 mb-3 space-y-2">
+          <div class="px-1 text-xs font-semibold text-discord-text-muted uppercase tracking-wider">
+            Find or start a conversation
+          </div>
+          <div class="flex gap-2">
+            <input
+              type="text"
+              class="flex-1 min-w-0 h-9 px-3 rounded bg-discord-dark border border-discord-border text-sm text-discord-text outline-none focus:border-discord-blue"
+              placeholder="Username"
+              [ngModel]="dmUsername()"
+              (ngModelChange)="dmUsername.set($event)"
+              (keydown.enter)="startDirectMessage()"
+            >
+            <button
+              type="button"
+              class="px-3 h-9 rounded bg-discord-blue text-white text-xs font-semibold uppercase tracking-wide hover:bg-discord-blue-dark disabled:opacity-50"
+              [disabled]="dmLoading()"
+              (click)="startDirectMessage()"
+            >
+              DM
+            </button>
+          </div>
+          @if (dmError()) {
+            <div class="text-xs text-red-400 px-1">{{ dmError() }}</div>
+          }
         </div>
+
+        <div class="px-4 py-1.5 text-xs font-semibold text-discord-text-muted uppercase tracking-wider">
+          Direct Messages — {{ conversations().length }}
+        </div>
+
+        @if (conversations().length === 0) {
+          <div class="px-4 py-4 text-sm text-discord-text-muted leading-relaxed">
+            No conversations yet. Enter a username above to start chatting.
+          </div>
+        }
+
+        @for (conversation of conversations(); track conversation.id) {
+          <div
+            class="px-2 py-2 mx-2 rounded cursor-pointer text-sm text-discord-text hover:bg-discord-hover hover:text-discord-text-light transition-colors duration-100 flex items-center min-w-0 gap-3"
+            [ngClass]="{'bg-discord-blue-dark text-discord-text-lighter hover:bg-discord-blue': selectedConversation()?.id === conversation.id}"
+            (click)="handleConversationSelect(conversation)"
+          >
+            <div class="w-8 h-8 rounded-full bg-discord-blue flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
+              {{ conversation.participant.username.charAt(0).toUpperCase() }}
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="font-medium text-sm whitespace-nowrap overflow-hidden text-ellipsis">
+                {{ conversation.participant.username }}
+              </div>
+              <div class="text-xs text-discord-text-muted whitespace-nowrap overflow-hidden text-ellipsis">
+                {{ lastMessagePreview(conversation) }}
+              </div>
+            </div>
+          </div>
+        }
       }
       @for (category of categories(); track category.categoryId) {
         <div class="mb-4 w-full overflow-hidden">

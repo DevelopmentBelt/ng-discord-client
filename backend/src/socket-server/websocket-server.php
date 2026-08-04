@@ -50,5 +50,6 @@ $app = new App($httpHost, $port, $bindAddress);
 
 $app->route('/base', new WsServer(new BaseSocketListener()), ['*']);
 $app->route('/channel', new WsServer(new BaseSocketListener()), ['*']);
+$app->route('/dm', new WsServer(new BaseSocketListener()), ['*']);
 
 $app->run();

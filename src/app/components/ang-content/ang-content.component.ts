@@ -2,8 +2,10 @@ import {ChangeDetectionStrategy, Component, OnInit, computed, signal, WritableSi
 import {AngcordContentComponent} from "./angcord-content/angcord-content.component";
 import {MemberSidebarComponent} from "./member-sidebar/member-sidebar.component";
 import {ChannelSidebarComponent} from "./channel-sidebar/channel-sidebar.component";
+import {DmChatComponent} from "../dm-chat/dm-chat.component";
 import {Channel} from "../../models/channel/channel";
 import {Server} from "../../models/server/server";
+import {DmConversation} from "../../models/dm/dm-conversation";
 import {AuthService} from "../../services/auth-service/auth.service";
 
 @Component({
@@ -13,7 +15,8 @@ import {AuthService} from "../../services/auth-service/auth.service";
   imports: [
     AngcordContentComponent,
     MemberSidebarComponent,
-    ChannelSidebarComponent
+    ChannelSidebarComponent,
+    DmChatComponent
   ],
   standalone: true
 })
@@ -22,6 +25,7 @@ export class AngContentComponent implements OnInit {
 
   selectedServer: WritableSignal<Server | null> = signal(null);
   selectedChannel: WritableSignal<Channel | null> = signal(null);
+  selectedConversation: WritableSignal<DmConversation | null> = signal(null);
 
   readonly isHomeView = computed(() => {
     const server = this.selectedServer();
@@ -58,16 +62,28 @@ export class AngContentComponent implements OnInit {
       serverDescription: 'Home'
     });
     this.selectedChannel.set(null);
+    this.selectedConversation.set(null);
   }
 
   handleServerChange(server: Server) {
     this.selectedServer.set(server);
     // Channel list reloads asynchronously; clear chat until the new channel arrives
     this.selectedChannel.set(null);
+    this.selectedConversation.set(null);
   }
 
   handleChannelChange(channel: Channel | null) {
     this.selectedChannel.set(channel || null);
+    if (channel) {
+      this.selectedConversation.set(null);
+    }
+  }
+
+  handleConversationChange(conversation: DmConversation | null) {
+    this.selectedConversation.set(conversation);
+    if (conversation) {
+      this.selectedChannel.set(null);
+    }
   }
 
   startResizing(event: MouseEvent, type: 'left' | 'right'): void {

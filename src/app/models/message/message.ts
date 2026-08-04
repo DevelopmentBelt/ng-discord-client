@@ -11,6 +11,7 @@ export interface Message {
   editTimestamp: Moment;
   author: Author;
   channelId?: number | string;
+  conversationId?: number | string;
   hidden?: boolean;
 }
 

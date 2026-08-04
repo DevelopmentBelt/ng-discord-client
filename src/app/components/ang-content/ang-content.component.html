@@ -11,6 +11,7 @@
       <channel-sidebar
         (selectedServerChange)="handleServerChange($event)"
         (selectedChannelChange)="handleChannelChange($event)"
+        (selectedConversationChange)="handleConversationChange($event)"
         [servers]="servers()"
       >
       </channel-sidebar>
@@ -25,28 +26,32 @@
 
     <div class="bg-discord-lighter border-r border-discord-border min-w-[300px] flex-1 flex-shrink-0" [style.width.%]="mainContentWidth()">
       @if (isHomeView()) {
-        <div class="h-full w-full bg-discord-lighter flex flex-col">
-          <div class="px-4 py-3 border-b border-discord-border bg-discord-lighter flex-shrink-0">
-            <h5 class="m-0 text-lg font-semibold text-discord-text-lighter">Home</h5>
-            <p class="m-0 text-sm text-discord-text-muted">Friends, DMs, and your servers</p>
-          </div>
-          <div class="flex-1 flex items-center justify-center px-8">
-            <div class="max-w-md text-center">
-              <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-discord-blue flex items-center justify-center text-white text-2xl font-semibold">
-                {{ currentUsername().charAt(0).toUpperCase() }}
-              </div>
-              <h2 class="text-2xl font-semibold text-discord-text-lighter mb-2">
-                Welcome back, {{ currentUsername() }}
-              </h2>
-              <p class="text-discord-text-muted mb-6">
-                Select a server from the left to start chatting, or create one with the + button.
-              </p>
-              <div class="text-sm text-discord-text-muted bg-discord-medium border border-discord-border rounded-lg px-4 py-3">
-                Direct messages are coming soon. For now, hang out in a server channel.
+        @if (selectedConversation()) {
+          <app-dm-chat [conversation]="selectedConversation()"></app-dm-chat>
+        } @else {
+          <div class="h-full w-full bg-discord-lighter flex flex-col">
+            <div class="px-4 py-3 border-b border-discord-border bg-discord-lighter flex-shrink-0">
+              <h5 class="m-0 text-lg font-semibold text-discord-text-lighter">Direct Messages</h5>
+              <p class="m-0 text-sm text-discord-text-muted">Chat privately with other users</p>
+            </div>
+            <div class="flex-1 flex items-center justify-center px-8">
+              <div class="max-w-md text-center">
+                <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-discord-blue flex items-center justify-center text-white text-2xl font-semibold">
+                  {{ currentUsername().charAt(0).toUpperCase() }}
+                </div>
+                <h2 class="text-2xl font-semibold text-discord-text-lighter mb-2">
+                  Welcome back, {{ currentUsername() }}
+                </h2>
+                <p class="text-discord-text-muted mb-4">
+                  Start a DM from the left by entering a username, or open an existing conversation.
+                </p>
+                <p class="text-sm text-discord-text-muted">
+                  You can also pick a server from the rail to join channel chat.
+                </p>
               </div>
             </div>
           </div>
-        </div>
+        }
       } @else if (selectedChannel()) {
         <angcord-content
           [server]="selectedServer()"

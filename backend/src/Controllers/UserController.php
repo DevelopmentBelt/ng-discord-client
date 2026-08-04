@@ -15,6 +15,7 @@ class UserController extends Routes
     $this->app->post('/api/users/login', [$this, 'login']);
     $this->app->post('/api/users/logout', [$this, 'logout']);
     $this->app->get('/api/users/me', [$this, 'me']);
+    $this->app->get('/api/users/search', [$this, 'search']);
   }
 
   public function register(Request $request, Response $response, $args): Response
@@ -137,6 +138,45 @@ class UserController extends Routes
       'status' => 'success',
       'user' => AuthService::userToArray($user),
     ]);
+  }
+
+  public function search(Request $request, Response $response, $args): Response
+  {
+    $userId = AuthService::getUserId();
+    if (!$userId) {
+      return $this->json($response, ['status' => 'error', 'message' => 'Not authenticated'], 401);
+    }
+
+    $queryParams = $request->getQueryParams();
+    $q = trim((string) ($queryParams['q'] ?? ''));
+    if (strlen($q) < 1) {
+      return $this->json($response, []);
+    }
+
+    $pdo = $this->dbService->getConnection();
+    $stmt = $pdo->prepare(
+      "SELECT user_id, user_name, user_pic, user_bio, email
+       FROM users
+       WHERE user_id <> ?
+         AND (user_name LIKE ? OR email LIKE ?)
+       ORDER BY user_name ASC
+       LIMIT 20"
+    );
+    $like = '%' . $q . '%';
+    $stmt->execute([$userId, $like, $like]);
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $users = array_map(static function ($row) {
+      return [
+        'id' => (int) $row['user_id'],
+        'username' => $row['user_name'],
+        'userPic' => $row['user_pic'] ?? '',
+        'userBio' => $row['user_bio'] ?? '',
+        'email' => $row['email'] ?? '',
+      ];
+    }, $rows);
+
+    return $this->json($response, $users);
   }
 
   private function json(Response $response, array $payload, int $status = 200): Response
