@@ -2,10 +2,6 @@
 
 namespace App\Controllers;
 
-if (session_status() !== PHP_SESSION_ACTIVE) {
-  session_start();
-}
-
 use App\Services\DatabaseService;
 use App\Services\Utils;
 use App\Services\UtilService;

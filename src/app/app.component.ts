@@ -1,8 +1,9 @@
-import {Component, OnInit, signal, WritableSignal} from '@angular/core';
-import {UserWebService} from "./services/user-web-service/user-web.service";
-import {DefaultViewComponent} from "./views/default-view/default-view.component";
-import {CommonModule} from "@angular/common";
-import {LoginComponent} from "./components/login/login.component";
+import { Component, OnInit, computed, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { DefaultViewComponent } from './views/default-view/default-view.component';
+import { LoginComponent } from './components/login/login.component';
+import { AuthService } from './services/auth-service/auth.service';
+import { take } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -17,12 +18,21 @@ import {LoginComponent} from "./components/login/login.component";
   standalone: true
 })
 export class AppComponent implements OnInit {
-  isLoggedIn: WritableSignal<boolean> = signal(true); // TODO Set to false
+  readonly checkingSession = signal(true);
+  readonly isLoggedIn = computed(() => this.authService.isLoggedIn());
+  readonly showApp = computed(() => !this.checkingSession() && this.isLoggedIn());
+  readonly showLogin = computed(() => !this.checkingSession() && !this.isLoggedIn());
 
-  constructor(private userWebService: UserWebService) {}
-  public ngOnInit(): void {}
+  constructor(private authService: AuthService) {}
+
+  ngOnInit(): void {
+    this.authService.checkSession().pipe(take(1)).subscribe({
+      next: () => this.checkingSession.set(false),
+      error: () => this.checkingSession.set(false)
+    });
+  }
 
   handleLoggedIn() {
-    this.isLoggedIn.set(true);
+    this.checkingSession.set(false);
   }
 }

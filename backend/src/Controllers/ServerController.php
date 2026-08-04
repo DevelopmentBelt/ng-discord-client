@@ -4,12 +4,11 @@ namespace App\Controllers;
 
 use App\Models\Server;
 use App\Models\User;
+use App\Services\AuthService;
 use Exception;
 use PDO;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
-
-$_SESSION['user_id'] = 1; // TODO GET RID OF THIS, only used for testing using badger account
 
 class ServerController extends Routes {
   protected function registerRoutes() {
@@ -30,8 +29,8 @@ class ServerController extends Routes {
 
   public function getServersForUser(Request $request, Response $response, $args) {
     try {
-      $userId = $_SESSION['user_id'];
-      error_log("getServersForUser called with user_id: " . $userId);
+      $userId = AuthService::getUserId();
+      error_log("getServersForUser called with user_id: " . ($userId ?? 'null'));
       
       if ($userId) {
         $pdo = $this->dbService->getConnection();
@@ -188,7 +187,7 @@ class ServerController extends Routes {
 
   public function joinServer(Request $request, Response $response, $args) {
     try {
-      $userId = $_SESSION['user_id'];
+      $userId = AuthService::getUserId();
       $serverId = $args['serverId'];
       
       if (!$userId) {
@@ -223,7 +222,7 @@ class ServerController extends Routes {
 
   public function leaveServer(Request $request, Response $response, $args) {
     try {
-      $userId = $_SESSION['user_id'];
+      $userId = AuthService::getUserId();
       $serverId = $args['serverId'];
       
       if (!$userId) {
@@ -253,7 +252,7 @@ class ServerController extends Routes {
 
   public function createServer(Request $request, Response $response, $args) {
     try {
-      $userId = $_SESSION['user_id'];
+      $userId = AuthService::getUserId();
       if (!$userId) {
         $response->getBody()->write(json_encode(['error' => 'User not authenticated']));
         return $response->withHeader('Content-Type', 'application/json')->withStatus(401);

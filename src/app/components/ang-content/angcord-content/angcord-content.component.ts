@@ -5,6 +5,7 @@ import {Subscription, take} from "rxjs";
 import {MessageWebService} from "../../../services/message-web-service/message-web.service";
 import {ChannelSocketService} from "../../../services/socket-service/channel-socket.service";
 import {AlertService} from "../../../services/alert-service/alert-service";
+import {AuthService} from "../../../services/auth-service/auth.service";
 import {Message, Author, Mention} from "../../../models/message/message";
 import {Server} from "../../../models/server/server";
 import {Channel} from "../../../models/channel/channel";
@@ -50,13 +51,15 @@ export class AngcordContentComponent implements OnInit, OnDestroy {
     private webService: MessageWebService,
     private socketService: ChannelSocketService,
     private cdr: ChangeDetectorRef,
-    private alertService: AlertService
+    private alertService: AlertService,
+    private authService: AuthService
   ) {
     effect(() => {
       this.subs.unsubscribe();
       this.subs = new Subscription();
       const server = this.server();
       const channel = this.channel();
+      const currentUser = this.authService.currentUser();
       this.messageList = [];
       if (this.messageBox?.nativeElement) {
         this.messageBox.nativeElement.value = '';
@@ -68,7 +71,9 @@ export class AngcordContentComponent implements OnInit, OnDestroy {
         const channelId = channel.channelId + '';
         const requestKey = `${serverId}:${channelId}`;
         this.socketService.setChannelId(channelId);
-        this.socketService.setUserId(1);
+        if (currentUser?.id) {
+          this.socketService.setUserId(currentUser.id);
+        }
 
         this.subs.add(
           this.webService.getLatestMessages(serverId, channelId).subscribe((resp) => {
@@ -259,8 +264,14 @@ export class AngcordContentComponent implements OnInit, OnDestroy {
   }
 
   public postMessage(textRaw: string) {
+    const currentUser = this.authService.currentUser();
+    if (!currentUser || !this.channel()?.channelId) {
+      this.alertService.warning('Not signed in', 'Please log in to send messages.');
+      return;
+    }
+
     const msg: Message = {
-      id: "test",
+      id: 'pending',
       text: textRaw,
       rawText: textRaw,
       mentions: {} as Mention[],
@@ -270,20 +281,15 @@ export class AngcordContentComponent implements OnInit, OnDestroy {
       attachments: [],
       channelId: this.channel()?.channelId,
       author: {
-        userId: 1,
-        username: 'Badger',
-        profilePic: 'https://avatars.githubusercontent.com/u/8027457?v=4'
+        userId: currentUser.id,
+        username: currentUser.username,
+        profilePic: currentUser.userPic || ''
       } as Author
     };
-    const user: User = {
-      id: '1',
-      username: 'Badger',
-      fullName: 'badger.jar',
-      profilePic: ''
-    } as unknown as User;
-    this.webService.postMessage(user, this.channel().channelId + "", msg).pipe(take(1)).subscribe((resp) => {
-      // TODO Check that the message was success, send it to everyone
-      this.socketService.sendMessage(msg);
+
+    this.webService.postMessage(currentUser, this.channel().channelId + '', msg).pipe(take(1)).subscribe({
+      next: () => this.socketService.sendMessage(msg),
+      error: () => this.alertService.warning('Send failed', 'Could not send your message.')
     });
   }
 }

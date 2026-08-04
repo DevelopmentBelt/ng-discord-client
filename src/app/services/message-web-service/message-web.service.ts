@@ -10,31 +10,23 @@ import { environment } from '../../../environments/environment';
 })
 export class MessageWebService {
   private baseUrl = environment.apiUrl;
+  private readonly creds = { withCredentials: true };
 
   constructor(private http: HttpClient) {}
 
   getLatestMessages(serverId: string, channelId: string): Observable<Message[]> {
-    return this.http.get<Message[]>(`${this.baseUrl}/api/messages/${serverId}/${channelId}`);
+    return this.http.get<Message[]>(`${this.baseUrl}/api/messages/${serverId}/${channelId}`, this.creds);
   }
 
   postMessage(user: User, channelId: string, message: Message): Observable<any> {
     return this.http.post(`${this.baseUrl}/api/messages/${channelId}`, {
       postedByMemberId: user.id,
       message: message.rawText,
-      attachments: [], // TODO: Handle attachments
+      attachments: [],
       timestamp: new Date().toISOString()
-    });
+    }, this.creds);
   }
 
-  /**
-   * Search for messages in a specific channel
-   * @param serverId - The server ID to search in
-   * @param channelId - The channel ID to search in
-   * @param query - The search query text
-   * @param limit - Maximum number of results to return (default: 50)
-   * @param offset - Number of results to skip for pagination (default: 0)
-   * @returns Observable of search results
-   */
   searchMessages(serverId: string, channelId: string, query: string, limit: number = 50, offset: number = 0): Observable<Message[]> {
     const params = {
       q: query,
@@ -42,17 +34,9 @@ export class MessageWebService {
       offset: offset.toString()
     };
 
-    return this.http.get<Message[]>(`${this.baseUrl}/api/search/${serverId}/${channelId}`, { params });
+    return this.http.get<Message[]>(`${this.baseUrl}/api/search/${serverId}/${channelId}`, { params, ...this.creds });
   }
 
-  /**
-   * Search for messages across all channels in a server
-   * @param serverId - The server ID to search in
-   * @param query - The search query text
-   * @param limit - Maximum number of results to return (default: 50)
-   * @param offset - Number of results to skip for pagination (default: 0)
-   * @returns Observable of search results
-   */
   searchServerMessages(serverId: string, query: string, limit: number = 50, offset: number = 0): Observable<Message[]> {
     const params = {
       q: query,
@@ -60,6 +44,6 @@ export class MessageWebService {
       offset: offset.toString()
     };
 
-    return this.http.get<Message[]>(`${this.baseUrl}/api/search/${serverId}`, { params });
+    return this.http.get<Message[]>(`${this.baseUrl}/api/search/${serverId}`, { params, ...this.creds });
   }
 }

@@ -1,19 +1,21 @@
 <?php
 
-namespace backend\auth;
+namespace App\Auth;
+
+use App\Services\AuthService;
+
+/**
+ * Thin wrapper around session-based AuthService.
+ */
 class Authenticator
 {
-  private bool $isAuthenticated = false;
-
-  public function __construct() {}
-
   public function isAuthenticated(): bool
   {
-    return $this->isAuthenticated;
+    return AuthService::getUserId() !== null;
   }
 
-  public function authenticate()
+  public function getUserId(): ?int
   {
-    $this->isAuthenticated = true;
+    return AuthService::getUserId();
   }
 }

@@ -1,6 +1,9 @@
-@if (isLoggedIn()) {
+@if (checkingSession()) {
+  <div class="w-screen h-screen flex items-center justify-center bg-discord-dark text-discord-text-muted">
+    Loading...
+  </div>
+} @else if (showApp()) {
   <default-view />
 } @else {
-  <!-- Login Screen -->
   <app-login (userLoggedIn)="handleLoggedIn()" />
 }

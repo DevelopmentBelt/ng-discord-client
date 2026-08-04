@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from "@angular/common/http";
-import {Observable} from "rxjs";
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 @Injectable({
@@ -8,21 +8,33 @@ import { environment } from '../../environments/environment';
 })
 export class ServerConnectivityService {
   private BASE_URL: string = `${environment.apiUrl}/api/`;
+
   constructor(private httpClient: HttpClient) {}
 
-  public sendPostReq(path: string, body: any, options: any): Observable<any> {
-    return this.httpClient.post(this.BASE_URL + path, body, options);
+  private withCredentials(options: any = {}): any {
+    return {
+      ...options,
+      withCredentials: true
+    };
   }
-  public sendPutReq(path: string, body: any, options: any): Observable<any> {
-    return this.httpClient.put(this.BASE_URL + path, body, options);
+
+  public sendPostReq(path: string, body: any, options: any = {}): Observable<any> {
+    return this.httpClient.post(this.BASE_URL + path, body, this.withCredentials(options));
   }
-  public sendPatchReq(path: string, body: any, options: any): Observable<any> {
-    return this.httpClient.patch(this.BASE_URL + path, body, options);
+
+  public sendPutReq(path: string, body: any, options: any = {}): Observable<any> {
+    return this.httpClient.put(this.BASE_URL + path, body, this.withCredentials(options));
   }
-  public sendDeleteRequest(path: string, options: any): Observable<any> {
-    return this.httpClient.delete(this.BASE_URL + path, options);
+
+  public sendPatchReq(path: string, body: any, options: any = {}): Observable<any> {
+    return this.httpClient.patch(this.BASE_URL + path, body, this.withCredentials(options));
   }
-  public sendGetRequest(path: string, options: any): Observable<any> {
-    return this.httpClient.get(this.BASE_URL + path, options);
+
+  public sendDeleteRequest(path: string, options: any = {}): Observable<any> {
+    return this.httpClient.delete(this.BASE_URL + path, this.withCredentials(options));
+  }
+
+  public sendGetRequest(path: string, options: any = {}): Observable<any> {
+    return this.httpClient.get(this.BASE_URL + path, this.withCredentials(options));
   }
 }

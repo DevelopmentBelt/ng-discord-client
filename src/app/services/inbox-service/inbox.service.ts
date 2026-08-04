@@ -305,14 +305,14 @@ export class InboxService {
    * API methods for backend integration
    */
   fetchInboxItems(): Observable<InboxItem[]> {
-    return this.http.get<InboxItem[]>(`${this.baseUrl}/api/inbox`);
+    return this.http.get<InboxItem[]>(`${this.baseUrl}/api/inbox`, { withCredentials: true });
   }
 
   markItemAsRead(itemId: string): Observable<any> {
-    return this.http.put(`${this.baseUrl}/api/inbox/${itemId}/read`, {});
+    return this.http.put(`${this.baseUrl}/api/inbox/${itemId}/read`, {}, { withCredentials: true });
   }
 
   deleteInboxItem(itemId: string): Observable<any> {
-    return this.http.delete(`${this.baseUrl}/api/inbox/${itemId}`);
+    return this.http.delete(`${this.baseUrl}/api/inbox/${itemId}`, { withCredentials: true });
   }
 }

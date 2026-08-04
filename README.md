@@ -14,7 +14,7 @@ cp .env.example .env
 docker compose up --build
 ```
 
-Then open:
+Then open http://localhost:4200 and **register a new account**. There is no seed user or dummy servers — create a server from the `+` button after logging in.
 
 | Service    | URL |
 |-----------|-----|
@@ -23,7 +23,7 @@ Then open:
 | WebSocket | ws://localhost:8080 |
 | MySQL     | localhost:3306 |
 
-Default DB credentials are in `.env.example` (`ng_discord` / `ng_discord`). Schema and seed data load automatically on first start.
+Default DB credentials are in `.env.example` (`ng_discord` / `ng_discord`). Schema loads automatically on first start (empty database).
 
 Useful commands:
 

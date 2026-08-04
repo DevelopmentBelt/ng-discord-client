@@ -10,6 +10,8 @@ import { Server } from '../../models/server/server';
 import { ServerConnectivityService } from '../../services/server-connectivity.service';
 import { InboxService } from '../../services/inbox-service/inbox.service';
 import { ServerWebService } from '../../services/server-web-service/server-web.service';
+import { AuthService } from '../../services/auth-service/auth.service';
+import { take } from 'rxjs';
 
 @Component({
   selector: 'app-sidebar',
@@ -46,8 +48,17 @@ export class SidebarComponent implements OnInit {
   constructor(
     private serverService: ServerConnectivityService,
     private inboxService: InboxService,
-    private serverWebService: ServerWebService
+    private serverWebService: ServerWebService,
+    private authService: AuthService
   ) {}
+
+  currentUsername(): string {
+    return this.authService.currentUser()?.username || 'User';
+  }
+
+  logout(): void {
+    this.authService.logout().pipe(take(1)).subscribe();
+  }
 
   ngOnInit(): void {
     this.loadServers();

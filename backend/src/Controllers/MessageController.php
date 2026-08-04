@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Services\AuthService;
 use PDO;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -47,13 +48,23 @@ class MessageController extends Routes {
   }
 
   public function postMessage(Request $request, Response $response, $args): Response {
-    $body = $request->getParsedBody();
-    $authorId = $body['postedByMemberId'];
-    $rawText = $body['message'];
+    $authorId = AuthService::getUserId();
+    if (!$authorId) {
+      $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Not authenticated']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(401);
+    }
+
+    $body = $request->getParsedBody() ?? [];
+    $rawText = $body['message'] ?? '';
     $attachments = $body['attachments'] ?? [];
     // TODO We need to parse the mentioned members from the rawText
     $timestampPosted = $body['timestamp'] ?? null;
     $channelId = $args['channelId'];
+
+    if (trim((string) $rawText) === '') {
+      $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Message cannot be empty']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+    }
 
     // MySQL DATETIME rejects ISO-8601 with T/Z; normalize to Y-m-d H:i:s
     try {
