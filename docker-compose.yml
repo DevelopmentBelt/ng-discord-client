@@ -1,0 +1,76 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: ng-discord-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: ${DB_NAME:-ng_discord}
+      MYSQL_USER: ${DB_USER:-ng_discord}
+      MYSQL_PASSWORD: ${DB_PASS:-ng_discord}
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-root}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/api/Dockerfile
+    container_name: ng-discord-api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_NAME: ${DB_NAME:-ng_discord}
+      DB_USER: ${DB_USER:-ng_discord}
+      DB_PASS: ${DB_PASS:-ng_discord}
+      DB_CHARSET: ${DB_CHARSET:-utf8mb4}
+    ports:
+      - "${API_PORT:-80}:80"
+    volumes:
+      - ./backend:/var/www/html
+
+  websocket:
+    build:
+      context: .
+      dockerfile: docker/websocket/Dockerfile
+    container_name: ng-discord-websocket
+    restart: unless-stopped
+    environment:
+      WS_HTTP_HOST: ${WS_HTTP_HOST:-localhost}
+      WS_HOST: ${WS_HOST:-0.0.0.0}
+      WS_PORT: ${WS_PORT:-8080}
+    ports:
+      - "${WS_PORT:-8080}:8080"
+    volumes:
+      - ./backend:/var/www/html
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend/Dockerfile
+    container_name: ng-discord-frontend
+    restart: unless-stopped
+    depends_on:
+      - api
+      - websocket
+    ports:
+      - "${FRONTEND_PORT:-4200}:4200"
+    volumes:
+      - .:/app
+      - frontend_node_modules:/app/node_modules
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+
+volumes:
+  db_data:
+  frontend_node_modules:

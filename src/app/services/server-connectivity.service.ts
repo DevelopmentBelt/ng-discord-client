@@ -1,12 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from "@angular/common/http";
 import {Observable} from "rxjs";
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ServerConnectivityService {
-  private BASE_URL: string = 'http://localhost:80/api/';
+  private BASE_URL: string = `${environment.apiUrl}/api/`;
   constructor(private httpClient: HttpClient) {}
 
   public sendPostReq(path: string, body: any, options: any): Observable<any> {

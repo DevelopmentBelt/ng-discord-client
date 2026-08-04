@@ -3,12 +3,13 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Message } from '../../models/message/message';
 import { User } from '../../models/user/user';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class MessageWebService {
-  private baseUrl = 'http://localhost:80'; // Adjust this to match your backend URL
+  private baseUrl = environment.apiUrl;
 
   constructor(private http: HttpClient) {}
 

@@ -7,11 +7,11 @@ use PDO;
 class DatabaseService {
   private PDO | null $pdo;
   public function __construct() {
-    $host = $_ENV['DB_HOST'];
-    $db   = $_ENV['DB_NAME'];
-    $user = $_ENV['DB_USER'];
-    $pass = $_ENV['DB_PASS'];
-    $charset = $_ENV['DB_CHARSET'];
+    $host = $_ENV['DB_HOST'] ?? getenv('DB_HOST') ?: 'localhost';
+    $db = $_ENV['DB_NAME'] ?? getenv('DB_NAME') ?: 'ng_discord';
+    $user = $_ENV['DB_USER'] ?? getenv('DB_USER') ?: 'ng_discord';
+    $pass = $_ENV['DB_PASS'] ?? getenv('DB_PASS') ?: 'ng_discord';
+    $charset = $_ENV['DB_CHARSET'] ?? getenv('DB_CHARSET') ?: 'utf8mb4';
     $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
 
     // PDO options

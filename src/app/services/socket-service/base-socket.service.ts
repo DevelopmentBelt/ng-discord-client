@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -7,7 +8,7 @@ export class BaseSocketService {
   private io: WebSocket;
   private connected: boolean = false;
   constructor() {
-    this.io = new WebSocket('ws://localhost:8080/base');
+    this.io = new WebSocket(`${environment.wsUrl}/base`);
     this.io.onopen = () => {
       this.connected = true;
     }

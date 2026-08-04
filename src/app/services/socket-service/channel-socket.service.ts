@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import {Observable, Subject} from "rxjs";
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -39,7 +40,7 @@ export class ChannelSocketService {
   }
   constructor() {}
   connect(): boolean {
-    this.io = new WebSocket('ws://localhost:8080/channel?channelId=' + this.channelId + "&userId=" + this.userId);
+    this.io = new WebSocket(`${environment.wsUrl}/channel?channelId=` + this.channelId + "&userId=" + this.userId);
     this.io.onopen = () => {
       this.connected = true;
     }

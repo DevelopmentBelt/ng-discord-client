@@ -5,12 +5,13 @@ import { InboxItem, InboxItemType, InboxPriority, DirectMessageThread, InboxFilt
 import { User } from '../../models/user/user';
 import { Message } from '../../models/message/message';
 import * as moment from 'moment';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class InboxService {
-  private baseUrl = 'http://localhost:80';
+  private baseUrl = environment.apiUrl;
 
   // Signals for reactive state management
   private inboxItems: WritableSignal<InboxItem[]> = signal([]);

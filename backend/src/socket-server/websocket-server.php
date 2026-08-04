@@ -42,8 +42,11 @@ class BaseSocketListener implements MessageComponentInterface {
   }
 }
 
-// Run the server application through the WebSocket protocol on port 8080
-$app = new App('localhost', 8080);
+// httpHost must match the browser URL (ws://localhost:...); bind on all interfaces for Docker
+$httpHost = getenv('WS_HTTP_HOST') ?: 'localhost';
+$port = (int) (getenv('WS_PORT') ?: 8080);
+$bindAddress = getenv('WS_HOST') ?: '0.0.0.0';
+$app = new App($httpHost, $port, $bindAddress);
 
 $app->route('/base', new WsServer(new BaseSocketListener()), ['*']);
 $app->route('/channel', new WsServer(new BaseSocketListener()), ['*']);
