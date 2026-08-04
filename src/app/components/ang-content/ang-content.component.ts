@@ -19,8 +19,8 @@ import {Server} from "../../models/server/server";
 export class AngContentComponent implements OnInit {
   servers: WritableSignal<Server[]> = signal([]);
 
-  selectedServer: WritableSignal<Server> = signal(null);
-  selectedChannel: WritableSignal<Channel> = signal(null);
+  selectedServer: WritableSignal<Server | null> = signal(null);
+  selectedChannel: WritableSignal<Channel | null> = signal(null);
 
   // Resizable layout signals
   // Note: Server sidebar is fixed at 72px, so leftSidebarWidth includes both server + channel areas

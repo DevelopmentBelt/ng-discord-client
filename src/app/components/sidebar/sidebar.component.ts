@@ -170,7 +170,6 @@ export class SidebarComponent implements OnInit {
   onServerCreated(serverData: any): void {
     this.serverWebService.createServer(serverData).subscribe({
       next: (newServer: any) => {
-        // Backend now returns data in the correct format
         const transformedServer = {
           serverId: newServer.serverId?.toString() || '',
           serverName: newServer.serverName || '',
@@ -178,17 +177,15 @@ export class SidebarComponent implements OnInit {
           iconURL: newServer.iconURL || '',
           ownerId: newServer.ownerId?.toString() || ''
         };
-        
-        // Add to local servers list
+
         this.servers.set([...this.servers(), transformedServer]);
         this.sidebarServers.set([...this.sidebarServers(), transformedServer]);
-        
-        // Close the modal
         this.closeServerCreation();
+        // Select the new server so channels/members load immediately
+        this.selectServer(transformedServer);
       },
       error: (error: any) => {
         console.error('Failed to create server:', error);
-        // TODO: Show error message to user
       }
     });
   }

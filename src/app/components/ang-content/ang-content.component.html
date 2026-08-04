@@ -46,7 +46,7 @@
 
     <!-- Right sidebar: Member list -->
     <div class="bg-discord-medium min-w-[200px] max-w-[40%] flex-shrink-0" [style.width.%]="rightSidebarWidth()">
-      <member-sidebar></member-sidebar>
+      <member-sidebar [server]="selectedServer()"></member-sidebar>
     </div>
   </div>
 </div>

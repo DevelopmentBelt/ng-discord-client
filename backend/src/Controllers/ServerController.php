@@ -15,6 +15,7 @@ class ServerController extends Routes {
     $this->app->get('/api/servers/', [$this, 'getServersForUser']);
     $this->app->get('/api/servers/public/', [$this, 'getPublicServers']);
     $this->app->get('/api/servers/{serverId}/channels', [$this, 'getServerChannels']);
+    $this->app->get('/api/servers/{serverId}/members', [$this, 'getServerMembers']);
     $this->app->post('/api/servers/', [$this, 'createServer']);
     $this->app->post('/api/servers/{serverId}/join', [$this, 'joinServer']);
     $this->app->delete('/api/servers/{serverId}/leave', [$this, 'leaveServer']);
@@ -185,6 +186,105 @@ class ServerController extends Routes {
     }
   }
 
+  public function getServerMembers(Request $request, Response $response, $args) {
+    try {
+      $userId = AuthService::getUserId();
+      if (!$userId) {
+        $response->getBody()->write(json_encode(['error' => 'User not authenticated']));
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(401);
+      }
+
+      $serverId = (int) $args['serverId'];
+      $pdo = $this->dbService->getConnection();
+
+      $serverStmt = $pdo->prepare('SELECT owner_id FROM servers WHERE server_id = ?');
+      $serverStmt->execute([$serverId]);
+      $server = $serverStmt->fetch(PDO::FETCH_ASSOC);
+      if (!$server) {
+        $response->getBody()->write(json_encode(['error' => 'Server not found']));
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
+      }
+      $ownerId = (int) $server['owner_id'];
+
+      $userStmt = $pdo->prepare('SELECT user_name FROM users WHERE user_id = ?');
+      $userStmt->execute([$userId]);
+      $username = $userStmt->fetchColumn() ?: null;
+
+      // Ensure the current user has a membership row (owners can be missing from older creates)
+      $membershipStmt = $pdo->prepare('SELECT member_id FROM members WHERE user_id = ? AND server_id = ?');
+      $membershipStmt->execute([$userId, $serverId]);
+      $membership = $membershipStmt->fetch(PDO::FETCH_ASSOC);
+
+      if (!$membership) {
+        if ($userId !== $ownerId) {
+          $response->getBody()->write(json_encode(['error' => 'Not a member of this server']));
+          return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
+        }
+        $pdo->prepare(
+          "INSERT INTO members (member_name, user_id, server_id, status, joined_at)
+           VALUES (?, ?, ?, 'online', NOW())"
+        )->execute([$username, $userId, $serverId]);
+      } else {
+        $pdo->prepare(
+          "UPDATE members
+           SET status = 'online',
+               member_name = COALESCE(NULLIF(member_name, ''), ?)
+           WHERE user_id = ? AND server_id = ?"
+        )->execute([$username, $userId, $serverId]);
+      }
+
+      $stmt = $pdo->prepare(
+        "SELECT m.member_id, m.member_name, m.user_id, m.status, m.joined_at,
+                u.user_name, u.user_pic
+         FROM members m
+         INNER JOIN users u ON u.user_id = m.user_id
+         WHERE m.server_id = ?
+         ORDER BY
+           CASE WHEN m.user_id = ? THEN 0 ELSE 1 END,
+           CASE WHEN COALESCE(m.status, 'offline') = 'offline' THEN 1 ELSE 0 END,
+           COALESCE(m.member_name, u.user_name) ASC"
+      );
+      $stmt->execute([$serverId, $ownerId]);
+      $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+      $members = [];
+      foreach ($rows as $row) {
+        $memberUserId = (int) $row['user_id'];
+        $isOwner = $memberUserId === $ownerId;
+        $displayName = $row['member_name'] ?: $row['user_name'];
+        $status = strtolower((string) ($row['status'] ?: 'offline'));
+        if (!in_array($status, ['online', 'idle', 'dnd', 'offline'], true)) {
+          $status = 'offline';
+        }
+
+        $roles = $isOwner ? ['Owner'] : ['Member'];
+
+        $members[] = [
+          'memberId' => (string) $row['member_id'],
+          'memberName' => $displayName,
+          'userId' => $memberUserId,
+          'username' => $row['user_name'],
+          'userPic' => $row['user_pic'] ?? '',
+          'status' => $status,
+          'roles' => $roles,
+          'joinedAt' => $row['joined_at'],
+          'isOwner' => $isOwner,
+          'isAdmin' => $isOwner,
+          'canManageMembers' => $isOwner,
+          'canManageChannels' => $isOwner,
+          'canManageRoles' => $isOwner,
+        ];
+      }
+
+      $response->getBody()->write(json_encode($members));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+    } catch (Exception $e) {
+      error_log('Error in getServerMembers: ' . $e->getMessage());
+      $response->getBody()->write(json_encode(['error' => 'Failed to fetch server members']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+    }
+  }
+
   public function joinServer(Request $request, Response $response, $args) {
     try {
       $userId = AuthService::getUserId();
@@ -207,10 +307,14 @@ class ServerController extends Routes {
         return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
       }
       
+      $userStmt = $pdo->prepare('SELECT user_name FROM users WHERE user_id = ?');
+      $userStmt->execute([$userId]);
+      $username = $userStmt->fetchColumn() ?: null;
+
       // Add user to server
-      $insertQuery = "INSERT INTO members (user_id, server_id, joined_at) VALUES (?, ?, NOW())";
+      $insertQuery = "INSERT INTO members (member_name, user_id, server_id, status, joined_at) VALUES (?, ?, ?, 'online', NOW())";
       $insertStmt = $pdo->prepare($insertQuery);
-      $insertStmt->execute([$userId, $serverId]);
+      $insertStmt->execute([$username, $userId, $serverId]);
       
       $response->getBody()->write(json_encode(['success' => true, 'message' => 'Successfully joined server']));
       return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
@@ -276,10 +380,14 @@ class ServerController extends Routes {
       
       $serverId = $pdo->lastInsertId();
       
+      $userStmt = $pdo->prepare('SELECT user_name FROM users WHERE user_id = ?');
+      $userStmt->execute([$userId]);
+      $username = $userStmt->fetchColumn() ?: null;
+
       // Add the creator as a member
-      $memberQuery = "INSERT INTO members (user_id, server_id, joined_at) VALUES (?, ?, NOW())";
+      $memberQuery = "INSERT INTO members (member_name, user_id, server_id, status, joined_at) VALUES (?, ?, ?, 'online', NOW())";
       $memberStmt = $pdo->prepare($memberQuery);
-      $memberStmt->execute([$userId, $serverId]);
+      $memberStmt->execute([$username, $userId, $serverId]);
 
       // Default category + #general so the new server is immediately usable
       $pdo->prepare("INSERT INTO categories (server_id, category_name, category_icon) VALUES (?, 'Text Channels', NULL)")
