@@ -8,15 +8,15 @@ use Exception;
 class User
 {
   private int $user_id;
-  private string $user_name;
-  private string $user_bio;
-  private string $user_pic;
-  private string $email;
+  private ?string $user_name;
+  private ?string $user_bio;
+  private ?string $user_pic;
+  private ?string $email;
   private bool $email_verified;
 
   private PDO $pdo;
 
-  public function __construct(int $user_id, PDO $pdo, bool $returnUserData = true, string $user_name = null, string $user_bio = null, string $user_pic = null, string $email = null, bool $email_verified = false) {
+  public function __construct(int $user_id, PDO $pdo, bool $returnUserData = true, ?string $user_name = null, ?string $user_bio = null, ?string $user_pic = null, ?string $email = null, bool $email_verified = false) {
     $this->user_id = $user_id;
     $this->user_name = $user_name;
     $this->user_bio = $user_bio;
@@ -29,11 +29,13 @@ class User
       $stmt = $this->pdo->prepare($query);
       $stmt->execute([$user_id]);
       $row = $stmt->fetch(PDO::FETCH_ASSOC);
-      $this->user_name = $row['user_name'];
-      $this->user_bio = $row['user_bio'];
-      $this->user_pic = $row['user_pic'];
-      $this->email = $row['email'];
-      $this->email_verified = $row['email_verified'];
+      if ($row) {
+        $this->user_name = $row['user_name'] ?? null;
+        $this->user_bio = $row['user_bio'] ?? null;
+        $this->user_pic = $row['user_pic'] ?? null;
+        $this->email = $row['email'] ?? null;
+        $this->email_verified = (bool)($row['email_verified'] ?? false);
+      }
     }
   }
 
@@ -58,19 +60,19 @@ class User
     return $this->user_id;
   }
 
-  public function getName(): string {
+  public function getName(): ?string {
     return $this->user_name;
   }
 
-  public function getBio(): string {
+  public function getBio(): ?string {
     return $this->user_bio;
   }
 
-  public function getPic(): string {
+  public function getPic(): ?string {
     return $this->user_pic;
   }
 
-  public function getEmail(): string {
+  public function getEmail(): ?string {
     return $this->email;
   }
 

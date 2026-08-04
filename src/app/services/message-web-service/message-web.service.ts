@@ -8,7 +8,7 @@ import { User } from '../../models/user/user';
   providedIn: 'root'
 })
 export class MessageWebService {
-  private baseUrl = 'http://localhost:8000'; // Adjust this to match your backend URL
+  private baseUrl = 'http://localhost:80'; // Adjust this to match your backend URL
 
   constructor(private http: HttpClient) {}
 
@@ -17,11 +17,11 @@ export class MessageWebService {
   }
 
   postMessage(user: User, channelId: string, message: Message): Observable<any> {
-    return this.http.post(`${this.baseUrl}/api/messages`, {
-      userId: user.id,
-      channelId: channelId,
-      text: message.text,
-      rawText: message.rawText
+    return this.http.post(`${this.baseUrl}/api/messages/${channelId}`, {
+      postedByMemberId: user.id,
+      message: message.rawText,
+      attachments: [], // TODO: Handle attachments
+      timestamp: new Date().toISOString()
     });
   }
 
@@ -40,7 +40,7 @@ export class MessageWebService {
       limit: limit.toString(),
       offset: offset.toString()
     };
-    
+
     return this.http.get<Message[]>(`${this.baseUrl}/api/search/${serverId}/${channelId}`, { params });
   }
 
@@ -58,7 +58,7 @@ export class MessageWebService {
       limit: limit.toString(),
       offset: offset.toString()
     };
-    
+
     return this.http.get<Message[]>(`${this.baseUrl}/api/search/${serverId}`, { params });
   }
 }

@@ -23,7 +23,8 @@ class ServerController extends Routes {
   }
 
   public function testEndpoint(Request $request, Response $response, $args) {
-    return $response->withJson(['message' => 'Server controller is working', 'timestamp' => date('Y-m-d H:i:s')]);
+    $response->getBody()->write(json_encode(['message' => 'Server controller is working', 'timestamp' => date('Y-m-d H:i:s')]));
+    return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
   }
 
   public function getServersForUser(Request $request, Response $response, $args) {
@@ -50,14 +51,17 @@ class ServerController extends Routes {
         }
         
         error_log("Returning " . count($serverObjs) . " servers");
-        return $response->withJson($serverObjs);
+        $response->getBody()->write(json_encode($serverObjs));
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
       } else {
         error_log("User not authenticated");
-        return $response->withStatus(401)->withJson(['error' => 'User not authenticated']);
+        $response->getBody()->write(json_encode(['error' => 'User not authenticated']));
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(401);
       }
     } catch (Exception $e) {
       error_log("Error in getServersForUser: " . $e->getMessage());
-      return $response->withStatus(500)->withJson(['error' => 'Internal server error: ' . $e->getMessage()]);
+      $response->getBody()->write(json_encode(['error' => 'Internal server error: ' . $e->getMessage()]));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
     }
   }
 
@@ -111,9 +115,11 @@ class ServerController extends Routes {
         $serverObjs[] = $serverData;
       }
       
-      return $response->withJson($serverObjs);
+      $response->getBody()->write(json_encode($serverObjs));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
     } catch (Exception $e) {
-      return $response->withStatus(500)->withJson(['error' => 'Failed to fetch public servers']);
+      $response->getBody()->write(json_encode(['error' => 'Failed to fetch public servers']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
     }
   }
 
@@ -123,7 +129,8 @@ class ServerController extends Routes {
       $serverId = $args['serverId'];
       
       if (!$userId) {
-        return $response->withStatus(401)->withJson(['error' => 'User not authenticated']);
+        $response->getBody()->write(json_encode(['error' => 'User not authenticated']));
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(401);
       }
       
       $pdo = $this->dbService->getConnection();
@@ -134,7 +141,8 @@ class ServerController extends Routes {
       $checkStmt->execute([$userId, $serverId]);
       
       if ($checkStmt->fetch()) {
-        return $response->withStatus(400)->withJson(['error' => 'User is already a member of this server']);
+        $response->getBody()->write(json_encode(['error' => 'User is already a member of this server']));
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
       }
       
       // Add user to server
@@ -142,9 +150,11 @@ class ServerController extends Routes {
       $insertStmt = $pdo->prepare($insertQuery);
       $insertStmt->execute([$userId, $serverId]);
       
-      return $response->withJson(['success' => true, 'message' => 'Successfully joined server']);
+      $response->getBody()->write(json_encode(['success' => true, 'message' => 'Successfully joined server']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
     } catch (Exception $e) {
-      return $response->withStatus(500)->withJson(['error' => 'Failed to join server']);
+      $response->getBody()->write(json_encode(['error' => 'Failed to join server']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
     }
   }
 
@@ -154,7 +164,8 @@ class ServerController extends Routes {
       $serverId = $args['serverId'];
       
       if (!$userId) {
-        return $response->withStatus(401)->withJson(['error' => 'User not authenticated']);
+        $response->getBody()->write(json_encode(['error' => 'User not authenticated']));
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(401);
       }
       
       $pdo = $this->dbService->getConnection();
@@ -165,12 +176,15 @@ class ServerController extends Routes {
       $deleteStmt->execute([$userId, $serverId]);
       
       if ($deleteStmt->rowCount() === 0) {
-        return $response->withStatus(400)->withJson(['error' => 'User is not a member of this server']);
+        $response->getBody()->write(json_encode(['error' => 'User is not a member of this server']));
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
       }
       
-      return $response->withJson(['success' => true, 'message' => 'Successfully left server']);
+      $response->getBody()->write(json_encode(['success' => true, 'message' => 'Successfully left server']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
     } catch (Exception $e) {
-      return $response->withStatus(500)->withJson(['error' => 'Failed to leave server']);
+      $response->getBody()->write(json_encode(['error' => 'Failed to leave server']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
     }
   }
 
@@ -178,7 +192,8 @@ class ServerController extends Routes {
     try {
       $userId = $_SESSION['user_id'];
       if (!$userId) {
-        return $response->withStatus(401)->withJson(['error' => 'User not authenticated']);
+        $response->getBody()->write(json_encode(['error' => 'User not authenticated']));
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(401);
       }
 
       $data = $request->getParsedBody();
@@ -186,7 +201,8 @@ class ServerController extends Routes {
       $serverDescription = $data['serverDescription'] ?? '';
       
       if (empty($serverName)) {
-        return $response->withStatus(400)->withJson(['error' => 'Server name is required']);
+        $response->getBody()->write(json_encode(['error' => 'Server name is required']));
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
       }
 
       $pdo = $this->dbService->getConnection();
@@ -212,10 +228,17 @@ class ServerController extends Routes {
         'ownerId' => $userId
       ];
       
-      return $response->withJson($serverData);
+      $response->getBody()->write(json_encode($serverData));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
     } catch (Exception $e) {
-      return $response->withStatus(500)->withJson(['error' => 'Failed to create server']);
+      $response->getBody()->write(json_encode(['error' => 'Failed to create server']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
     }
   }
-  public function archiveServer(Request $request, Response $response, $args) {}
+  
+  public function archiveServer(Request $request, Response $response, $args) {
+    // TODO: Implement server archiving functionality
+    $response->getBody()->write(json_encode(['message' => 'Archive server functionality not yet implemented']));
+    return $response->withHeader('Content-Type', 'application/json')->withStatus(501);
+  }
 }

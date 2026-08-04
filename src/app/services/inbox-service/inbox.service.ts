@@ -10,17 +10,17 @@ import * as moment from 'moment';
   providedIn: 'root'
 })
 export class InboxService {
-  private baseUrl = 'http://localhost:8000';
-  
+  private baseUrl = 'http://localhost:80';
+
   // Signals for reactive state management
   private inboxItems: WritableSignal<InboxItem[]> = signal([]);
   private unreadCount: WritableSignal<number> = signal(0);
   private directMessageThreads: WritableSignal<DirectMessageThread[]> = signal([]);
-  
+
   // Behavior subjects for real-time updates
   private inboxUpdateSubject = new BehaviorSubject<InboxItem[]>([]);
   private unreadCountSubject = new BehaviorSubject<number>(0);
-  
+
   // Public observables
   inboxItems$ = this.inboxUpdateSubject.asObservable();
   unreadCount$ = this.unreadCountSubject.asObservable();
@@ -55,10 +55,10 @@ export class InboxService {
    */
   markAsRead(itemId: string): void {
     const items = this.inboxItems();
-    const updatedItems = items.map(item => 
+    const updatedItems = items.map(item =>
       item.id === itemId ? { ...item, isRead: true } : item
     );
-    
+
     this.inboxItems.set(updatedItems);
     this.updateUnreadCount();
     this.inboxUpdateSubject.next(updatedItems);
@@ -70,7 +70,7 @@ export class InboxService {
   markAllAsRead(): void {
     const items = this.inboxItems();
     const updatedItems = items.map(item => ({ ...item, isRead: true }));
-    
+
     this.inboxItems.set(updatedItems);
     this.updateUnreadCount();
     this.inboxUpdateSubject.next(updatedItems);
@@ -82,7 +82,7 @@ export class InboxService {
   deleteItem(itemId: string): void {
     const items = this.inboxItems();
     const updatedItems = items.filter(item => item.id !== itemId);
-    
+
     this.inboxItems.set(updatedItems);
     this.updateUnreadCount();
     this.inboxUpdateSubject.next(updatedItems);
@@ -93,29 +93,29 @@ export class InboxService {
    */
   filterItems(filters: InboxFilters): InboxItem[] {
     let items = this.inboxItems();
-    
+
     if (!filters.showRead) {
       items = items.filter(item => !item.isRead);
     }
-    
+
     if (!filters.showUnread) {
       items = items.filter(item => item.isRead);
     }
-    
+
     if (filters.types.length > 0) {
       items = items.filter(item => filters.types.includes(item.type));
     }
-    
+
     if (filters.priority.length > 0) {
       items = items.filter(item => filters.priority.includes(item.priority));
     }
-    
+
     if (filters.dateRange) {
-      items = items.filter(item => 
+      items = items.filter(item =>
         item.timestamp.isBetween(filters.dateRange!.start, filters.dateRange!.end, 'day', '[]')
       );
     }
-    
+
     return items;
   }
 
@@ -129,10 +129,10 @@ export class InboxService {
       timestamp: moment(),
       isRead: false
     };
-    
+
     const items = this.inboxItems();
     const updatedItems = [newItem, ...items];
-    
+
     this.inboxItems.set(updatedItems);
     this.updateUnreadCount();
     this.inboxUpdateSubject.next(updatedItems);
@@ -143,10 +143,10 @@ export class InboxService {
    */
   updateInboxItem(itemId: string, updates: Partial<InboxItem>): void {
     const items = this.inboxItems();
-    const updatedItems = items.map(item => 
+    const updatedItems = items.map(item =>
       item.id === itemId ? { ...item, ...updates } : item
     );
-    
+
     this.inboxItems.set(updatedItems);
     this.updateUnreadCount();
     this.inboxUpdateSubject.next(updatedItems);
@@ -163,7 +163,7 @@ export class InboxService {
    * Get high priority items
    */
   getHighPriorityItems(): InboxItem[] {
-    return this.inboxItems().filter(item => 
+    return this.inboxItems().filter(item =>
       item.priority === InboxPriority.HIGH || item.priority === InboxPriority.URGENT
     );
   }
@@ -173,7 +173,7 @@ export class InboxService {
    */
   searchItems(query: string): InboxItem[] {
     const searchTerm = query.toLowerCase();
-    return this.inboxItems().filter(item => 
+    return this.inboxItems().filter(item =>
       item.title.toLowerCase().includes(searchTerm) ||
       item.content.toLowerCase().includes(searchTerm) ||
       item.sender?.username?.toLowerCase().includes(searchTerm)
