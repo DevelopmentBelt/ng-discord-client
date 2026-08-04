@@ -116,26 +116,21 @@ export class AngcordContentComponent implements OnInit, OnDestroy {
    */
   getChannelDescription(): string {
     const channel = this.channel();
-    if (!channel) return 'General discussion';
-    
-    // You can customize this based on channel properties
+    if (!channel) return 'Select a channel';
+
     if (channel.channelName?.toLowerCase().includes('general')) {
       return 'General discussion';
     } else if (channel.channelName?.toLowerCase().includes('help')) {
       return 'Get help and support';
     } else if (channel.channelName?.toLowerCase().includes('announcements')) {
       return 'Important announcements';
-    } else {
-      return 'Channel discussion';
     }
+    return 'Channel discussion';
   }
 
-  /**
-   * Get message input placeholder text
-   */
   getMessagePlaceholder(): string {
-    const channelName = this.channel()?.channelName || 'general';
-    return `Message #${channelName}`;
+    const channelName = this.channel()?.channelName;
+    return channelName ? `Message #${channelName}` : 'Select a channel to send a message';
   }
 
   /**

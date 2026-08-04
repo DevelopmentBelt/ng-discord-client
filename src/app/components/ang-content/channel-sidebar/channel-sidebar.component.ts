@@ -117,16 +117,23 @@ export class ChannelSidebarComponent implements OnInit {
     this.showServerSettings.set(false);
   }
 
-  getCurrentServerName(): string {
+  isHomeSelected(): boolean {
     const server = this.selectedServer();
-    return server ? server.serverName : 'Angcord Server';
+    return !server || server.serverId === 'home';
+  }
+
+  getCurrentServerName(): string {
+    if (this.isHomeSelected()) {
+      return 'Direct Messages';
+    }
+    return this.selectedServer()?.serverName || 'Select a Server';
   }
 
   canViewServerOverview(): boolean {
-    return true;
+    return !this.isHomeSelected();
   }
 
   canAccessServerSettings(): boolean {
-    return !!this.selectedServer();
+    return !this.isHomeSelected();
   }
 }

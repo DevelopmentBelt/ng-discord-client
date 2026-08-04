@@ -1,9 +1,10 @@
-import {ChangeDetectionStrategy, Component, OnInit, signal, WritableSignal, HostListener, ElementRef} from '@angular/core';
+import {ChangeDetectionStrategy, Component, OnInit, computed, signal, WritableSignal, HostListener, ElementRef} from '@angular/core';
 import {AngcordContentComponent} from "./angcord-content/angcord-content.component";
 import {MemberSidebarComponent} from "./member-sidebar/member-sidebar.component";
 import {ChannelSidebarComponent} from "./channel-sidebar/channel-sidebar.component";
 import {Channel} from "../../models/channel/channel";
 import {Server} from "../../models/server/server";
+import {AuthService} from "../../services/auth-service/auth.service";
 
 @Component({
   selector: 'ang-content',
@@ -22,6 +23,13 @@ export class AngContentComponent implements OnInit {
   selectedServer: WritableSignal<Server | null> = signal(null);
   selectedChannel: WritableSignal<Channel | null> = signal(null);
 
+  readonly isHomeView = computed(() => {
+    const server = this.selectedServer();
+    return !server || server.serverId === 'home';
+  });
+
+  readonly currentUsername = computed(() => this.authService.currentUser()?.username || 'there');
+
   // Resizable layout signals
   // Note: Server sidebar is fixed at 72px, so leftSidebarWidth includes both server + channel areas
   leftSidebarWidth: WritableSignal<number> = signal(25);
@@ -34,10 +42,22 @@ export class AngContentComponent implements OnInit {
   private startX: number = 0;
   private startWidths: { left: number; main: number; right: number } = { left: 25, main: 55, right: 20 };
 
-  constructor(private elementRef: ElementRef) {}
+  constructor(
+    private elementRef: ElementRef,
+    private authService: AuthService
+  ) {}
 
   ngOnInit(): void {
     this.loadSavedWidths();
+    // Start on Home until the user picks a real server
+    this.selectedServer.set({
+      serverId: 'home',
+      serverName: 'Home',
+      iconURL: '',
+      ownerId: '',
+      serverDescription: 'Home'
+    });
+    this.selectedChannel.set(null);
   }
 
   handleServerChange(server: Server) {
@@ -46,7 +66,7 @@ export class AngContentComponent implements OnInit {
     this.selectedChannel.set(null);
   }
 
-  handleChannelChange(channel: Channel) {
+  handleChannelChange(channel: Channel | null) {
     this.selectedChannel.set(channel || null);
   }
 

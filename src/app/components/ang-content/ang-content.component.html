@@ -1,5 +1,4 @@
 <div class="h-screen flex flex-col overflow-hidden bg-discord-darker">
-  <!-- Header area with Discord-like styling -->
   <div class="h-12 bg-discord-lighter border-b border-discord-border flex-shrink-0 flex items-center px-4">
     <div class="flex items-center space-x-3">
       <div class="w-6 h-6 bg-discord-blue rounded"></div>
@@ -7,9 +6,7 @@
     </div>
   </div>
 
-  <!-- Main content area with resizable panels -->
   <div class="flex-1 flex overflow-hidden">
-    <!-- Left sidebar: Server list and channels (fixed server sidebar + resizable channel area) -->
     <div class="bg-discord-dark border-r border-discord-border min-w-[272px] max-w-[40%] flex-shrink-0" [style.width.%]="leftSidebarWidth()">
       <channel-sidebar
         (selectedServerChange)="handleServerChange($event)"
@@ -19,7 +16,6 @@
       </channel-sidebar>
     </div>
 
-    <!-- Resize handle between left sidebar and main content -->
     <div
       class="w-1 bg-discord-border cursor-col-resize hover:bg-discord-blue transition-colors duration-200 flex-shrink-0 relative z-10 group"
       (mousedown)="startResizing($event, 'left')"
@@ -27,26 +23,54 @@
       <div class="absolute inset-0 bg-transparent group-hover:bg-discord-blue/20 transition-colors duration-200"></div>
     </div>
 
-    <!-- Main content area -->
     <div class="bg-discord-lighter border-r border-discord-border min-w-[300px] flex-1 flex-shrink-0" [style.width.%]="mainContentWidth()">
-      <angcord-content
-        [server]="selectedServer()"
-        [channel]="selectedChannel()"
+      @if (isHomeView()) {
+        <div class="h-full w-full bg-discord-lighter flex flex-col">
+          <div class="px-4 py-3 border-b border-discord-border bg-discord-lighter flex-shrink-0">
+            <h5 class="m-0 text-lg font-semibold text-discord-text-lighter">Home</h5>
+            <p class="m-0 text-sm text-discord-text-muted">Friends, DMs, and your servers</p>
+          </div>
+          <div class="flex-1 flex items-center justify-center px-8">
+            <div class="max-w-md text-center">
+              <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-discord-blue flex items-center justify-center text-white text-2xl font-semibold">
+                {{ currentUsername().charAt(0).toUpperCase() }}
+              </div>
+              <h2 class="text-2xl font-semibold text-discord-text-lighter mb-2">
+                Welcome back, {{ currentUsername() }}
+              </h2>
+              <p class="text-discord-text-muted mb-6">
+                Select a server from the left to start chatting, or create one with the + button.
+              </p>
+              <div class="text-sm text-discord-text-muted bg-discord-medium border border-discord-border rounded-lg px-4 py-3">
+                Direct messages are coming soon. For now, hang out in a server channel.
+              </div>
+            </div>
+          </div>
+        </div>
+      } @else if (selectedChannel()) {
+        <angcord-content
+          [server]="selectedServer()"
+          [channel]="selectedChannel()"
+        >
+        </angcord-content>
+      } @else {
+        <div class="h-full w-full flex items-center justify-center text-discord-text-muted text-sm px-6 text-center">
+          This server has no channels yet.
+        </div>
+      }
+    </div>
+
+    @if (!isHomeView()) {
+      <div
+        class="w-1 bg-discord-border cursor-col-resize hover:bg-discord-blue transition-colors duration-200 flex-shrink-0 relative z-10 group"
+        (mousedown)="startResizing($event, 'right')"
       >
-      </angcord-content>
-    </div>
+        <div class="absolute inset-0 bg-transparent group-hover:bg-discord-blue/20 transition-colors duration-200"></div>
+      </div>
 
-    <!-- Resize handle between main content and right sidebar -->
-    <div
-      class="w-1 bg-discord-border cursor-col-resize hover:bg-discord-blue transition-colors duration-200 flex-shrink-0 relative z-10 group"
-      (mousedown)="startResizing($event, 'right')"
-    >
-      <div class="absolute inset-0 bg-transparent group-hover:bg-discord-blue/20 transition-colors duration-200"></div>
-    </div>
-
-    <!-- Right sidebar: Member list -->
-    <div class="bg-discord-medium min-w-[200px] max-w-[40%] flex-shrink-0" [style.width.%]="rightSidebarWidth()">
-      <member-sidebar [server]="selectedServer()"></member-sidebar>
-    </div>
+      <div class="bg-discord-medium min-w-[200px] max-w-[40%] flex-shrink-0" [style.width.%]="rightSidebarWidth()">
+        <member-sidebar [server]="selectedServer()"></member-sidebar>
+      </div>
+    }
   </div>
 </div>

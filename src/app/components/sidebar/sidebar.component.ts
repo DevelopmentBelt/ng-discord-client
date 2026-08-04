@@ -62,6 +62,8 @@ export class SidebarComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadServers();
+    // Keep Home selection in sync with the main layout on first load
+    this.selectHome();
   }
 
   /**
