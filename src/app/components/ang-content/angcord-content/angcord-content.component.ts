@@ -63,7 +63,9 @@ export class AngcordContentComponent implements OnInit, OnDestroy {
         this.socketService.setChannelId(channelId + "");
         this.socketService.setUserId(1);
         this.messageList = [];
-        this.messageBox.nativeElement.value = '';
+        if (this.messageBox?.nativeElement) {
+          this.messageBox.nativeElement.value = '';
+        }
         // Need to get the latest messages from the web service
         this.subs.add(
           this.webService.getLatestMessages(serverId + "", channelId + "").subscribe((resp) => {

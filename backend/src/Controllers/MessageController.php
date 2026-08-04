@@ -41,10 +41,19 @@ class MessageController extends Routes {
     $body = $request->getParsedBody();
     $authorId = $body['postedByMemberId'];
     $rawText = $body['message'];
-    $attachments = $body['attachments'];
+    $attachments = $body['attachments'] ?? [];
     // TODO We need to parse the mentioned members from the rawText
-    $timestampPosted = $body['timestamp'];
+    $timestampPosted = $body['timestamp'] ?? null;
     $channelId = $args['channelId'];
+
+    // MySQL DATETIME rejects ISO-8601 with T/Z; normalize to Y-m-d H:i:s
+    try {
+      $timestampPosted = (new \DateTimeImmutable($timestampPosted ?: 'now'))
+        ->setTimezone(new \DateTimeZone('UTC'))
+        ->format('Y-m-d H:i:s');
+    } catch (\Exception $e) {
+      $timestampPosted = gmdate('Y-m-d H:i:s');
+    }
 
     $conn = $this->dbService->getConnection();
     $conn->beginTransaction();

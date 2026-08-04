@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Controllers;
-session_start();
 
 use App\Services\DatabaseService;
 use Psr\Http\Message\ResponseInterface as Response;
