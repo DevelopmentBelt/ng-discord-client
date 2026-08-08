@@ -269,8 +269,52 @@
     } @else {
       <div class="flex-1 overflow-y-auto px-6 py-5 space-y-6">
         <div>
-          <label class="block text-xs font-semibold text-discord-text-muted uppercase tracking-wider mb-2">Accent color</label>
-          <p class="text-sm text-discord-text-muted mb-3">Buttons, links, focus rings, and highlights across the app.</p>
+          <label class="block text-xs font-semibold text-discord-text-muted uppercase tracking-wider mb-2">Theme presets</label>
+          <p class="text-sm text-discord-text-muted mb-3">Apply a full color scheme instantly, then fine-tune anything below.</p>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+            @for (preset of themePresets; track preset.id) {
+              <button
+                type="button"
+                class="theme-preset text-left"
+                [class.theme-preset--active]="themePresetId() === preset.id"
+                (click)="selectThemePreset(preset.id)"
+              >
+                <span class="theme-preset__swatches" aria-hidden="true">
+                  <span [style.background]="preset.colors.darker"></span>
+                  <span [style.background]="preset.colors.medium"></span>
+                  <span [style.background]="preset.colors.lighter"></span>
+                  <span [style.background]="preset.colors.blue"></span>
+                </span>
+                <span class="theme-preset__label">{{ preset.label }}</span>
+                <span class="theme-preset__desc">{{ preset.description }}</span>
+              </button>
+            }
+          </div>
+          @if (themePresetId() === 'custom') {
+            <p class="text-xs text-discord-text-muted mt-2">Custom palette — your individual color tweaks are active.</p>
+          }
+        </div>
+
+        <div class="theme-live-preview">
+          <div class="theme-live-preview__rail" [style.background]="colorHex('dark')">
+            <span [style.background]="liveAccentHex()"></span>
+            <span [style.background]="colorHex('medium')"></span>
+            <span [style.background]="colorHex('light')"></span>
+          </div>
+          <div class="theme-live-preview__panel" [style.background]="colorHex('medium')" [style.color]="colorHex('textMuted')">
+            Channels
+            <div class="theme-live-preview__chip" [style.background]="colorHex('light')" [style.color]="colorHex('textLight')"># general</div>
+          </div>
+          <div class="theme-live-preview__main" [style.background]="colorHex('lighter')" [style.color]="colorHex('textLight')">
+            <div class="theme-live-preview__title" [style.color]="colorHex('textLighter')">Preview</div>
+            <p>Chat surfaces, sidebars, and text update live.</p>
+            <button type="button" class="theme-live-preview__btn" [style.background]="liveAccentHex()">Accent button</button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-discord-text-muted uppercase tracking-wider mb-2">Accent shortcuts</label>
+          <p class="text-sm text-discord-text-muted mb-3">Quickly recolor buttons, links, and focus rings.</p>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
             @for (accent of accentOptions; track accent.id) {
               <button
@@ -297,7 +341,7 @@
               <input
                 type="color"
                 class="accent-color-input"
-                [ngModel]="customAccent()"
+                [ngModel]="colorHex('blue')"
                 (ngModelChange)="onCustomAccentInput($event)"
                 name="customAccentColor"
               />
@@ -314,6 +358,132 @@
           <div class="accent-preview" [style.background]="liveAccentHex()">
             <span>Live preview</span>
             <button type="button" class="accent-preview__btn">Primary action</button>
+          </div>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-discord-text-muted uppercase tracking-wider mb-2">Surfaces</label>
+            <div class="color-grid">
+              @for (field of surfaceFields(); track field.key) {
+                <label class="color-field">
+                  <span class="color-field__meta">
+                    <span class="color-field__label">{{ field.label }}</span>
+                    <span class="color-field__desc">{{ field.description }}</span>
+                  </span>
+                  <span class="color-field__controls">
+                    <input
+                      type="color"
+                      class="accent-color-input"
+                      [ngModel]="colorHex(field.key)"
+                      (ngModelChange)="onThemeColorInput(field.key, $event)"
+                      [name]="'color-' + field.key"
+                    />
+                    <input
+                      type="text"
+                      maxlength="7"
+                      class="color-field__hex"
+                      [ngModel]="colorHex(field.key)"
+                      (ngModelChange)="onThemeColorInput(field.key, $event)"
+                      [name]="'hex-' + field.key"
+                    />
+                  </span>
+                </label>
+              }
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-discord-text-muted uppercase tracking-wider mb-2">Accent colors</label>
+            <div class="color-grid">
+              @for (field of accentFields(); track field.key) {
+                <label class="color-field">
+                  <span class="color-field__meta">
+                    <span class="color-field__label">{{ field.label }}</span>
+                    <span class="color-field__desc">{{ field.description }}</span>
+                  </span>
+                  <span class="color-field__controls">
+                    <input
+                      type="color"
+                      class="accent-color-input"
+                      [ngModel]="colorHex(field.key)"
+                      (ngModelChange)="onThemeColorInput(field.key, $event)"
+                      [name]="'color-' + field.key"
+                    />
+                    <input
+                      type="text"
+                      maxlength="7"
+                      class="color-field__hex"
+                      [ngModel]="colorHex(field.key)"
+                      (ngModelChange)="onThemeColorInput(field.key, $event)"
+                      [name]="'hex-' + field.key"
+                    />
+                  </span>
+                </label>
+              }
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-discord-text-muted uppercase tracking-wider mb-2">Text</label>
+            <div class="color-grid">
+              @for (field of textFields(); track field.key) {
+                <label class="color-field">
+                  <span class="color-field__meta">
+                    <span class="color-field__label">{{ field.label }}</span>
+                    <span class="color-field__desc">{{ field.description }}</span>
+                  </span>
+                  <span class="color-field__controls">
+                    <input
+                      type="color"
+                      class="accent-color-input"
+                      [ngModel]="colorHex(field.key)"
+                      (ngModelChange)="onThemeColorInput(field.key, $event)"
+                      [name]="'color-' + field.key"
+                    />
+                    <input
+                      type="text"
+                      maxlength="7"
+                      class="color-field__hex"
+                      [ngModel]="colorHex(field.key)"
+                      (ngModelChange)="onThemeColorInput(field.key, $event)"
+                      [name]="'hex-' + field.key"
+                    />
+                  </span>
+                </label>
+              }
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-discord-text-muted uppercase tracking-wider mb-2">Chrome</label>
+            <div class="color-grid">
+              @for (field of chromeFields(); track field.key) {
+                <label class="color-field">
+                  <span class="color-field__meta">
+                    <span class="color-field__label">{{ field.label }}</span>
+                    <span class="color-field__desc">{{ field.description }}</span>
+                  </span>
+                  <span class="color-field__controls">
+                    <input
+                      type="color"
+                      class="accent-color-input"
+                      [ngModel]="colorHex(field.key)"
+                      (ngModelChange)="onThemeColorInput(field.key, $event)"
+                      [name]="'color-' + field.key"
+                    />
+                    <input
+                      type="text"
+                      maxlength="7"
+                      class="color-field__hex"
+                      [ngModel]="colorHex(field.key)"
+                      (ngModelChange)="onThemeColorInput(field.key, $event)"
+                      [name]="'hex-' + field.key"
+                    />
+                  </span>
+                </label>
+              }
+            </div>
           </div>
         </div>
 

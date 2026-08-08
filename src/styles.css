@@ -84,18 +84,18 @@ html.theme-reduce-motion *::after {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #202225;
+  background: var(--discord-dark);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #40444b;
+  background: var(--discord-light);
 }
 
 /* Firefox scrollbar */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #202225 transparent;
+  scrollbar-color: var(--discord-dark) transparent;
 }
 
 /* Selection styling */

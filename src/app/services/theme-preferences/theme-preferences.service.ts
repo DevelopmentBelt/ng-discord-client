@@ -3,7 +3,12 @@ import {
   ACCENT_OPTIONS,
   AccentId,
   AppPreferences,
-  DEFAULT_PREFERENCES
+  DEFAULT_PREFERENCES,
+  DEFAULT_THEME_COLORS,
+  THEME_COLOR_FIELDS,
+  THEME_PRESETS,
+  ThemeColorKey,
+  ThemeColors
 } from '../../models/user/app-theme';
 
 @Injectable({
@@ -12,31 +17,132 @@ import {
 export class ThemePreferencesService {
   private readonly STORAGE_KEY = 'angcord-preferences';
 
-  private readonly prefsSignal = signal<AppPreferences>({ ...DEFAULT_PREFERENCES });
+  private readonly cssVarMap: Record<ThemeColorKey, { hex: string; rgb: string }> = {
+    dark: { hex: '--discord-dark', rgb: '--discord-dark-rgb' },
+    darker: { hex: '--discord-darker', rgb: '--discord-darker-rgb' },
+    medium: { hex: '--discord-medium', rgb: '--discord-medium-rgb' },
+    lighter: { hex: '--discord-lighter', rgb: '--discord-lighter-rgb' },
+    light: { hex: '--discord-light', rgb: '--discord-light-rgb' },
+    blue: { hex: '--discord-blue', rgb: '--discord-blue-rgb' },
+    blueDark: { hex: '--discord-blue-dark', rgb: '--discord-blue-dark-rgb' },
+    text: { hex: '--discord-text', rgb: '--discord-text-rgb' },
+    textLight: { hex: '--discord-text-light', rgb: '--discord-text-light-rgb' },
+    textLighter: { hex: '--discord-text-lighter', rgb: '--discord-text-lighter-rgb' },
+    textMuted: { hex: '--discord-text-muted', rgb: '--discord-text-muted-rgb' },
+    textMutedLight: { hex: '--discord-text-muted-light', rgb: '--discord-text-muted-light-rgb' },
+    hover: { hex: '--discord-hover', rgb: '--discord-hover-rgb' },
+    border: { hex: '--discord-border', rgb: '--discord-border-rgb' }
+  };
+
+  private readonly prefsSignal = signal<AppPreferences>(this.cloneDefaults());
 
   readonly preferences = this.prefsSignal.asReadonly();
   readonly accentId = computed(() => this.prefsSignal().accentId);
   readonly customAccent = computed(() => this.prefsSignal().customAccent);
+  readonly themePresetId = computed(() => this.prefsSignal().themePresetId);
+  readonly colors = computed(() => this.prefsSignal().colors);
   readonly compactMode = computed(() => this.prefsSignal().compactMode);
   readonly reduceMotion = computed(() => this.prefsSignal().reduceMotion);
   readonly accentOptions = ACCENT_OPTIONS;
+  readonly themePresets = THEME_PRESETS;
+  readonly colorFields = THEME_COLOR_FIELDS;
 
   constructor() {
     this.prefsSignal.set(this.readStorage());
     this.apply(this.prefsSignal());
   }
 
+  setThemePreset(id: string): void {
+    const preset = THEME_PRESETS.find((p) => p.id === id);
+    if (!preset) {
+      return;
+    }
+    const colors = { ...preset.colors };
+    this.patch({
+      themePresetId: id,
+      colors,
+      accentId: this.matchAccentId(colors.blue),
+      customAccent: colors.blue
+    });
+  }
+
   setAccent(id: AccentId): void {
-    this.patch({ accentId: id });
+    if (id === 'custom') {
+      this.patch({
+        accentId: 'custom',
+        themePresetId: 'custom',
+        colors: {
+          ...this.prefsSignal().colors,
+          blue: this.resolveAccentHex({ ...this.prefsSignal(), accentId: 'custom' }),
+          blueDark: this.darkenHex(this.resolveAccentHex({ ...this.prefsSignal(), accentId: 'custom' }), 0.18)
+        }
+      });
+      return;
+    }
+
+    const hex = ACCENT_OPTIONS.find((o) => o.id === id)?.hex || DEFAULT_THEME_COLORS.blue;
+    this.patch({
+      accentId: id,
+      customAccent: hex,
+      themePresetId: 'custom',
+      colors: {
+        ...this.prefsSignal().colors,
+        blue: hex,
+        blueDark: this.darkenHex(hex, 0.18)
+      }
+    });
   }
 
   setCustomAccent(hex: string): void {
     const normalized = this.normalizeHex(hex);
-    // Keep the typed value so the hex field stays editable while incomplete
+    const value = normalized || hex.trim() || DEFAULT_THEME_COLORS.blue;
+    const applyHex = normalized || this.prefsSignal().colors.blue;
     this.patch({
       accentId: 'custom',
-      customAccent: normalized || hex.trim() || DEFAULT_PREFERENCES.customAccent
+      customAccent: value,
+      themePresetId: 'custom',
+      colors: {
+        ...this.prefsSignal().colors,
+        blue: applyHex,
+        blueDark: this.darkenHex(applyHex, 0.18)
+      }
     });
+  }
+
+  setColor(key: ThemeColorKey, hex: string): void {
+    const normalized = this.normalizeHex(hex);
+    const value = normalized || hex.trim() || DEFAULT_THEME_COLORS[key];
+    const nextColors = {
+      ...this.prefsSignal().colors,
+      [key]: normalized || this.prefsSignal().colors[key]
+    };
+
+    // Keep hex field editable while incomplete; only apply valid colors
+    if (!normalized) {
+      if (key === 'blue') {
+        this.prefsSignal.update((prefs) => {
+          const next = { ...prefs, accentId: 'custom' as AccentId, customAccent: value, themePresetId: 'custom' };
+          this.writeStorage(next);
+          return next;
+        });
+      }
+      return;
+    }
+
+    const patch: Partial<AppPreferences> = {
+      themePresetId: 'custom',
+      colors: nextColors
+    };
+
+    if (key === 'blue') {
+      patch.accentId = 'custom';
+      patch.customAccent = value;
+      if (!this.normalizeHex(this.prefsSignal().colors.blueDark)) {
+        nextColors.blueDark = this.darkenHex(normalized, 0.18);
+      }
+    }
+
+    this.patch(patch);
   }
 
   setCompactMode(enabled: boolean): void {
@@ -48,18 +154,30 @@ export class ThemePreferencesService {
   }
 
   reset(): void {
-    this.patch({ ...DEFAULT_PREFERENCES });
+    const defaults = this.cloneDefaults();
+    this.prefsSignal.set(defaults);
+    this.writeStorage(defaults);
+    this.apply(defaults);
   }
 
   resolveAccentHex(prefs: AppPreferences = this.prefsSignal()): string {
     if (prefs.accentId === 'custom') {
-      return this.normalizeHex(prefs.customAccent) || DEFAULT_PREFERENCES.customAccent;
+      return this.normalizeHex(prefs.customAccent) || prefs.colors.blue || DEFAULT_THEME_COLORS.blue;
     }
-    return ACCENT_OPTIONS.find((o) => o.id === prefs.accentId)?.hex || DEFAULT_PREFERENCES.customAccent;
+    return ACCENT_OPTIONS.find((o) => o.id === prefs.accentId)?.hex || prefs.colors.blue || DEFAULT_THEME_COLORS.blue;
+  }
+
+  colorValue(key: ThemeColorKey): string {
+    return this.prefsSignal().colors[key] || DEFAULT_THEME_COLORS[key];
   }
 
   private patch(partial: Partial<AppPreferences>): void {
-    const next = { ...this.prefsSignal(), ...partial };
+    const current = this.prefsSignal();
+    const next: AppPreferences = {
+      ...current,
+      ...partial,
+      colors: partial.colors ? { ...partial.colors } : { ...current.colors }
+    };
     this.prefsSignal.set(next);
     this.writeStorage(next);
     this.apply(next);
@@ -67,17 +185,17 @@ export class ThemePreferencesService {
 
   private apply(prefs: AppPreferences): void {
     const root = document.documentElement;
-    const accent =
-      prefs.accentId === 'custom'
-        ? this.normalizeHex(prefs.customAccent) || DEFAULT_PREFERENCES.customAccent
-        : this.resolveAccentHex(prefs);
-    const dark = this.darkenHex(accent, 0.18);
-    const rgb = this.hexToRgbChannels(accent);
+    const colors = this.mergeColors(prefs.colors);
 
-    root.style.setProperty('--discord-blue', accent);
-    root.style.setProperty('--discord-blue-dark', dark);
-    root.style.setProperty('--discord-blue-rgb', rgb);
-    root.style.setProperty('--discord-blue-dark-rgb', this.hexToRgbChannels(dark));
+    (Object.keys(this.cssVarMap) as ThemeColorKey[]).forEach((key) => {
+      const hex = this.normalizeHex(colors[key]) || DEFAULT_THEME_COLORS[key];
+      const mapping = this.cssVarMap[key];
+      root.style.setProperty(mapping.hex, hex);
+      root.style.setProperty(mapping.rgb, this.hexToRgbChannels(hex));
+    });
+
+    // hover also used as solid in some places; keep rgba helper for legacy CSS
+    root.style.setProperty('--discord-hover', `rgb(${this.hexToRgbChannels(colors.hover)} / 0.4)`);
 
     root.classList.toggle('theme-compact', prefs.compactMode);
     root.classList.toggle('theme-reduce-motion', prefs.reduceMotion);
@@ -87,20 +205,46 @@ export class ThemePreferencesService {
     try {
       const raw = localStorage.getItem(this.STORAGE_KEY);
       if (!raw) {
-        return { ...DEFAULT_PREFERENCES };
+        return this.cloneDefaults();
       }
       const parsed = JSON.parse(raw) as Partial<AppPreferences>;
       const accentId = ACCENT_OPTIONS.some((o) => o.id === parsed.accentId)
         ? (parsed.accentId as AccentId)
         : DEFAULT_PREFERENCES.accentId;
+
+      let colors = this.mergeColors(parsed.colors);
+      // Migrate older preference shape (accent-only)
+      if (!parsed.colors) {
+        const accent =
+          accentId === 'custom'
+            ? this.normalizeHex(parsed.customAccent || '') || DEFAULT_THEME_COLORS.blue
+            : ACCENT_OPTIONS.find((o) => o.id === accentId)?.hex || DEFAULT_THEME_COLORS.blue;
+        colors = {
+          ...DEFAULT_THEME_COLORS,
+          blue: accent,
+          blueDark: this.darkenHex(accent, 0.18)
+        };
+      }
+
+      const themePresetId =
+        typeof parsed.themePresetId === 'string' &&
+        (parsed.themePresetId === 'custom' || THEME_PRESETS.some((p) => p.id === parsed.themePresetId))
+          ? parsed.themePresetId
+          : parsed.colors
+            ? 'custom'
+            : 'classic';
+
       return {
         accentId,
-        customAccent: this.normalizeHex(parsed.customAccent || '') || DEFAULT_PREFERENCES.customAccent,
+        customAccent:
+          this.normalizeHex(parsed.customAccent || '') || colors.blue || DEFAULT_PREFERENCES.customAccent,
+        themePresetId,
+        colors,
         compactMode: !!parsed.compactMode,
         reduceMotion: !!parsed.reduceMotion
       };
     } catch {
-      return { ...DEFAULT_PREFERENCES };
+      return this.cloneDefaults();
     }
   }
 
@@ -110,6 +254,36 @@ export class ThemePreferencesService {
     } catch {
       // ignore quota / private mode
     }
+  }
+
+  private mergeColors(partial?: Partial<ThemeColors> | null): ThemeColors {
+    const merged = { ...DEFAULT_THEME_COLORS };
+    if (!partial) {
+      return merged;
+    }
+    (Object.keys(DEFAULT_THEME_COLORS) as ThemeColorKey[]).forEach((key) => {
+      const value = this.normalizeHex(partial[key] || '');
+      if (value) {
+        merged[key] = value;
+      }
+    });
+    return merged;
+  }
+
+  private matchAccentId(hex: string): AccentId {
+    const normalized = this.normalizeHex(hex);
+    if (!normalized) {
+      return 'custom';
+    }
+    const match = ACCENT_OPTIONS.find((o) => o.id !== 'custom' && o.hex.toLowerCase() === normalized);
+    return match?.id || 'custom';
+  }
+
+  private cloneDefaults(): AppPreferences {
+    return {
+      ...DEFAULT_PREFERENCES,
+      colors: { ...DEFAULT_THEME_COLORS }
+    };
   }
 
   private normalizeHex(value: string): string | null {

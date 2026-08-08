@@ -11,7 +11,12 @@ import {
   PROFILE_CARDS,
   ProfileCardId
 } from '../../models/user/profile-style';
-import { AccentId, PRESENCE_OPTIONS, PresenceStatus } from '../../models/user/app-theme';
+import {
+  AccentId,
+  PRESENCE_OPTIONS,
+  PresenceStatus,
+  ThemeColorKey
+} from '../../models/user/app-theme';
 
 type SettingsTab = 'profile' | 'appearance';
 
@@ -30,6 +35,8 @@ export class UserSettingsModalComponent implements OnInit {
   readonly effects = AVATAR_EFFECTS;
   readonly presenceOptions = PRESENCE_OPTIONS;
   readonly accentOptions = this.themePreferences.accentOptions;
+  readonly themePresets = this.themePreferences.themePresets;
+  readonly colorFields = this.themePreferences.colorFields;
 
   activeTab = signal<SettingsTab>('profile');
 
@@ -53,9 +60,15 @@ export class UserSettingsModalComponent implements OnInit {
   readonly previewName = computed(() => this.displayName().trim() || this.username().trim() || 'Username');
   readonly accentId = this.themePreferences.accentId;
   readonly customAccent = this.themePreferences.customAccent;
+  readonly themePresetId = this.themePreferences.themePresetId;
+  readonly themeColors = this.themePreferences.colors;
   readonly compactMode = this.themePreferences.compactMode;
   readonly reduceMotion = this.themePreferences.reduceMotion;
   readonly liveAccentHex = computed(() => this.themePreferences.resolveAccentHex());
+  readonly surfaceFields = computed(() => this.colorFields.filter((f) => f.group === 'surfaces'));
+  readonly accentFields = computed(() => this.colorFields.filter((f) => f.group === 'accent'));
+  readonly textFields = computed(() => this.colorFields.filter((f) => f.group === 'text'));
+  readonly chromeFields = computed(() => this.colorFields.filter((f) => f.group === 'chrome'));
 
   constructor(
     private authService: AuthService,
@@ -96,12 +109,20 @@ export class UserSettingsModalComponent implements OnInit {
     this.presenceStatus.set(id);
   }
 
+  selectThemePreset(id: string): void {
+    this.themePreferences.setThemePreset(id);
+  }
+
   selectAccent(id: AccentId): void {
     this.themePreferences.setAccent(id);
   }
 
   onCustomAccentInput(value: string): void {
     this.themePreferences.setCustomAccent(value);
+  }
+
+  onThemeColorInput(key: ThemeColorKey, value: string): void {
+    this.themePreferences.setColor(key, value);
   }
 
   onCompactToggle(checked: boolean): void {
@@ -114,6 +135,10 @@ export class UserSettingsModalComponent implements OnInit {
 
   resetAppearance(): void {
     this.themePreferences.reset();
+  }
+
+  colorHex(key: ThemeColorKey): string {
+    return this.themeColors()[key];
   }
 
   save(): void {
