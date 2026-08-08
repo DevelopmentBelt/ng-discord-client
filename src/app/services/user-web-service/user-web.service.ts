@@ -1,5 +1,11 @@
 import { Injectable } from '@angular/core';
-import { AuthResponse, LoginRequest, RegisterRequest } from '../../models/user/auth';
+import {
+  AuthResponse,
+  ForgotPasswordRequest,
+  LoginRequest,
+  RegisterRequest,
+  ResetPasswordRequest
+} from '../../models/user/auth';
 import { ServerConnectivityService } from '../server-connectivity.service';
 import { Observable } from 'rxjs';
 
@@ -27,6 +33,16 @@ export class UserWebService {
       password
     };
     return this.serverConnectivityService.sendPostReq(`${this.API_URL}/login`, loginRequest, {});
+  }
+
+  public forgotPassword(email: string): Observable<AuthResponse> {
+    const body: ForgotPasswordRequest = { email };
+    return this.serverConnectivityService.sendPostReq(`${this.API_URL}/forgot-password`, body, {});
+  }
+
+  public resetPassword(token: string, password: string): Observable<AuthResponse> {
+    const body: ResetPasswordRequest = { token, password };
+    return this.serverConnectivityService.sendPostReq(`${this.API_URL}/reset-password`, body, {});
   }
 
   public logout(): Observable<AuthResponse> {

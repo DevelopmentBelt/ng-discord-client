@@ -8,6 +8,7 @@ DROP TABLE IF EXISTS `channels`;
 DROP TABLE IF EXISTS `categories`;
 DROP TABLE IF EXISTS `members`;
 DROP TABLE IF EXISTS `servers`;
+DROP TABLE IF EXISTS `password_reset_tokens`;
 DROP TABLE IF EXISTS `users`;
 
 CREATE TABLE IF NOT EXISTS `users` (
@@ -22,6 +23,17 @@ CREATE TABLE IF NOT EXISTS `users` (
   `password` VARCHAR(256) NOT NULL,
   UNIQUE KEY `uniq_users_email` (`email`),
   UNIQUE KEY `uniq_users_username` (`user_name`)
+);
+
+CREATE TABLE IF NOT EXISTS `password_reset_tokens` (
+  `id` BIGINT(64) AUTO_INCREMENT PRIMARY KEY,
+  `user_id` BIGINT(64) NOT NULL,
+  `token_hash` CHAR(64) NOT NULL,
+  `expires_at` DATETIME NOT NULL,
+  `used_at` DATETIME NULL,
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY `uniq_prt_token_hash` (`token_hash`),
+  KEY `idx_prt_user_id` (`user_id`)
 );
 
 CREATE TABLE IF NOT EXISTS `servers` (

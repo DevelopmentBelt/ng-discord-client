@@ -34,6 +34,9 @@ services:
       DB_USER: ${DB_USER:-ng_discord}
       DB_PASS: ${DB_PASS:-ng_discord}
       DB_CHARSET: ${DB_CHARSET:-utf8mb4}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:4200}
+      MAIL_DRIVER: ${MAIL_DRIVER:-log}
+      MAIL_FROM: ${MAIL_FROM:-noreply@angcord.local}
     ports:
       - "${API_PORT:-80}:80"
     volumes:

@@ -56,6 +56,14 @@ export class AuthService {
     );
   }
 
+  forgotPassword(email: string): Observable<AuthResponse> {
+    return this.userWebService.forgotPassword(email);
+  }
+
+  resetPassword(token: string, password: string): Observable<AuthResponse> {
+    return this.userWebService.resetPassword(token, password);
+  }
+
   logout(): Observable<AuthResponse> {
     return this.userWebService.logout().pipe(
       tap(() => this.currentUserSignal.set(null)),

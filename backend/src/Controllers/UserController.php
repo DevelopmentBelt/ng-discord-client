@@ -3,17 +3,22 @@
 namespace App\Controllers;
 
 use App\Services\AuthService;
+use App\Services\MailService;
 use PDO;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
 class UserController extends Routes
 {
+  private const RESET_TOKEN_TTL_SECONDS = 3600;
+
   protected function registerRoutes(): void
   {
     $this->app->post('/api/users/register', [$this, 'register']);
     $this->app->post('/api/users/login', [$this, 'login']);
     $this->app->post('/api/users/logout', [$this, 'logout']);
+    $this->app->post('/api/users/forgot-password', [$this, 'forgotPassword']);
+    $this->app->post('/api/users/reset-password', [$this, 'resetPassword']);
     $this->app->get('/api/users/me', [$this, 'me']);
     $this->app->put('/api/users/me', [$this, 'updateProfile']);
     $this->app->get('/api/users/search', [$this, 'search']);
@@ -121,6 +126,116 @@ class UserController extends Routes
       session_start();
     }
     return $this->json($response, ['status' => 'success', 'message' => 'Logged out']);
+  }
+
+  public function forgotPassword(Request $request, Response $response, $args): Response
+  {
+    $body = $request->getParsedBody() ?? [];
+    $email = trim((string) ($body['email'] ?? ''));
+
+    $generic = [
+      'status' => 'success',
+      'message' => 'If an account exists for that email, password reset instructions have been sent.',
+    ];
+
+    if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+      return $this->json($response, $generic);
+    }
+
+    $pdo = $this->dbService->getConnection();
+    $this->ensurePasswordResetTable($pdo);
+
+    $stmt = $pdo->prepare('SELECT user_id, email FROM users WHERE LOWER(email) = LOWER(:email) LIMIT 1');
+    $stmt->execute(['email' => $email]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$row) {
+      return $this->json($response, $generic);
+    }
+
+    $userId = (int) $row['user_id'];
+    $token = bin2hex(random_bytes(32));
+    $tokenHash = hash('sha256', $token);
+    $expiresAt = date('Y-m-d H:i:s', time() + self::RESET_TOKEN_TTL_SECONDS);
+
+    $pdo->prepare('UPDATE password_reset_tokens SET used_at = NOW() WHERE user_id = :user_id AND used_at IS NULL')
+      ->execute(['user_id' => $userId]);
+
+    $insert = $pdo->prepare(
+      'INSERT INTO password_reset_tokens (user_id, token_hash, expires_at) VALUES (:user_id, :token_hash, :expires_at)'
+    );
+    $insert->execute([
+      'user_id' => $userId,
+      'token_hash' => $tokenHash,
+      'expires_at' => $expiresAt,
+    ]);
+
+    $frontendUrl = rtrim((string) ($_ENV['FRONTEND_URL'] ?? getenv('FRONTEND_URL') ?: 'http://localhost:4200'), '/');
+    $resetUrl = $frontendUrl . '/?resetToken=' . urlencode($token);
+
+    MailService::sendPasswordReset((string) $row['email'], $resetUrl);
+
+    // Local/dev (MAIL_DRIVER=log): return the link so reset works without SMTP.
+    if (MailService::isLogDriver()) {
+      $generic['resetUrl'] = $resetUrl;
+      $generic['devHint'] = 'Email delivery is in log mode. Use resetUrl or check backend/storage/password-resets.log';
+    }
+
+    return $this->json($response, $generic);
+  }
+
+  public function resetPassword(Request $request, Response $response, $args): Response
+  {
+    $body = $request->getParsedBody() ?? [];
+    $token = trim((string) ($body['token'] ?? ''));
+    $password = (string) ($body['password'] ?? '');
+
+    if ($token === '' || strlen($token) < 32) {
+      return $this->json($response, ['status' => 'error', 'message' => 'Invalid or expired reset link'], 400);
+    }
+    if (strlen($password) < 6) {
+      return $this->json($response, ['status' => 'error', 'message' => 'Password must be at least 6 characters'], 400);
+    }
+
+    $pdo = $this->dbService->getConnection();
+    $this->ensurePasswordResetTable($pdo);
+
+    $tokenHash = hash('sha256', $token);
+    $stmt = $pdo->prepare(
+      'SELECT id, user_id FROM password_reset_tokens
+       WHERE token_hash = :token_hash
+         AND used_at IS NULL
+         AND expires_at > NOW()
+       LIMIT 1'
+    );
+    $stmt->execute(['token_hash' => $tokenHash]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$row) {
+      return $this->json($response, ['status' => 'error', 'message' => 'Invalid or expired reset link'], 400);
+    }
+
+    $userId = (int) $row['user_id'];
+    $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+
+    $pdo->beginTransaction();
+    try {
+      $pdo->prepare('UPDATE users SET password = :password WHERE user_id = :user_id')
+        ->execute(['password' => $hashedPassword, 'user_id' => $userId]);
+      $pdo->prepare('UPDATE password_reset_tokens SET used_at = NOW() WHERE id = :id')
+        ->execute(['id' => (int) $row['id']]);
+      $pdo->prepare('UPDATE password_reset_tokens SET used_at = NOW() WHERE user_id = :user_id AND used_at IS NULL')
+        ->execute(['user_id' => $userId]);
+      $pdo->commit();
+    } catch (\Throwable $e) {
+      $pdo->rollBack();
+      return $this->json($response, ['status' => 'error', 'message' => 'Could not reset password. Please try again.'], 500);
+    }
+
+    return $this->json($response, [
+      'status' => 'success',
+      'message' => 'Password updated. You can log in with your new password.',
+    ]);
   }
 
   public function me(Request $request, Response $response, $args): Response
@@ -252,6 +367,22 @@ class UserController extends Routes
     }, $rows);
 
     return $this->json($response, $users);
+  }
+
+  private function ensurePasswordResetTable(PDO $pdo): void
+  {
+    $pdo->exec(
+      'CREATE TABLE IF NOT EXISTS password_reset_tokens (
+        id BIGINT(64) AUTO_INCREMENT PRIMARY KEY,
+        user_id BIGINT(64) NOT NULL,
+        token_hash CHAR(64) NOT NULL,
+        expires_at DATETIME NOT NULL,
+        used_at DATETIME NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY uniq_prt_token_hash (token_hash),
+        KEY idx_prt_user_id (user_id)
+      )'
+    );
   }
 
   private function json(Response $response, array $payload, int $status = 200): Response
