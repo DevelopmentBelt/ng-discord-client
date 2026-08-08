@@ -1,4 +1,8 @@
 /** @type {import('tailwindcss').Config} */
+
+/** Allow opacity modifiers (e.g. bg-discord-blue/50) with CSS variable RGB channels */
+const withRgb = (variable) => `rgb(var(${variable}) / <alpha-value>)`;
+
 module.exports = {
   content: [
     "./src/**/*.{html,ts}",
@@ -7,20 +11,20 @@ module.exports = {
     extend: {
       colors: {
         discord: {
-          'dark': '#202225',
-          'darker': '#1e1f23',
-          'medium': '#2f3136',
-          'lighter': '#36393f',
-          'light': '#40444b',
-          'blue': '#5865f2',
-          'blue-dark': '#404eed',
-          'text': '#b5b9c0',
-          'text-light': '#dcddde',
-          'text-lighter': '#ffffff',
-          'text-muted': '#949ba4',
-          'text-muted-light': '#afafaf',
-          'hover': 'rgba(79, 84, 92, 0.4)',
-          'border': '#202225',
+          'dark': withRgb('--discord-dark-rgb'),
+          'darker': withRgb('--discord-darker-rgb'),
+          'medium': withRgb('--discord-medium-rgb'),
+          'lighter': withRgb('--discord-lighter-rgb'),
+          'light': withRgb('--discord-light-rgb'),
+          'blue': withRgb('--discord-blue-rgb'),
+          'blue-dark': withRgb('--discord-blue-dark-rgb'),
+          'text': withRgb('--discord-text-rgb'),
+          'text-light': withRgb('--discord-text-light-rgb'),
+          'text-lighter': withRgb('--discord-text-lighter-rgb'),
+          'text-muted': withRgb('--discord-text-muted-rgb'),
+          'text-muted-light': withRgb('--discord-text-muted-light-rgb'),
+          'hover': 'rgb(var(--discord-hover-rgb) / 0.4)',
+          'border': withRgb('--discord-border-rgb'),
         }
       },
       fontFamily: {

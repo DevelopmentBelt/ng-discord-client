@@ -29,7 +29,7 @@
   <!-- Messages Area -->
   <div class="flex-1 overflow-y-auto pb-2.5 px-4">
     @for (msg of messageList; track msg; let i = $index) {
-      <div class="hover:bg-discord-light/30 rounded-lg transition-colors duration-150">
+      <div class="msg-row hover:bg-discord-light/30 rounded-lg transition-colors duration-150">
         <div class="flex px-2 py-3 items-start gap-4">
           <div class="flex-shrink-0 w-10 text-center">
             @if (i == 0 || messageList[i-1]?.author?.userId != msg.author.userId) {

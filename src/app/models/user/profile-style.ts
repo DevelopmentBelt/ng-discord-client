@@ -1,4 +1,12 @@
-export type ProfileCardId = 'classic' | 'midnight' | 'aurora' | 'ember' | 'ocean' | 'neon';
+export type ProfileCardId =
+  | 'classic'
+  | 'midnight'
+  | 'aurora'
+  | 'ember'
+  | 'ocean'
+  | 'neon'
+  | 'forest'
+  | 'sunset';
 export type AvatarEffectId = 'none' | 'ring' | 'glow' | 'pulse' | 'rainbow' | 'holo';
 
 export interface ProfileCardOption {
@@ -19,7 +27,9 @@ export const PROFILE_CARDS: ProfileCardOption[] = [
   { id: 'aurora', label: 'Aurora', description: 'Cool northern glow' },
   { id: 'ember', label: 'Ember', description: 'Warm firelight' },
   { id: 'ocean', label: 'Ocean', description: 'Teal depths' },
-  { id: 'neon', label: 'Neon', description: 'Electric edge' }
+  { id: 'neon', label: 'Neon', description: 'Electric edge' },
+  { id: 'forest', label: 'Forest', description: 'Mossy greens' },
+  { id: 'sunset', label: 'Sunset', description: 'Peach to violet' }
 ];
 
 export const AVATAR_EFFECTS: AvatarEffectOption[] = [

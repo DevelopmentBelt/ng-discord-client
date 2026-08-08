@@ -2,6 +2,33 @@
   display: contents;
 }
 
+.settings-tabs {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.settings-tab {
+  padding: 0.55rem 0.9rem;
+  border-radius: 8px 8px 0 0;
+  color: #949ba4;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  border-bottom: none;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.settings-tab:hover {
+  color: #dbdee1;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.settings-tab--active {
+  color: #fff;
+  background: rgba(0, 0, 0, 0.25);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 -2px 0 var(--discord-blue);
+}
+
 .profile-card {
   position: relative;
   overflow: hidden;
@@ -11,8 +38,10 @@
 }
 
 .profile-card__banner {
-  height: 72px;
-  background: linear-gradient(135deg, #5865f2, #3ba55d);
+  height: 88px;
+  background: linear-gradient(135deg, var(--discord-blue), #3ba55d);
+  background-size: cover;
+  background-position: center;
 }
 
 .profile-card__body {
@@ -23,10 +52,22 @@
   align-items: flex-end;
 }
 
+.profile-card__avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
 .profile-card__meta {
   flex: 1;
   min-width: 0;
   padding-top: 28px;
+}
+
+.profile-card__name-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .profile-card__name {
@@ -36,9 +77,23 @@
   line-height: 1.2;
 }
 
+.profile-card__pronouns {
+  font-size: 0.75rem;
+  color: #b5bac1;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
 .profile-card__handle {
   font-size: 0.8rem;
   color: #b5bac1;
+  margin-bottom: 4px;
+}
+
+.profile-card__status {
+  font-size: 0.85rem;
+  color: #dbdee1;
   margin-bottom: 6px;
 }
 
@@ -52,7 +107,7 @@
 }
 
 .profile-card--classic .profile-card__banner {
-  background: linear-gradient(135deg, #5865f2, #404eed);
+  background: linear-gradient(135deg, var(--discord-blue), var(--discord-blue-dark));
 }
 
 .profile-card--midnight .profile-card__banner {
@@ -79,8 +134,18 @@
   box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.25), 0 0 24px rgba(232, 121, 249, 0.15);
 }
 
+.profile-card--forest .profile-card__banner {
+  background: linear-gradient(135deg, #14532d, #22c55e 50%, #86efac);
+}
+
+.profile-card--sunset .profile-card__banner {
+  background: linear-gradient(135deg, #fb7185, #fb923c 45%, #c084fc);
+}
+
 .card-option,
-.effect-option {
+.effect-option,
+.presence-option,
+.accent-option {
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -93,18 +158,23 @@
 }
 
 .card-option:hover,
-.effect-option:hover {
-  border-color: rgba(88, 101, 242, 0.55);
+.effect-option:hover,
+.presence-option:hover,
+.accent-option:hover {
+  border-color: rgb(var(--discord-blue-rgb) / 0.55);
   transform: translateY(-1px);
 }
 
 .card-option--active,
-.effect-option--active {
-  border-color: #5865f2;
-  background: rgba(88, 101, 242, 0.15);
+.effect-option--active,
+.presence-option--active,
+.accent-option--active {
+  border-color: var(--discord-blue);
+  background: rgb(var(--discord-blue-rgb) / 0.15);
 }
 
-.card-option__swatch {
+.card-option__swatch,
+.accent-option__swatch {
   display: block;
   height: 28px;
   border-radius: 6px;
@@ -112,7 +182,7 @@
 }
 
 .card-option__swatch[data-card='classic'] {
-  background: linear-gradient(135deg, #5865f2, #404eed);
+  background: linear-gradient(135deg, var(--discord-blue), var(--discord-blue-dark));
 }
 
 .card-option__swatch[data-card='midnight'] {
@@ -135,27 +205,152 @@
   background: linear-gradient(135deg, #111827, #22d3ee, #e879f9);
 }
 
+.card-option__swatch[data-card='forest'] {
+  background: linear-gradient(135deg, #14532d, #22c55e, #86efac);
+}
+
+.card-option__swatch[data-card='sunset'] {
+  background: linear-gradient(135deg, #fb7185, #fb923c, #c084fc);
+}
+
 .card-option__label,
-.effect-option__label {
+.effect-option__label,
+.presence-option__label,
+.accent-option__label {
   font-size: 0.85rem;
   font-weight: 600;
   color: #f2f3f5;
 }
 
 .card-option__desc,
-.effect-option__desc {
+.effect-option__desc,
+.presence-option__desc,
+.accent-option__desc {
   font-size: 0.72rem;
   color: #949ba4;
 }
 
-.effect-option {
+.effect-option,
+.presence-option {
   flex-direction: row;
   align-items: center;
   gap: 10px;
 }
 
-.effect-option__text {
+.effect-option__text,
+.presence-option__text {
   display: flex;
   flex-direction: column;
   min-width: 0;
+}
+
+.presence-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  border: 2px solid #1e1f22;
+  flex-shrink: 0;
+  background: #6b7280;
+}
+
+.profile-card__avatar-wrap .presence-dot {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  width: 16px;
+  height: 16px;
+  z-index: 2;
+}
+
+.presence-dot--online {
+  background: #23a559;
+}
+
+.presence-dot--idle {
+  background: #f0b232;
+}
+
+.presence-dot--dnd {
+  background: #f23f43;
+}
+
+.presence-dot--invisible {
+  background: #80848e;
+  box-shadow: inset 0 0 0 3px #1e1f22;
+}
+
+.custom-accent-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .custom-accent-row {
+    grid-template-columns: 1.2fr 1fr;
+    align-items: end;
+  }
+}
+
+.accent-color-input {
+  width: 48px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.accent-preview {
+  border-radius: 12px;
+  padding: 16px;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 96px;
+  justify-content: space-between;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+
+.accent-preview__btn {
+  align-self: flex-start;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fff;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.pref-toggle {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+
+.pref-toggle input {
+  margin-top: 3px;
+  accent-color: var(--discord-blue);
+}
+
+.pref-toggle__label {
+  display: block;
+  font-weight: 600;
+  color: #f2f3f5;
+  font-size: 0.9rem;
+}
+
+.pref-toggle__desc {
+  display: block;
+  color: #949ba4;
+  font-size: 0.8rem;
+  margin-top: 2px;
 }

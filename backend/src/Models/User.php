@@ -11,6 +11,11 @@ class User
   private ?string $user_name;
   private ?string $user_bio;
   private ?string $user_pic;
+  private ?string $display_name = null;
+  private ?string $pronouns = null;
+  private ?string $custom_status = null;
+  private ?string $banner_url = null;
+  private string $presence_status = 'online';
   private string $profile_card = 'classic';
   private string $avatar_effect = 'none';
   private ?string $email;
@@ -35,6 +40,11 @@ class User
         $this->user_name = $row['user_name'] ?? null;
         $this->user_bio = $row['user_bio'] ?? null;
         $this->user_pic = $row['user_pic'] ?? null;
+        $this->display_name = $row['display_name'] ?? null;
+        $this->pronouns = $row['pronouns'] ?? null;
+        $this->custom_status = $row['custom_status'] ?? null;
+        $this->banner_url = $row['banner_url'] ?? null;
+        $this->presence_status = $row['presence_status'] ?? 'online';
         $this->profile_card = $row['profile_card'] ?? 'classic';
         $this->avatar_effect = $row['avatar_effect'] ?? 'none';
         $this->email = $row['email'] ?? null;
@@ -74,6 +84,26 @@ class User
 
   public function getPic(): ?string {
     return $this->user_pic;
+  }
+
+  public function getDisplayName(): ?string {
+    return $this->display_name;
+  }
+
+  public function getPronouns(): ?string {
+    return $this->pronouns;
+  }
+
+  public function getCustomStatus(): ?string {
+    return $this->custom_status;
+  }
+
+  public function getBannerUrl(): ?string {
+    return $this->banner_url;
+  }
+
+  public function getPresenceStatus(): string {
+    return $this->presence_status ?: 'online';
   }
 
   public function getProfileCard(): string {

@@ -60,6 +60,33 @@ export class SidebarComponent implements OnInit {
     return this.currentUser()?.username || 'User';
   }
 
+  displayName(): string {
+    return this.currentUser()?.displayName?.trim() || this.currentUsername();
+  }
+
+  avatarInitial(): string {
+    return this.displayName().charAt(0).toUpperCase() || 'U';
+  }
+
+  userSettingsTitle(): string {
+    const status = this.currentUser()?.customStatus?.trim();
+    const base = `Profile settings — ${this.displayName()}`;
+    return status ? `${base} · ${status}` : base;
+  }
+
+  presenceDotClass(): string {
+    switch (this.currentUser()?.presenceStatus || 'online') {
+      case 'idle':
+        return 'bg-yellow-500';
+      case 'dnd':
+        return 'bg-red-500';
+      case 'invisible':
+        return 'bg-gray-500';
+      default:
+        return 'bg-green-500';
+    }
+  }
+
   currentUserPic(): string {
     return this.currentUser()?.userPic || '';
   }

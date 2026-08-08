@@ -86,8 +86,9 @@ class UserController extends Routes
     }
 
     $pdo = $this->dbService->getConnection();
+    $this->ensureProfileExtraColumns($pdo);
     $stmt = $pdo->prepare(
-      'SELECT user_id, user_name, user_bio, user_pic, profile_card, avatar_effect, email, email_verified, password
+      'SELECT user_id, password
        FROM users
        WHERE email = :email OR user_name = :username
        LIMIT 1'
@@ -101,20 +102,15 @@ class UserController extends Routes
 
     $userId = (int) $row['user_id'];
     AuthService::login($userId);
+    $user = AuthService::loadUser($pdo, $userId);
+    if (!$user) {
+      return $this->json($response, ['status' => 'error', 'message' => 'Login failed'], 500);
+    }
 
     return $this->json($response, [
       'status' => 'success',
       'message' => 'Login successful',
-      'user' => [
-        'id' => $userId,
-        'username' => $row['user_name'],
-        'email' => $row['email'],
-        'userPic' => $row['user_pic'] ?? '',
-        'userBio' => $row['user_bio'] ?? '',
-        'profileCard' => $row['profile_card'] ?? 'classic',
-        'avatarEffect' => $row['avatar_effect'] ?? 'none',
-        'emailVerified' => (bool) ($row['email_verified'] ?? false),
-      ],
+      'user' => AuthService::userToArray($user),
     ]);
   }
 
@@ -246,6 +242,7 @@ class UserController extends Routes
     }
 
     $pdo = $this->dbService->getConnection();
+    $this->ensureProfileExtraColumns($pdo);
     $user = AuthService::loadUser($pdo, $userId);
     if (!$user) {
       AuthService::logout();
@@ -269,11 +266,17 @@ class UserController extends Routes
     $username = trim((string) ($body['username'] ?? ''));
     $userBio = trim((string) ($body['userBio'] ?? ''));
     $userPic = trim((string) ($body['userPic'] ?? ''));
+    $displayName = trim((string) ($body['displayName'] ?? ''));
+    $pronouns = trim((string) ($body['pronouns'] ?? ''));
+    $customStatus = trim((string) ($body['customStatus'] ?? ''));
+    $bannerUrl = trim((string) ($body['bannerUrl'] ?? ''));
+    $presenceStatus = trim((string) ($body['presenceStatus'] ?? 'online'));
     $profileCard = trim((string) ($body['profileCard'] ?? 'classic'));
     $avatarEffect = trim((string) ($body['avatarEffect'] ?? 'none'));
 
-    $allowedCards = ['classic', 'midnight', 'aurora', 'ember', 'ocean', 'neon'];
+    $allowedCards = ['classic', 'midnight', 'aurora', 'ember', 'ocean', 'neon', 'forest', 'sunset'];
     $allowedEffects = ['none', 'ring', 'glow', 'pulse', 'rainbow', 'holo'];
+    $allowedPresence = ['online', 'idle', 'dnd', 'invisible'];
 
     if ($username === '') {
       return $this->json($response, ['status' => 'error', 'message' => 'Username is required'], 400);
@@ -287,11 +290,26 @@ class UserController extends Routes
     if (strlen($userBio) > 255) {
       return $this->json($response, ['status' => 'error', 'message' => 'Bio must be 255 characters or less'], 400);
     }
+    if (strlen($displayName) > 64) {
+      return $this->json($response, ['status' => 'error', 'message' => 'Display name must be 64 characters or less'], 400);
+    }
+    if (strlen($pronouns) > 32) {
+      return $this->json($response, ['status' => 'error', 'message' => 'Pronouns must be 32 characters or less'], 400);
+    }
+    if (strlen($customStatus) > 128) {
+      return $this->json($response, ['status' => 'error', 'message' => 'Custom status must be 128 characters or less'], 400);
+    }
     if ($userPic !== '' && !filter_var($userPic, FILTER_VALIDATE_URL)) {
       return $this->json($response, ['status' => 'error', 'message' => 'Avatar must be a valid URL'], 400);
     }
     if (strlen($userPic) > 512) {
       return $this->json($response, ['status' => 'error', 'message' => 'Avatar URL is too long'], 400);
+    }
+    if ($bannerUrl !== '' && !filter_var($bannerUrl, FILTER_VALIDATE_URL)) {
+      return $this->json($response, ['status' => 'error', 'message' => 'Banner must be a valid URL'], 400);
+    }
+    if (strlen($bannerUrl) > 512) {
+      return $this->json($response, ['status' => 'error', 'message' => 'Banner URL is too long'], 400);
     }
     if (!in_array($profileCard, $allowedCards, true)) {
       return $this->json($response, ['status' => 'error', 'message' => 'Invalid profile card'], 400);
@@ -299,8 +317,13 @@ class UserController extends Routes
     if (!in_array($avatarEffect, $allowedEffects, true)) {
       return $this->json($response, ['status' => 'error', 'message' => 'Invalid avatar effect'], 400);
     }
+    if (!in_array($presenceStatus, $allowedPresence, true)) {
+      return $this->json($response, ['status' => 'error', 'message' => 'Invalid presence status'], 400);
+    }
 
     $pdo = $this->dbService->getConnection();
+    $this->ensureProfileExtraColumns($pdo);
+
     $dup = $pdo->prepare('SELECT COUNT(*) FROM users WHERE user_name = ? AND user_id <> ?');
     $dup->execute([$username, $userId]);
     if ((int) $dup->fetchColumn() > 0) {
@@ -308,12 +331,28 @@ class UserController extends Routes
     }
 
     $stmt = $pdo->prepare(
-      'UPDATE users SET user_name = ?, user_bio = ?, user_pic = ?, profile_card = ?, avatar_effect = ? WHERE user_id = ?'
+      'UPDATE users SET
+         user_name = ?,
+         user_bio = ?,
+         user_pic = ?,
+         display_name = ?,
+         pronouns = ?,
+         custom_status = ?,
+         banner_url = ?,
+         presence_status = ?,
+         profile_card = ?,
+         avatar_effect = ?
+       WHERE user_id = ?'
     );
     $stmt->execute([
       $username,
       $userBio !== '' ? $userBio : null,
       $userPic !== '' ? $userPic : null,
+      $displayName !== '' ? $displayName : null,
+      $pronouns !== '' ? $pronouns : null,
+      $customStatus !== '' ? $customStatus : null,
+      $bannerUrl !== '' ? $bannerUrl : null,
+      $presenceStatus,
       $profileCard,
       $avatarEffect,
       $userId,
@@ -383,6 +422,28 @@ class UserController extends Routes
         KEY idx_prt_user_id (user_id)
       )'
     );
+  }
+
+  private function ensureProfileExtraColumns(PDO $pdo): void
+  {
+    $columns = [
+      'display_name' => 'VARCHAR(64) NULL',
+      'pronouns' => 'VARCHAR(32) NULL',
+      'custom_status' => 'VARCHAR(128) NULL',
+      'banner_url' => 'VARCHAR(512) NULL',
+      'presence_status' => "VARCHAR(16) NOT NULL DEFAULT 'online'",
+    ];
+
+    foreach ($columns as $name => $definition) {
+      $stmt = $pdo->prepare(
+        'SELECT COUNT(*) FROM information_schema.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?'
+      );
+      $stmt->execute(['users', $name]);
+      if ((int) $stmt->fetchColumn() === 0) {
+        $pdo->exec('ALTER TABLE users ADD COLUMN `' . $name . '` ' . $definition);
+      }
+    }
   }
 
   private function json(Response $response, array $payload, int $status = 200): Response

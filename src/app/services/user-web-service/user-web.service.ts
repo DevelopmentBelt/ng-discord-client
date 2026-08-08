@@ -57,6 +57,11 @@ export class UserWebService {
     username: string;
     userBio?: string;
     userPic?: string;
+    displayName?: string;
+    pronouns?: string;
+    customStatus?: string;
+    bannerUrl?: string;
+    presenceStatus?: string;
     profileCard?: string;
     avatarEffect?: string;
   }): Observable<AuthResponse> {

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { DefaultViewComponent } from './views/default-view/default-view.component';
 import { LoginComponent } from './components/login/login.component';
 import { AuthService } from './services/auth-service/auth.service';
+import { ThemePreferencesService } from './services/theme-preferences/theme-preferences.service';
 import { take } from 'rxjs';
 
 @Component({
@@ -23,7 +24,11 @@ export class AppComponent implements OnInit {
   readonly showApp = computed(() => !this.checkingSession() && this.isLoggedIn());
   readonly showLogin = computed(() => !this.checkingSession() && !this.isLoggedIn());
 
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    // Eagerly apply saved accent / appearance prefs on boot
+    _themePreferences: ThemePreferencesService
+  ) {}
 
   ngOnInit(): void {
     this.authService.checkSession().pipe(take(1)).subscribe({
