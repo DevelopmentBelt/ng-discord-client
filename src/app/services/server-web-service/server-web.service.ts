@@ -33,16 +33,18 @@ export class ServerWebService {
   }
 
   /**
-   * Create a new server
+   * Create a new server (private by default unless isPublic is true)
    */
   createServer(serverData: {
     serverName: string;
     serverDescription: string;
     serverIcon?: File;
-  }): Observable<Server> {
+    isPublic?: boolean;
+  }): Observable<Server & { inviteCode?: string | null; isPublic?: boolean }> {
     const formData = new FormData();
     formData.append('serverName', serverData.serverName);
     formData.append('serverDescription', serverData.serverDescription);
+    formData.append('isPublic', serverData.isPublic ? 'true' : 'false');
     
     if (serverData.serverIcon) {
       formData.append('serverIcon', serverData.serverIcon);
@@ -52,10 +54,42 @@ export class ServerWebService {
   }
 
   /**
-   * Join a server
+   * Join a public server, or a private one with an invite code
    */
-  joinServer(serverId: string): Observable<any> {
-    return this.serverService.sendPostReq(`servers/${serverId}/join`, {}, {});
+  joinServer(serverId: string, inviteCode?: string): Observable<any> {
+    const body = inviteCode ? { inviteCode } : {};
+    return this.serverService.sendPostReq(`servers/${serverId}/join`, body, {});
+  }
+
+  joinServerWithInvite(inviteCode: string): Observable<{
+    success: boolean;
+    message?: string;
+    server: Server;
+  }> {
+    return this.serverService.sendPostReq('servers/join-invite', { inviteCode }, {});
+  }
+
+  updateServerPrivacy(serverId: string, isPublic: boolean): Observable<{
+    status: string;
+    serverId: number;
+    isPublic: boolean;
+    message?: string;
+  }> {
+    return this.serverService.sendPatchReq(`servers/${serverId}/privacy`, { isPublic }, {});
+  }
+
+  createServerInvite(serverId: string, options?: { maxUses?: number; expiresInHours?: number }): Observable<{
+    status: string;
+    invite: { code: string; serverId: number; maxUses: number; uses: number; expiresAt: string | null };
+  }> {
+    return this.serverService.sendPostReq(`servers/${serverId}/invites`, options || {}, {});
+  }
+
+  listServerInvites(serverId: string): Observable<{
+    status: string;
+    invites: Array<{ code: string; maxUses: number; uses: number; expiresAt: string | null; createdAt: string }>;
+  }> {
+    return this.serverService.sendGetRequest(`servers/${serverId}/invites`, {});
   }
 
   /**

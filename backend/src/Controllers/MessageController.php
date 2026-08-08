@@ -15,10 +15,21 @@ class MessageController extends Routes {
   }
 
   public function getMessages(Request $request, Response $response, $args) {
-    $serverId = $args['serverId'];
+    $userId = AuthService::getUserId();
+    if (!$userId) {
+      $response->getBody()->write(json_encode(['error' => 'Not authenticated']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(401);
+    }
+
+    $serverId = (int) $args['serverId'];
     $channelId = $args['channelId'];
     $conn = $this->dbService->getConnection();
     $this->ensurePhantomColumns($conn);
+
+    if (!$this->userIsServerMember($conn, $serverId, (int) $userId)) {
+      $response->getBody()->write(json_encode(['error' => 'Not a member of this server']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
+    }
 
     $stmt = $conn->prepare(
       "SELECT m.*, u.user_name, u.user_pic
@@ -73,12 +84,23 @@ class MessageController extends Routes {
     $conn = $this->dbService->getConnection();
     $this->ensurePhantomColumns($conn);
 
-    $channelStmt = $conn->prepare('SELECT is_phantom FROM channels WHERE channel_id = ? LIMIT 1');
+    $channelStmt = $conn->prepare(
+      'SELECT ch.is_phantom, cat.server_id
+       FROM channels ch
+       JOIN categories cat ON cat.category_id = ch.category_id
+       WHERE ch.channel_id = ?
+       LIMIT 1'
+    );
     $channelStmt->execute([$channelId]);
     $channel = $channelStmt->fetch(PDO::FETCH_ASSOC);
     if (!$channel) {
       $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Channel not found']));
       return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
+    }
+
+    if (!$this->userIsServerMember($conn, (int) $channel['server_id'], (int) $authorId)) {
+      $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Not a member of this server']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
     }
 
     $isPhantom = !empty($channel['is_phantom']);
@@ -159,6 +181,20 @@ class MessageController extends Routes {
     } catch (\Throwable $e) {
       // ignore
     }
+  }
+
+  private function userIsServerMember(PDO $pdo, int $serverId, int $userId): bool
+  {
+    $ownerStmt = $pdo->prepare('SELECT owner_id FROM servers WHERE server_id = ? LIMIT 1');
+    $ownerStmt->execute([$serverId]);
+    $ownerId = (int) $ownerStmt->fetchColumn();
+    if ($ownerId > 0 && $ownerId === $userId) {
+      return true;
+    }
+
+    $stmt = $pdo->prepare('SELECT COUNT(*) FROM members WHERE server_id = ? AND user_id = ?');
+    $stmt->execute([$serverId, $userId]);
+    return (int) $stmt->fetchColumn() > 0;
   }
 
   private function ensureColumn(PDO $pdo, string $table, string $column, string $definition): void

@@ -1,6 +1,4 @@
--- Privacy-first: invite table for private communities.
--- New servers default to is_public = FALSE in schema / createServer.
-
+-- Privacy-first invites for private communities
 CREATE TABLE IF NOT EXISTS `server_invites` (
   `invite_id` BIGINT(64) AUTO_INCREMENT PRIMARY KEY,
   `server_id` BIGINT(64) NOT NULL,

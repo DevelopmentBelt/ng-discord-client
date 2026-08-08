@@ -21,6 +21,10 @@ class ServerController extends Routes {
     $this->app->post('/api/servers/{serverId}/channels/{channelId}/phantom/disable', [$this, 'disablePhantomChannel']);
     $this->app->get('/api/servers/{serverId}/channels/{channelId}/phantom/key', [$this, 'getPhantomChannelKey']);
     $this->app->get('/api/servers/{serverId}/members', [$this, 'getServerMembers']);
+    $this->app->patch('/api/servers/{serverId}/privacy', [$this, 'updateServerPrivacy']);
+    $this->app->post('/api/servers/{serverId}/invites', [$this, 'createServerInvite']);
+    $this->app->get('/api/servers/{serverId}/invites', [$this, 'listServerInvites']);
+    $this->app->post('/api/servers/join-invite', [$this, 'joinServerWithInvite']);
     $this->app->post('/api/servers/', [$this, 'createServer']);
     $this->app->post('/api/servers/{serverId}/join', [$this, 'joinServer']);
     $this->app->delete('/api/servers/{serverId}/leave', [$this, 'leaveServer']);
@@ -51,7 +55,8 @@ class ServerController extends Routes {
             'serverName' => $server['server_name'],
             'serverDescription' => $server['server_description'],
             'iconURL' => $server['server_icon'],
-            'ownerId' => $server['owner_id']
+            'ownerId' => $server['owner_id'],
+            'isPublic' => !empty($server['is_public']),
           ];
           $serverObjs[] = $serverData;
         }
@@ -106,16 +111,16 @@ class ServerController extends Routes {
           $server['owner_id']
         );
         
-        // Add additional public server data
+        // Public directory listing — no owner identity
         $serverData = [
           'serverId' => $server['server_id'],
           'serverName' => $server['server_name'],
           'serverDescription' => $server['server_description'],
           'iconURL' => $server['server_icon'],
-          'ownerId' => $server['owner_id'],
-          'memberCount' => (int)$server['member_count'],
-          'isJoined' => false, // TODO: Check if current user is a member
-          'tags' => ['community'] // TODO: Implement actual tags system
+          'memberCount' => (int) $server['member_count'],
+          'isPublic' => true,
+          'isJoined' => false,
+          'tags' => ['community'],
         ];
         
         $serverObjs[] = $serverData;
@@ -131,9 +136,20 @@ class ServerController extends Routes {
 
   public function getServerChannels(Request $request, Response $response, $args) {
     try {
+      $userId = AuthService::getUserId();
+      if (!$userId) {
+        $response->getBody()->write(json_encode(['error' => 'Not authenticated']));
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(401);
+      }
+
       $serverId = (int) $args['serverId'];
       $pdo = $this->dbService->getConnection();
       $this->ensurePhantomChannelColumns($pdo);
+
+      if (!$this->userIsServerMember($pdo, $serverId, $userId)) {
+        $response->getBody()->write(json_encode(['error' => 'Not a member of this server']));
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
+      }
 
       $categoryStmt = $pdo->prepare(
         "SELECT category_id, server_id, category_name, category_icon
@@ -551,7 +567,9 @@ class ServerController extends Routes {
   public function joinServer(Request $request, Response $response, $args) {
     try {
       $userId = AuthService::getUserId();
-      $serverId = $args['serverId'];
+      $serverId = (int) $args['serverId'];
+      $body = $request->getParsedBody() ?? [];
+      $inviteCode = trim((string) ($body['inviteCode'] ?? ''));
       
       if (!$userId) {
         $response->getBody()->write(json_encode(['error' => 'User not authenticated']));
@@ -559,7 +577,17 @@ class ServerController extends Routes {
       }
       
       $pdo = $this->dbService->getConnection();
-      
+      $this->ensureInviteTable($pdo);
+      $this->ensureServerPrivacyColumn($pdo);
+
+      $serverStmt = $pdo->prepare('SELECT server_id, is_public FROM servers WHERE server_id = ? LIMIT 1');
+      $serverStmt->execute([$serverId]);
+      $server = $serverStmt->fetch(PDO::FETCH_ASSOC);
+      if (!$server) {
+        $response->getBody()->write(json_encode(['error' => 'Server not found']));
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
+      }
+
       // Check if user is already a member
       $checkQuery = "SELECT member_id FROM members WHERE user_id = ? AND server_id = ?";
       $checkStmt = $pdo->prepare($checkQuery);
@@ -568,6 +596,16 @@ class ServerController extends Routes {
       if ($checkStmt->fetch()) {
         $response->getBody()->write(json_encode(['error' => 'User is already a member of this server']));
         return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+      }
+
+      $isPublic = !empty($server['is_public']);
+      if (!$isPublic) {
+        if ($inviteCode === '' || !$this->validateInvite($pdo, $serverId, $inviteCode)) {
+          $response->getBody()->write(json_encode([
+            'error' => 'This community is private. An invite code is required to join.',
+          ]));
+          return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
+        }
       }
       
       $userStmt = $pdo->prepare('SELECT user_name FROM users WHERE user_id = ?');
@@ -578,6 +616,10 @@ class ServerController extends Routes {
       $insertQuery = "INSERT INTO members (member_name, user_id, server_id, status, joined_at) VALUES (?, ?, ?, 'online', NOW())";
       $insertStmt = $pdo->prepare($insertQuery);
       $insertStmt->execute([$username, $userId, $serverId]);
+
+      if (!$isPublic && $inviteCode !== '') {
+        $this->consumeInvite($pdo, $serverId, $inviteCode);
+      }
       
       $response->getBody()->write(json_encode(['success' => true, 'message' => 'Successfully joined server']));
       return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
@@ -585,6 +627,201 @@ class ServerController extends Routes {
       $response->getBody()->write(json_encode(['error' => 'Failed to join server']));
       return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
     }
+  }
+
+  public function joinServerWithInvite(Request $request, Response $response, $args): Response
+  {
+    $userId = AuthService::getUserId();
+    if (!$userId) {
+      $response->getBody()->write(json_encode(['error' => 'User not authenticated']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(401);
+    }
+
+    $body = $request->getParsedBody() ?? [];
+    $inviteCode = strtoupper(trim((string) ($body['inviteCode'] ?? '')));
+    if ($inviteCode === '') {
+      $response->getBody()->write(json_encode(['error' => 'Invite code is required']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+    }
+
+    $pdo = $this->dbService->getConnection();
+    $this->ensureInviteTable($pdo);
+
+    $stmt = $pdo->prepare(
+      'SELECT i.server_id, i.max_uses, i.uses, i.expires_at, s.server_name, s.server_description, s.server_icon, s.owner_id, s.is_public
+       FROM server_invites i
+       INNER JOIN servers s ON s.server_id = i.server_id
+       WHERE i.code = ? AND i.revoked_at IS NULL
+       LIMIT 1'
+    );
+    $stmt->execute([$inviteCode]);
+    $invite = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$invite) {
+      $response->getBody()->write(json_encode(['error' => 'Invalid or expired invite code']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
+    }
+
+    if (!empty($invite['expires_at']) && strtotime($invite['expires_at']) < time()) {
+      $response->getBody()->write(json_encode(['error' => 'This invite has expired']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(410);
+    }
+
+    $serverId = (int) $invite['server_id'];
+    if (!$this->validateInvite($pdo, $serverId, $inviteCode)) {
+      $response->getBody()->write(json_encode(['error' => 'This invite can no longer be used']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(410);
+    }
+
+    $serverPayload = [
+      'serverId' => $serverId,
+      'serverName' => $invite['server_name'],
+      'serverDescription' => $invite['server_description'],
+      'iconURL' => $invite['server_icon'],
+      'ownerId' => $invite['owner_id'],
+      'isPublic' => !empty($invite['is_public']),
+    ];
+
+    $checkStmt = $pdo->prepare('SELECT member_id FROM members WHERE user_id = ? AND server_id = ?');
+    $checkStmt->execute([$userId, $serverId]);
+    if ($checkStmt->fetch()) {
+      $response->getBody()->write(json_encode([
+        'success' => true,
+        'message' => 'Already a member',
+        'server' => $serverPayload,
+      ]));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+    }
+
+    $userStmt = $pdo->prepare('SELECT user_name FROM users WHERE user_id = ?');
+    $userStmt->execute([$userId]);
+    $username = $userStmt->fetchColumn() ?: null;
+    $pdo->prepare(
+      "INSERT INTO members (member_name, user_id, server_id, status, joined_at) VALUES (?, ?, ?, 'online', NOW())"
+    )->execute([$username, $userId, $serverId]);
+    $this->consumeInvite($pdo, $serverId, $inviteCode);
+
+    $response->getBody()->write(json_encode([
+      'success' => true,
+      'message' => 'Joined private community',
+      'server' => $serverPayload,
+    ]));
+    return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+  }
+
+  public function updateServerPrivacy(Request $request, Response $response, $args): Response
+  {
+    $userId = AuthService::getUserId();
+    if (!$userId) {
+      $response->getBody()->write(json_encode(['error' => 'User not authenticated']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(401);
+    }
+
+    $serverId = (int) $args['serverId'];
+    $body = $request->getParsedBody() ?? [];
+    $pdo = $this->dbService->getConnection();
+    $this->ensureServerPrivacyColumn($pdo);
+
+    if (!$this->userCanManageServer($pdo, $serverId, $userId)) {
+      $response->getBody()->write(json_encode(['error' => 'Only the server owner can change privacy settings']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
+    }
+
+    $isPublic = !empty($body['isPublic']);
+    $pdo->prepare('UPDATE servers SET is_public = ? WHERE server_id = ?')
+      ->execute([$isPublic ? 1 : 0, $serverId]);
+
+    $response->getBody()->write(json_encode([
+      'status' => 'success',
+      'serverId' => $serverId,
+      'isPublic' => $isPublic,
+      'message' => $isPublic
+        ? 'Community is now listed publicly and open to join.'
+        : 'Community is private. Members can only join with an invite.',
+    ]));
+    return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+  }
+
+  public function createServerInvite(Request $request, Response $response, $args): Response
+  {
+    $userId = AuthService::getUserId();
+    if (!$userId) {
+      $response->getBody()->write(json_encode(['error' => 'User not authenticated']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(401);
+    }
+
+    $serverId = (int) $args['serverId'];
+    $body = $request->getParsedBody() ?? [];
+    $pdo = $this->dbService->getConnection();
+    $this->ensureInviteTable($pdo);
+
+    if (!$this->userCanManageServer($pdo, $serverId, $userId)) {
+      $response->getBody()->write(json_encode(['error' => 'Only the server owner can create invites']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
+    }
+
+    $maxUses = isset($body['maxUses']) ? (int) $body['maxUses'] : 0;
+    $expiresInHours = isset($body['expiresInHours']) ? (int) $body['expiresInHours'] : 168;
+    $expiresAt = $expiresInHours > 0
+      ? gmdate('Y-m-d H:i:s', time() + ($expiresInHours * 3600))
+      : null;
+
+    $code = $this->generateInviteCode($pdo);
+    $pdo->prepare(
+      'INSERT INTO server_invites (server_id, code, created_by_user_id, max_uses, uses, expires_at)
+       VALUES (?, ?, ?, ?, 0, ?)'
+    )->execute([$serverId, $code, $userId, max(0, $maxUses), $expiresAt]);
+
+    $response->getBody()->write(json_encode([
+      'status' => 'success',
+      'invite' => [
+        'code' => $code,
+        'serverId' => $serverId,
+        'maxUses' => max(0, $maxUses),
+        'uses' => 0,
+        'expiresAt' => $expiresAt,
+      ],
+    ]));
+    return $response->withHeader('Content-Type', 'application/json')->withStatus(201);
+  }
+
+  public function listServerInvites(Request $request, Response $response, $args): Response
+  {
+    $userId = AuthService::getUserId();
+    if (!$userId) {
+      $response->getBody()->write(json_encode(['error' => 'User not authenticated']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(401);
+    }
+
+    $serverId = (int) $args['serverId'];
+    $pdo = $this->dbService->getConnection();
+    $this->ensureInviteTable($pdo);
+
+    if (!$this->userCanManageServer($pdo, $serverId, $userId)) {
+      $response->getBody()->write(json_encode(['error' => 'Only the server owner can view invites']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
+    }
+
+    $stmt = $pdo->prepare(
+      'SELECT code, max_uses, uses, expires_at, created_at
+       FROM server_invites
+       WHERE server_id = ? AND revoked_at IS NULL
+       ORDER BY created_at DESC
+       LIMIT 20'
+    );
+    $stmt->execute([$serverId]);
+    $invites = [];
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+      $invites[] = [
+        'code' => $row['code'],
+        'maxUses' => (int) $row['max_uses'],
+        'uses' => (int) $row['uses'],
+        'expiresAt' => $row['expires_at'],
+        'createdAt' => $row['created_at'],
+      ];
+    }
+
+    $response->getBody()->write(json_encode(['status' => 'success', 'invites' => $invites]));
+    return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
   }
 
   public function leaveServer(Request $request, Response $response, $args) {
@@ -625,9 +862,12 @@ class ServerController extends Routes {
         return $response->withHeader('Content-Type', 'application/json')->withStatus(401);
       }
 
-      $data = $request->getParsedBody();
+      $data = $request->getParsedBody() ?? [];
       $serverName = $data['serverName'] ?? '';
       $serverDescription = $data['serverDescription'] ?? '';
+      // Privacy-first: communities are private unless explicitly opted into discovery.
+      $isPublicRaw = $data['isPublic'] ?? false;
+      $isPublic = filter_var($isPublicRaw, FILTER_VALIDATE_BOOLEAN);
       
       if (empty($serverName)) {
         $response->getBody()->write(json_encode(['error' => 'Server name is required']));
@@ -635,13 +875,16 @@ class ServerController extends Routes {
       }
 
       $pdo = $this->dbService->getConnection();
+      $this->ensureServerPrivacyColumn($pdo);
+      $this->ensureInviteTable($pdo);
+      $this->ensurePhantomChannelColumns($pdo);
       
-      // Create the server
-      $insertQuery = "INSERT INTO servers (server_name, server_description, owner_id) VALUES (?, ?, ?)";
+      // Create the server (private by default)
+      $insertQuery = "INSERT INTO servers (server_name, server_description, owner_id, is_public) VALUES (?, ?, ?, ?)";
       $insertStmt = $pdo->prepare($insertQuery);
-      $insertStmt->execute([$serverName, $serverDescription, $userId]);
+      $insertStmt->execute([$serverName, $serverDescription, $userId, $isPublic ? 1 : 0]);
       
-      $serverId = $pdo->lastInsertId();
+      $serverId = (int) $pdo->lastInsertId();
       
       $userStmt = $pdo->prepare('SELECT user_name FROM users WHERE user_id = ?');
       $userStmt->execute([$userId]);
@@ -658,19 +901,31 @@ class ServerController extends Routes {
       $categoryId = $pdo->lastInsertId();
       $pdo->prepare("INSERT INTO channels (category_id, channel_name) VALUES (?, 'general')")
         ->execute([$categoryId]);
+
+      // Seed an invite for private communities so the owner can share access immediately
+      $inviteCode = null;
+      if (!$isPublic) {
+        $inviteCode = $this->generateInviteCode($pdo);
+        $pdo->prepare(
+          'INSERT INTO server_invites (server_id, code, created_by_user_id, max_uses, uses, expires_at)
+           VALUES (?, ?, ?, 0, 0, NULL)'
+        )->execute([$serverId, $inviteCode, $userId]);
+      }
       
-      // Return the created server data
       $serverData = [
         'serverId' => $serverId,
         'serverName' => $serverName,
         'serverDescription' => $serverDescription,
-        'iconURL' => '', // Default empty icon
-        'ownerId' => $userId
+        'iconURL' => '',
+        'ownerId' => $userId,
+        'isPublic' => $isPublic,
+        'inviteCode' => $inviteCode,
       ];
       
       $response->getBody()->write(json_encode($serverData));
       return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
     } catch (Exception $e) {
+      error_log('Error in createServer: ' . $e->getMessage());
       $response->getBody()->write(json_encode(['error' => 'Failed to create server']));
       return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
     }
@@ -736,5 +991,96 @@ class ServerController extends Routes {
         $pdo->exec('ALTER TABLE channels ADD COLUMN `' . $name . '` ' . $definition);
       }
     }
+  }
+
+  private function ensureServerPrivacyColumn(PDO $pdo): void
+  {
+    $stmt = $pdo->prepare(
+      'SELECT COUNT(*) FROM information_schema.COLUMNS
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?'
+    );
+    $stmt->execute(['servers', 'is_public']);
+    if ((int) $stmt->fetchColumn() === 0) {
+      $pdo->exec('ALTER TABLE servers ADD COLUMN `is_public` TINYINT(1) NOT NULL DEFAULT 0');
+    }
+  }
+
+  private function ensureInviteTable(PDO $pdo): void
+  {
+    $pdo->exec(
+      'CREATE TABLE IF NOT EXISTS server_invites (
+        invite_id BIGINT(64) AUTO_INCREMENT PRIMARY KEY,
+        server_id BIGINT(64) NOT NULL,
+        code VARCHAR(32) NOT NULL,
+        created_by_user_id BIGINT(64) NOT NULL,
+        max_uses INT NOT NULL DEFAULT 0,
+        uses INT NOT NULL DEFAULT 0,
+        expires_at DATETIME NULL,
+        revoked_at DATETIME NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY uniq_server_invite_code (code),
+        KEY idx_server_invites_server (server_id)
+      )'
+    );
+  }
+
+  private function generateInviteCode(PDO $pdo): string
+  {
+    for ($i = 0; $i < 8; $i++) {
+      $code = strtoupper(substr(bin2hex(random_bytes(5)), 0, 8));
+      $stmt = $pdo->prepare('SELECT COUNT(*) FROM server_invites WHERE code = ?');
+      $stmt->execute([$code]);
+      if ((int) $stmt->fetchColumn() === 0) {
+        return $code;
+      }
+    }
+    return strtoupper(substr(bin2hex(random_bytes(8)), 0, 10));
+  }
+
+  /**
+   * Validate invite for a server. max_uses = 0 means unlimited.
+   */
+  private function validateInvite(PDO $pdo, int $serverId, string $inviteCode): bool
+  {
+    $code = strtoupper(trim($inviteCode));
+    if ($code === '') {
+      return false;
+    }
+
+    $stmt = $pdo->prepare(
+      'SELECT invite_id, max_uses, uses, expires_at
+       FROM server_invites
+       WHERE server_id = ? AND code = ? AND revoked_at IS NULL
+       LIMIT 1'
+    );
+    $stmt->execute([$serverId, $code]);
+    $invite = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$invite) {
+      return false;
+    }
+
+    if (!empty($invite['expires_at']) && strtotime($invite['expires_at']) < time()) {
+      return false;
+    }
+
+    $maxUses = (int) $invite['max_uses'];
+    $uses = (int) $invite['uses'];
+    if ($maxUses > 0 && $uses >= $maxUses) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private function consumeInvite(PDO $pdo, int $serverId, string $inviteCode): void
+  {
+    $code = strtoupper(trim($inviteCode));
+    if ($code === '') {
+      return;
+    }
+    $pdo->prepare(
+      'UPDATE server_invites SET uses = uses + 1
+       WHERE server_id = ? AND code = ? AND revoked_at IS NULL'
+    )->execute([$serverId, $code]);
   }
 }

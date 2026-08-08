@@ -1,8 +1,21 @@
-import { ChangeDetectionStrategy, Component, OnInit, signal, WritableSignal, input, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  OnInit,
+  computed,
+  signal,
+  WritableSignal,
+  input,
+  output
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { take } from 'rxjs';
 import { Server } from '../../models/server/server';
 import { Member } from '../../models/member/member';
+import { Channel } from '../../models/channel/channel';
+import { Category } from '../../models/channel/category';
 import { AlertService } from '../../services/alert-service/alert-service';
 import { RoleManagementModalComponent } from '../role-management-modal/role-management-modal.component';
 import { ChannelManagementModalComponent } from '../channel-management-modal/channel-management-modal.component';
@@ -92,6 +105,16 @@ export class ServerSettingsModalComponent implements OnInit {
   // Settings states
   verificationLevel: WritableSignal<string> = signal('Low');
   explicitContentFilter: WritableSignal<string> = signal('Medium');
+  isPublicCommunity: WritableSignal<boolean> = signal(false);
+  serverInvites = signal<Array<{
+    code: string;
+    maxUses: number;
+    uses: number;
+    expiresAt: string | null;
+    createdAt?: string;
+  }>>([]);
+  latestInviteCode = signal<string | null>(null);
+  inviteBusy = signal(false);
 
   // Modal states for new UI components
   isConfirmationModalOpen: WritableSignal<boolean> = signal(false);
@@ -114,13 +137,50 @@ export class ServerSettingsModalComponent implements OnInit {
     { id: 'use_voice_activity', name: 'Use Voice Activity', description: 'Use voice activity detection', category: 'Voice' }
   ];
 
-  constructor(private alertService: AlertService, private serverWebService: ServerWebService) {}
+  readonly topLevelChannels = computed(() =>
+    this.serverChannels().filter((c) => c.type === 'category' || !c.parentId)
+  );
+
+  readonly categoryOptions = computed(() =>
+    this.serverChannels().filter((c) => c.type === 'category')
+  );
+
+  readonly filteredMembers = computed(() => {
+    let members = this.serverMembers();
+
+    if (this.memberSearchQuery()) {
+      const query = this.memberSearchQuery().toLowerCase();
+      members = members.filter(
+        (member) =>
+          member.memberName.toLowerCase().includes(query) ||
+          member.username.toLowerCase().includes(query)
+      );
+    }
+
+    if (this.memberFilterRole() !== 'all') {
+      members = members.filter((member) => member.roles.includes(this.memberFilterRole()));
+    }
+
+    if (this.memberFilterStatus() !== 'all') {
+      members = members.filter((member) => member.status === this.memberFilterStatus());
+    }
+
+    return members;
+  });
+
+  constructor(
+    private alertService: AlertService,
+    private serverWebService: ServerWebService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
     if (this.server()) {
       this.initializeForm();
-      this.loadMockData();
+      this.loadMockRoles();
+      this.loadServerChannels();
       this.loadServerMembers();
+      this.loadInvites();
     }
   }
 
@@ -131,14 +191,97 @@ export class ServerSettingsModalComponent implements OnInit {
     if (this.server()) {
       this.serverName.set(this.server()!.serverName);
       this.serverDescription.set(this.server()!.serverDescription || '');
+      this.isPublicCommunity.set(!!this.server()!.isPublic);
     }
   }
 
+  switchTab(tab: string): void {
+    this.activeTab.set(tab);
+    if (tab === 'privacy') {
+      this.loadInvites();
+    }
+  }
+
+  togglePublicDiscovery(enabled: boolean): void {
+    const server = this.server();
+    if (!server?.serverId) {
+      return;
+    }
+    const next = !!enabled;
+    this.serverWebService.updateServerPrivacy(String(server.serverId), next).pipe(take(1)).subscribe({
+      next: (resp) => {
+        this.isPublicCommunity.set(!!resp.isPublic);
+        this.alertService.success(
+          resp.isPublic ? 'Community is public' : 'Community is private',
+          resp.message || ''
+        );
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.alertService.error(
+          'Could not update privacy',
+          err?.error?.error || err?.error?.message || 'Only the owner can change this.'
+        );
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  loadInvites(): void {
+    const server = this.server();
+    if (!server?.serverId || server.serverId === 'home') {
+      this.serverInvites.set([]);
+      return;
+    }
+    this.serverWebService.listServerInvites(String(server.serverId)).pipe(take(1)).subscribe({
+      next: (resp) => {
+        this.serverInvites.set(resp?.invites || []);
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.serverInvites.set([]);
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  createInvite(): void {
+    const server = this.server();
+    if (!server?.serverId || this.inviteBusy()) {
+      return;
+    }
+    this.inviteBusy.set(true);
+    this.serverWebService.createServerInvite(String(server.serverId), { maxUses: 0, expiresInHours: 168 }).pipe(take(1)).subscribe({
+      next: (resp) => {
+        this.inviteBusy.set(false);
+        this.latestInviteCode.set(resp?.invite?.code || null);
+        this.loadInvites();
+        this.alertService.success('Invite created', `Code: ${resp?.invite?.code}`);
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.inviteBusy.set(false);
+        this.alertService.error(
+          'Could not create invite',
+          err?.error?.error || err?.error?.message || 'Only the owner can create invites.'
+        );
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  copyInviteCode(code: string): void {
+    if (!code || !navigator?.clipboard) {
+      return;
+    }
+    void navigator.clipboard.writeText(code);
+    this.alertService.success('Copied', 'Invite code copied to clipboard.');
+  }
+
   /**
-   * Load mock data for development
+   * Load mock roles until role APIs are available
    */
-  loadMockData(): void {
-    // Mock roles
+  loadMockRoles(): void {
     const mockRoles: ServerRole[] = [
       {
         id: '1',
@@ -164,101 +307,123 @@ export class ServerSettingsModalComponent implements OnInit {
       }
     ];
     this.serverRoles.set(mockRoles);
-
-    // Mock channels
-    const mockChannels: ServerChannel[] = [
-      {
-        id: 1,
-        name: 'general',
-        type: 'text',
-        topic: 'General discussion',
-        parentId: '1',
-        position: 0,
-        nsfw: false
-      },
-      {
-        id: 2,
-        name: 'announcements',
-        type: 'text',
-        topic: 'Server announcements',
-        parentId: '1',
-        position: 1,
-        nsfw: false
-      }
-    ];
-    this.serverChannels.set(mockChannels);
   }
 
   /**
-   * Load server members
+   * Load real categories/channels for this server
+   */
+  loadServerChannels(): void {
+    const server = this.server();
+    if (!server?.serverId || server.serverId === 'home') {
+      this.serverChannels.set([]);
+      return;
+    }
+
+    this.serverWebService.getServerChannels(String(server.serverId)).pipe(take(1)).subscribe({
+      next: (categories) => {
+        this.serverChannels.set(this.flattenCategories(categories || []));
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.serverChannels.set([]);
+        this.alertService.error('Could not load channels', 'Failed to fetch server channels.');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  private flattenCategories(categories: Category[]): ServerChannel[] {
+    const flattened: ServerChannel[] = [];
+    categories.forEach((category, categoryIndex) => {
+      flattened.push({
+        id: category.categoryId,
+        name: category.categoryName,
+        type: 'category',
+        position: categoryIndex,
+        nsfw: false
+      });
+
+      (category.channels || []).forEach((channel, channelIndex) => {
+        flattened.push(this.toServerChannel(channel, channelIndex));
+      });
+    });
+    return flattened;
+  }
+
+  private toServerChannel(channel: Channel, position = 0): ServerChannel {
+    return {
+      id: channel.channelId,
+      name: channel.channelName,
+      type: channel.type || 'text',
+      position: channel.position ?? position,
+      parentId: String(channel.categoryId),
+      categoryId: channel.categoryId,
+      topic: channel.topic,
+      nsfw: !!channel.nsfw,
+      isPhantom: !!channel.isPhantom,
+      slowmode: channel.slowmode,
+      userLimit: channel.userLimit,
+      bitrate: channel.bitrate
+    };
+  }
+
+  /**
+   * Load real server members
    */
   loadServerMembers(): void {
-    if (!this.server()) return;
-    
+    const server = this.server();
+    if (!server?.serverId || server.serverId === 'home') {
+      this.serverMembers.set([]);
+      this.availableRoles.set([]);
+      this.isLoadingMembers.set(false);
+      return;
+    }
+
     this.isLoadingMembers.set(true);
-    // TODO: Implement actual member loading from backend
-    // For now, using mock data
-    const mockMembers: Member[] = [
-      {
-        memberId: '1',
-        memberName: 'Badger',
-        userId: 1,
-        username: 'badger',
-        userPic: 'https://avatars.githubusercontent.com/u/8027457',
-        status: 'online',
-        roles: ['Admin', 'Owner'],
-        joinedAt: new Date('2024-01-01'),
-        isOwner: true,
-        isAdmin: true,
-        canManageRoles: true,
-        canManageMembers: true,
-        canManageChannels: true
+    this.serverWebService.getServerMembers(String(server.serverId)).pipe(take(1)).subscribe({
+      next: (members) => {
+        const list = (Array.isArray(members) ? members : []).map((member) => this.normalizeMember(member));
+        this.serverMembers.set(list);
+        const allRoles = list.flatMap((member) => member.roles || []);
+        this.availableRoles.set([...new Set(allRoles)]);
+        this.isLoadingMembers.set(false);
+        this.cdr.markForCheck();
       },
-      {
-        memberId: '2',
-        memberName: 'John Doe',
-        userId: 2,
-        username: 'johndoe',
-        userPic: '',
-        status: 'idle',
-        roles: ['Moderator'],
-        joinedAt: new Date('2024-01-15'),
-        isOwner: false,
-        isAdmin: false,
-        canManageRoles: true,
-        canManageMembers: true,
-        canManageChannels: false
-      },
-      {
-        memberId: '3',
-        memberName: 'Jane Smith',
-        userId: 3,
-        username: 'janesmith',
-        userPic: '',
-        status: 'online',
-        roles: ['Member'],
-        joinedAt: new Date('2024-02-01'),
-        isOwner: false,
-        isAdmin: false,
-        canManageRoles: false,
-        canManageMembers: false,
-        canManageChannels: false
+      error: (err) => {
+        this.serverMembers.set([]);
+        this.availableRoles.set([]);
+        this.isLoadingMembers.set(false);
+        this.alertService.error(
+          'Could not load members',
+          err?.error?.error || 'Failed to fetch server members.'
+        );
+        this.cdr.markForCheck();
       }
-    ];
-    
-    this.serverMembers.set(mockMembers);
-    this.isLoadingMembers.set(false);
-    
-    // Extract available roles
-    const allRoles = mockMembers.flatMap(member => member.roles);
-    this.availableRoles.set([...new Set(allRoles)]);
+    });
   }
 
-  /**
-   * Switch between tabs
-   */
-  switchTab(tab: string): void {
-    this.activeTab.set(tab);
+  private normalizeMember(member: Member): Member {
+    const status = String(member.status || 'offline').toLowerCase();
+    const normalizedStatus: Member['status'] =
+      status === 'online' || status === 'idle' || status === 'dnd' || status === 'offline'
+        ? status
+        : 'offline';
+
+    return {
+      ...member,
+      memberId: String(member.memberId),
+      memberName: member.memberName || member.username || 'Unknown',
+      username: member.username || member.memberName || 'unknown',
+      userPic: member.userPic || '',
+      status: normalizedStatus,
+      roles: member.roles?.length ? member.roles : ['Member'],
+      joinedAt: member.joinedAt ? new Date(member.joinedAt) : new Date(),
+      isOwner: !!member.isOwner,
+      isAdmin: !!member.isAdmin,
+      canManageMembers: !!member.canManageMembers,
+      canManageChannels: !!member.canManageChannels,
+      canManageRoles: !!member.canManageRoles
+    };
   }
 
   /**
@@ -524,36 +689,57 @@ export class ServerSettingsModalComponent implements OnInit {
    * Save channel changes
    */
   saveChannel(channelData: Partial<ServerChannel>): void {
-    if (this.isEditingChannel()) {
-      // Update existing channel
-      const updatedChannels = this.serverChannels().map(channel => 
-        channel.id === this.selectedChannel()?.id ? { ...channel, ...channelData } : channel
-      );
-      this.serverChannels.set(updatedChannels);
-      this.alertService.success('Channel Updated', 'Channel has been updated successfully.');
-    } else {
-      // Create new channel
-      const newChannel: ServerChannel = {
-        id: Math.floor(Math.random() * 10000) + 1000, // Generate numeric ID
-        name: channelData.name || 'new-channel',
-        type: channelData.type || 'text',
-        position: this.serverChannels().length,
-        parentId: channelData.parentId,
-        categoryId: channelData.categoryId,
-        topic: channelData.topic,
-        nsfw: channelData.nsfw || false,
-        isPhantom: !!channelData.isPhantom,
-        slowmode: channelData.slowmode,
-        userLimit: channelData.userLimit,
-        bitrate: channelData.bitrate
-      };
-      
-      const updatedChannels = [...this.serverChannels(), newChannel];
-      this.serverChannels.set(updatedChannels);
-      this.alertService.success('Channel Created', 'New channel has been created successfully.');
+    const server = this.server();
+    if (!server?.serverId || server.serverId === 'home') {
+      return;
     }
-    
-    this.closeChannelModal();
+
+    const selected = this.selectedChannel();
+    if (this.isEditingChannel() && selected?.type === 'category') {
+      this.alertService.warning('Not supported', 'Category renaming is not available yet.');
+      this.closeChannelModal();
+      return;
+    }
+
+    const payload: Partial<Channel> = {
+      channelName: channelData.name,
+      categoryId: Number(channelData.categoryId || channelData.parentId || 0),
+      type: channelData.type || 'text',
+      topic: channelData.topic,
+      nsfw: !!channelData.nsfw,
+      isPhantom: !!channelData.isPhantom,
+      slowmode: channelData.slowmode,
+      userLimit: channelData.userLimit,
+      bitrate: channelData.bitrate
+    };
+
+    if (!payload.categoryId && payload.type !== 'category') {
+      this.alertService.error('Missing category', 'Choose a category for this channel.');
+      return;
+    }
+
+    const request$ = this.isEditingChannel() && selected
+      ? this.serverWebService.updateChannel(String(server.serverId), selected.id, payload)
+      : this.serverWebService.createChannel(String(server.serverId), payload);
+
+    request$.pipe(take(1)).subscribe({
+      next: () => {
+        this.alertService.success(
+          this.isEditingChannel() ? 'Channel Updated' : 'Channel Created',
+          this.isEditingChannel()
+            ? 'Channel has been updated successfully.'
+            : 'New channel has been created successfully.'
+        );
+        this.closeChannelModal();
+        this.loadServerChannels();
+      },
+      error: (err) => {
+        this.alertService.error(
+          this.isEditingChannel() ? 'Could not update channel' : 'Could not create channel',
+          err?.error?.message || 'Only the server owner can manage channels.'
+        );
+      }
+    });
   }
 
   /**
@@ -670,49 +856,13 @@ export class ServerSettingsModalComponent implements OnInit {
   }
 
   /**
-   * Get top-level channels (non-category channels)
+   * Channels belonging to a category
    */
-  get getTopLevelChannels(): ServerChannel[] {
-    return this.serverChannels().filter(c => !c.parentId);
-  }
-
-  /**
-   * Get category channels
-   */
-  get getCategoryChannels(): ServerChannel[] {
-    return this.serverChannels().filter(c => c.type === 'category');
-  }
-
-  /**
-   * Get filtered members based on search and filters
-   */
-  get filteredMembers(): Member[] {
-    let members = this.serverMembers();
-    
-    // Apply search filter
-    if (this.memberSearchQuery()) {
-      const query = this.memberSearchQuery().toLowerCase();
-      members = members.filter(member => 
-        member.memberName.toLowerCase().includes(query) ||
-        member.username.toLowerCase().includes(query)
-      );
-    }
-    
-    // Apply role filter
-    if (this.memberFilterRole() !== 'all') {
-      members = members.filter(member => 
-        member.roles.includes(this.memberFilterRole())
-      );
-    }
-    
-    // Apply status filter
-    if (this.memberFilterStatus() !== 'all') {
-      members = members.filter(member => 
-        member.status === this.memberFilterStatus()
-      );
-    }
-    
-    return members;
+  getChannelsInCategory(categoryId: number | string): ServerChannel[] {
+    const parent = String(categoryId);
+    return this.serverChannels().filter(
+      (c) => c.type !== 'category' && String(c.parentId || c.categoryId || '') === parent
+    );
   }
 
   /**

@@ -383,16 +383,17 @@ class UserController extends Routes
     }
 
     $pdo = $this->dbService->getConnection();
+    // Privacy-first: never search or return email addresses.
     $stmt = $pdo->prepare(
-      "SELECT user_id, user_name, user_pic, user_bio, email
+      "SELECT user_id, user_name, user_pic, user_bio
        FROM users
        WHERE user_id <> ?
-         AND (user_name LIKE ? OR email LIKE ?)
+         AND user_name LIKE ?
        ORDER BY user_name ASC
        LIMIT 20"
     );
     $like = '%' . $q . '%';
-    $stmt->execute([$userId, $like, $like]);
+    $stmt->execute([$userId, $like]);
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     $users = array_map(static function ($row) {
@@ -401,7 +402,6 @@ class UserController extends Routes
         'username' => $row['user_name'],
         'userPic' => $row['user_pic'] ?? '',
         'userBio' => $row['user_bio'] ?? '',
-        'email' => $row['email'] ?? '',
       ];
     }, $rows);
 

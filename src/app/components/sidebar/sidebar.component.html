@@ -63,10 +63,25 @@
       <div class="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-0 bg-discord-text-lighter rounded-r-full transition-all duration-200 opacity-0 group-hover:h-8 group-hover:opacity-100"></div>
     </div>
 
-    <!-- Explore Public Servers Button -->
+    <!-- Join private community via invite -->
+    <div
+      class="w-12 h-12 rounded-xl cursor-pointer transition-all duration-200 hover:rounded-2xl hover:bg-discord-hover group relative bg-discord-medium flex-shrink-0"
+      (click)="openJoinInvite()"
+      title="Join with invite code"
+    >
+      <div class="w-full h-full flex items-center justify-center">
+        <svg class="w-6 h-6 text-discord-text-muted group-hover:text-discord-text-light transition-colors duration-200" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+        </svg>
+      </div>
+      <div class="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-0 bg-discord-text-lighter rounded-r-full transition-all duration-200 opacity-0 group-hover:h-8 group-hover:opacity-100"></div>
+    </div>
+
+    <!-- Explore Public Servers Button (opt-in directory) -->
     <div
       class="w-12 h-12 rounded-xl cursor-pointer transition-all duration-200 hover:rounded-2xl hover:bg-discord-hover group relative bg-discord-medium flex-shrink-0"
       (click)="exploreServers();"
+      title="Explore public communities"
     >
       <div class="w-full h-full flex items-center justify-center">
         <svg class="w-6 h-6 text-discord-text-muted group-hover:text-discord-text-light transition-colors duration-200" fill="currentColor" viewBox="0 0 20 20">
@@ -116,6 +131,45 @@
     (closeModal)="closeServerCreation()"
     (serverCreated)="onServerCreated($event)"
   ></app-server-creation-modal>
+}
+
+@if (showJoinInvite()) {
+  <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" (click)="closeJoinInvite()">
+    <div class="bg-discord-lighter border border-discord-border rounded-lg shadow-xl w-full max-w-md p-5" (click)="$event.stopPropagation()">
+      <h3 class="text-lg font-semibold text-discord-text-lighter mb-1">Join private community</h3>
+      <p class="text-sm text-discord-text-muted mb-4">
+        Most communities are invite-only. Enter a code shared by a member.
+      </p>
+      <input
+        type="text"
+        class="w-full px-3 py-2 rounded-md bg-discord-dark border border-discord-border text-discord-text-light uppercase tracking-wider focus:outline-none focus:border-discord-blue mb-2"
+        placeholder="Invite code"
+        [ngModel]="inviteCodeInput()"
+        (ngModelChange)="inviteCodeInput.set($event)"
+        (keydown.enter)="joinWithInvite()"
+      />
+      @if (inviteJoinError()) {
+        <p class="text-xs text-red-400 mb-3">{{ inviteJoinError() }}</p>
+      }
+      <div class="flex justify-end gap-2 mt-3">
+        <button
+          type="button"
+          class="px-4 py-2 rounded-md bg-discord-medium hover:bg-discord-hover text-discord-text-light"
+          (click)="closeJoinInvite()"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="px-4 py-2 rounded-md bg-discord-blue hover:bg-discord-blue-dark text-white disabled:opacity-50"
+          [disabled]="inviteJoining()"
+          (click)="joinWithInvite()"
+        >
+          {{ inviteJoining() ? 'Joining…' : 'Join' }}
+        </button>
+      </div>
+    </div>
+  </div>
 }
 
 <!-- Server Browser Modal -->

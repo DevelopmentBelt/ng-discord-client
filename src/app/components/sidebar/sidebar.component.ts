@@ -12,6 +12,7 @@ import { ServerConnectivityService } from '../../services/server-connectivity.se
 import { InboxService } from '../../services/inbox-service/inbox.service';
 import { ServerWebService } from '../../services/server-web-service/server-web.service';
 import { AuthService } from '../../services/auth-service/auth.service';
+import { AlertService } from '../../services/alert-service/alert-service';
 import { take } from 'rxjs';
 
 @Component({
@@ -46,6 +47,10 @@ export class SidebarComponent implements OnInit {
   showServerCreation: WritableSignal<boolean> = signal(false);
   showInboxModal: WritableSignal<boolean> = signal(false);
   showUserSettings: WritableSignal<boolean> = signal(false);
+  showJoinInvite: WritableSignal<boolean> = signal(false);
+  inviteCodeInput = signal('');
+  inviteJoinError = signal('');
+  inviteJoining = signal(false);
 
   readonly currentUser = this.authService.currentUser;
 
@@ -53,7 +58,8 @@ export class SidebarComponent implements OnInit {
     private serverService: ServerConnectivityService,
     private inboxService: InboxService,
     private serverWebService: ServerWebService,
-    private authService: AuthService
+    private authService: AuthService,
+    private alertService: AlertService
   ) {}
 
   currentUsername(): string {
@@ -128,7 +134,8 @@ export class SidebarComponent implements OnInit {
           serverName: server.serverName || '',
           iconURL: server.iconURL || '',
           ownerId: server.ownerId?.toString() || '',
-          serverDescription: server.serverDescription || ''
+          serverDescription: server.serverDescription || '',
+          isPublic: !!server.isPublic
         }));
         
         this.servers.set(transformedServers);
@@ -217,6 +224,55 @@ export class SidebarComponent implements OnInit {
   /**
    * Handle server creation
    */
+  openJoinInvite(): void {
+    this.inviteCodeInput.set('');
+    this.inviteJoinError.set('');
+    this.showJoinInvite.set(true);
+  }
+
+  closeJoinInvite(): void {
+    this.showJoinInvite.set(false);
+    this.inviteCodeInput.set('');
+    this.inviteJoinError.set('');
+    this.inviteJoining.set(false);
+  }
+
+  joinWithInvite(): void {
+    const code = this.inviteCodeInput().trim();
+    if (!code) {
+      this.inviteJoinError.set('Enter an invite code');
+      return;
+    }
+
+    this.inviteJoining.set(true);
+    this.inviteJoinError.set('');
+    this.serverWebService.joinServerWithInvite(code).pipe(take(1)).subscribe({
+      next: (resp) => {
+        const server = {
+          serverId: String(resp.server?.serverId || ''),
+          serverName: resp.server?.serverName || '',
+          serverDescription: resp.server?.serverDescription || '',
+          iconURL: resp.server?.iconURL || '',
+          ownerId: String(resp.server?.ownerId || ''),
+          isPublic: !!resp.server?.isPublic
+        };
+        const exists = this.servers().some((s) => String(s.serverId) === server.serverId);
+        if (!exists) {
+          this.servers.set([...this.servers(), server]);
+          this.sidebarServers.set([...this.sidebarServers(), server]);
+        }
+        this.inviteJoining.set(false);
+        this.closeJoinInvite();
+        this.selectServer(server);
+        this.alertService.success('Joined community', `Welcome to ${server.serverName}.`);
+      },
+      error: (error) => {
+        this.inviteJoining.set(false);
+        this.inviteJoinError.set(error?.error?.error || 'Could not join with that invite.');
+      }
+    });
+  }
+
   onServerCreated(serverData: any): void {
     this.serverWebService.createServer(serverData).subscribe({
       next: (newServer: any) => {
@@ -225,7 +281,8 @@ export class SidebarComponent implements OnInit {
           serverName: newServer.serverName || '',
           serverDescription: newServer.serverDescription || '',
           iconURL: newServer.iconURL || '',
-          ownerId: newServer.ownerId?.toString() || ''
+          ownerId: newServer.ownerId?.toString() || '',
+          isPublic: !!newServer.isPublic
         };
 
         this.servers.set([...this.servers(), transformedServer]);
@@ -233,9 +290,19 @@ export class SidebarComponent implements OnInit {
         this.closeServerCreation();
         // Select the new server so channels/members load immediately
         this.selectServer(transformedServer);
+
+        if (!transformedServer.isPublic && newServer.inviteCode) {
+          this.alertService.success(
+            'Private community created',
+            `Invite code: ${newServer.inviteCode} — share it to let others join.`
+          );
+        } else if (transformedServer.isPublic) {
+          this.alertService.success('Community created', 'Listed in the public directory.');
+        }
       },
       error: (error: any) => {
         console.error('Failed to create server:', error);
+        this.alertService.error('Could not create community', error?.error?.error || 'Please try again.');
       }
     });
   }

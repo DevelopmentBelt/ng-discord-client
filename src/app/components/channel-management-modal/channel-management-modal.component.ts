@@ -94,7 +94,8 @@ export class ChannelManagementModalComponent implements OnInit {
     const defaultCategory = this.defaultCategoryId();
     this.selectedCategory.set(defaultCategory != null && defaultCategory !== '' ? String(defaultCategory) : '');
     this.isNsfw.set(false);
-    this.isPhantom.set(false);
+    // Privacy-first: new text channels default to Phantom
+    this.isPhantom.set(true);
     this.slowmode.set(0);
     this.userLimit.set(0);
     this.bitrate.set(64000);

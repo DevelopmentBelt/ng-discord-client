@@ -119,21 +119,30 @@
         <div class="space-y-4">
           <h4 class="text-sm font-semibold text-discord-text-muted uppercase tracking-wider">Server Settings</h4>
           
-          <!-- Public Server Toggle -->
-          <div class="flex items-center justify-between">
+          <!-- Discovery opt-in (private by default) -->
+          <div class="rounded-md border border-discord-border bg-discord-medium/40 p-3 space-y-3">
             <div>
-              <label class="text-sm font-medium text-discord-text-light">Public Server</label>
-              <p class="text-xs text-discord-text-muted">Anyone can find and join your server</p>
+              <label class="text-sm font-medium text-discord-text-light">Private by default</label>
+              <p class="text-xs text-discord-text-muted mt-1">
+                Communities are invite-only unless you opt into public discovery.
+              </p>
             </div>
-            <label class="relative inline-flex items-center cursor-pointer">
-              <input 
-                type="checkbox" 
-                [(ngModel)]="isPublic"
-                name="isPublic"
-                class="sr-only peer"
-              />
-              <div class="w-11 h-6 bg-discord-medium peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-discord-blue/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-discord-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-discord-blue"></div>
-            </label>
+            <div class="flex items-center justify-between">
+              <div>
+                <label class="text-sm font-medium text-discord-text-light">List in public directory</label>
+                <p class="text-xs text-discord-text-muted">Anyone can find and join without an invite</p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  [ngModel]="isPublic()"
+                  (ngModelChange)="isPublic.set(!!$event)"
+                  name="isPublic"
+                  class="sr-only peer"
+                />
+                <div class="w-11 h-6 bg-discord-medium peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-discord-blue/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-discord-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-discord-blue"></div>
+              </label>
+            </div>
           </div>
 
           <!-- Verification Level -->
