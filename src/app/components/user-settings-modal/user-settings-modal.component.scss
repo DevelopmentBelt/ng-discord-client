@@ -255,11 +255,11 @@
 
 .profile-card__avatar-wrap .presence-dot {
   position: absolute;
-  right: 2px;
-  bottom: 2px;
+  right: -1px;
+  bottom: -1px;
   width: 16px;
   height: 16px;
-  z-index: 2;
+  z-index: 3;
 }
 
 .presence-dot--online {
