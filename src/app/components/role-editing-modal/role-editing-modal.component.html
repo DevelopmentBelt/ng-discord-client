@@ -1,12 +1,12 @@
 @if (isOpen()) {
   <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" (click)="close()">
-    <div class="bg-discord-lighter border border-discord-border rounded-lg shadow-xl w-full max-w-lg" (click)="$event.stopPropagation()">
+    <div class="bg-nimbus-lighter border border-nimbus-border rounded-lg shadow-xl w-full max-w-lg" (click)="$event.stopPropagation()">
       <!-- Modal Header -->
-      <div class="px-6 py-4 border-b border-discord-border">
-        <h3 class="text-lg font-semibold text-discord-text-lighter">
+      <div class="px-6 py-4 border-b border-nimbus-border">
+        <h3 class="text-lg font-semibold text-nimbus-text-lighter">
           Edit Roles for {{ data()?.member?.memberName }}
         </h3>
-        <p class="text-sm text-discord-text-muted mt-1">
+        <p class="text-sm text-nimbus-text-muted mt-1">
           Manage member roles and permissions
         </p>
       </div>
@@ -15,7 +15,7 @@
       <div class="px-6 py-4 space-y-4">
         <!-- Available Roles -->
         <div>
-          <h4 class="text-sm font-medium text-discord-text-light mb-3">Available Roles</h4>
+          <h4 class="text-sm font-medium text-nimbus-text-light mb-3">Available Roles</h4>
           <div class="space-y-2">
             @for (role of data()?.availableRoles; track role) {
               <label class="flex items-center space-x-3 cursor-pointer">
@@ -23,9 +23,9 @@
                   type="checkbox" 
                   [checked]="isRoleSelected(role)"
                   (change)="toggleRole(role)"
-                  class="text-discord-blue focus:ring-discord-blue rounded border-discord-border"
+                  class="text-nimbus-blue focus:rinimbus-blue rounded border-nimbus-border"
                 />
-                <span class="text-discord-text-light">{{ role }}</span>
+                <span class="text-nimbus-text-light">{{ role }}</span>
               </label>
             }
           </div>
@@ -33,18 +33,18 @@
 
         <!-- Custom Role Input -->
         <div>
-          <h4 class="text-sm font-medium text-discord-text-light mb-3">Add Custom Role</h4>
+          <h4 class="text-sm font-medium text-nimbus-text-light mb-3">Add Custom Role</h4>
           <div class="flex space-x-2">
             <input 
               type="text" 
               [(ngModel)]="newRoleInput"
               placeholder="Enter custom role name"
-              class="flex-1 px-3 py-2 bg-discord-medium border border-discord-border rounded-md text-discord-text-light placeholder-discord-text-muted focus:outline-none focus:ring-2 focus:ring-discord-blue focus:border-transparent"
+              class="flex-1 px-3 py-2 bg-nimbus-medium border border-nimbus-border rounded-md text-nimbus-text-light placeholder-nimbus-text-muted focus:outline-none focus:ring-2 focus:rinimbus-blue focus:border-transparent"
               (keydown.enter)="addCustomRole()"
             >
             <button 
               (click)="addCustomRole()"
-              class="px-3 py-2 bg-discord-blue hover:bg-discord-blue-dark text-white text-sm font-medium rounded-md transition-colors duration-150"
+              class="px-3 py-2 bg-nimbus-blue hover:bg-nimbus-blue-dark text-white text-sm font-medium rounded-md transition-colors duration-150"
             >
               Add
             </button>
@@ -53,18 +53,18 @@
 
         <!-- Current Roles -->
         <div class="mb-4">
-          <h4 class="text-lg font-semibold text-discord-text-light mb-3">Current Roles</h4>
+          <h4 class="text-lg font-semibold text-nimbus-text-light mb-3">Current Roles</h4>
           @if (selectedRoles().length > 0) {
             <div class="space-y-2">
               @for (role of selectedRoles(); track role; let i = $index) {
-                <div class="flex items-center justify-between p-3 bg-discord-medium rounded-lg border border-discord-border">
-                  <span class="text-discord-text-light font-medium">{{ role }}</span>
+                <div class="flex items-center justify-between p-3 bg-nimbus-medium rounded-lg border border-nimbus-border">
+                  <span class="text-nimbus-text-light font-medium">{{ role }}</span>
                   <div class="flex items-center space-x-2">
                     <!-- Move Up Button -->
                     <button 
                       (click)="moveRoleUpByIndex(i)"
                       [disabled]="i === 0"
-                      class="p-1 text-discord-text-muted hover:text-discord-text-light disabled:opacity-50 disabled:cursor-not-allowed"
+                      class="p-1 text-nimbus-text-muted hover:text-nimbus-text-light disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Move Up"
                     >
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -76,7 +76,7 @@
                     <button 
                       (click)="moveRoleDownByIndex(i)"
                       [disabled]="i === selectedRoles().length - 1"
-                      class="p-1 text-discord-text-muted hover:text-discord-text-light disabled:opacity-50 disabled:cursor-not-allowed"
+                      class="p-1 text-nimbus-text-muted hover:text-nimbus-text-light disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Move Down"
                     >
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -99,22 +99,22 @@
               }
             </div>
           } @else {
-            <p class="text-discord-text-muted text-sm">No roles assigned</p>
+            <p class="text-nimbus-text-muted text-sm">No roles assigned</p>
           }
         </div>
       </div>
 
       <!-- Modal Footer -->
-      <div class="px-6 py-4 border-t border-discord-border flex items-center justify-end space-x-3">
+      <div class="px-6 py-4 border-t border-nimbus-border flex items-center justify-end space-x-3">
         <button 
           (click)="close()"
-          class="px-4 py-2 bg-discord-medium hover:bg-discord-hover text-discord-text-light font-medium rounded-md transition-colors duration-150"
+          class="px-4 py-2 bg-nimbus-medium hover:bg-nimbus-hover text-nimbus-text-light font-medium rounded-md transition-colors duration-150"
         >
           Cancel
         </button>
         <button 
           (click)="save()"
-          class="px-4 py-2 bg-discord-blue hover:bg-discord-blue-dark text-white font-medium rounded-md transition-colors duration-150"
+          class="px-4 py-2 bg-nimbus-blue hover:bg-nimbus-blue-dark text-white font-medium rounded-md transition-colors duration-150"
         >
           Save Changes
         </button>

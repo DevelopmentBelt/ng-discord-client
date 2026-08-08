@@ -1,6 +1,6 @@
-<div class="h-full bg-discord-medium flex flex-col">
-  <div class="px-4 py-3 border-b border-discord-border bg-discord-lighter flex-shrink-0">
-    <h6 class="m-0 text-sm font-semibold text-discord-text-muted uppercase tracking-wider">
+<div class="h-full bg-nimbus-medium flex flex-col">
+  <div class="px-4 py-3 border-b border-nimbus-border bg-nimbus-lighter flex-shrink-0">
+    <h6 class="m-0 text-sm font-semibold text-nimbus-text-muted uppercase tracking-wider">
       @if (!server()?.serverId || server()?.serverId === 'home') {
         Members
       } @else {
@@ -11,11 +11,11 @@
 
   <div class="flex-1 overflow-y-auto py-2">
     @if (!server()?.serverId || server()?.serverId === 'home') {
-      <div class="px-4 py-6 text-sm text-discord-text-muted text-center">
+      <div class="px-4 py-6 text-sm text-nimbus-text-muted text-center">
         Select a server to see members.
       </div>
     } @else if (isLoading()) {
-      <div class="px-4 py-6 text-sm text-discord-text-muted text-center">
+      <div class="px-4 py-6 text-sm text-nimbus-text-muted text-center">
         Loading members...
       </div>
     } @else if (loadError()) {
@@ -23,36 +23,36 @@
         {{ loadError() }}
       </div>
     } @else if (members().length === 0) {
-      <div class="px-4 py-6 text-sm text-discord-text-muted text-center">
+      <div class="px-4 py-6 text-sm text-nimbus-text-muted text-center">
         No members yet.
       </div>
     } @else {
       @if (getOnlineMembers().length > 0) {
         <div class="px-2 mb-4">
-          <div class="px-2 py-1.5 text-xs font-semibold text-discord-text-muted uppercase tracking-wider mb-2">
+          <div class="px-2 py-1.5 text-xs font-semibold text-nimbus-text-muted uppercase tracking-wider mb-2">
             Online — {{ getOnlineMembers().length }}
           </div>
 
           @for (member of getOnlineMembers(); track member.memberId) {
-            <div class="px-2 py-1.5 mx-2 rounded cursor-pointer text-sm text-discord-text hover:bg-discord-hover hover:text-discord-text-light transition-colors duration-100 flex items-center min-w-0 group" (click)="openUserProfile(member)">
+            <div class="px-2 py-1.5 mx-2 rounded cursor-pointer text-sm text-nimbus-text hover:bg-nimbus-hover hover:text-nimbus-text-light transition-colors duration-100 flex items-center min-w-0 group" (click)="openUserProfile(member)">
               <div class="relative flex-shrink-0 mr-3">
                 @if (member.userPic) {
                   <div class="w-8 h-8 rounded-full overflow-hidden">
                     <img [src]="member.userPic" [alt]="member.memberName" class="w-full h-full object-cover">
                   </div>
                 } @else {
-                  <div class="w-8 h-8 bg-discord-blue rounded-full flex items-center justify-center text-discord-text-lighter font-semibold text-sm">
+                  <div class="w-8 h-8 bg-nimbus-blue rounded-full flex items-center justify-center text-nimbus-text-lighter font-semibold text-sm">
                     {{ member.memberName.charAt(0).toUpperCase() }}
                   </div>
                 }
-                <div class="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-discord-medium" [class]="getStatusColor(member.status)"></div>
+                <div class="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-nimbus-medium" [class]="getStatusColor(member.status)"></div>
               </div>
               <div class="flex-1 min-w-0">
-                <div class="text-discord-text-lighter font-medium text-sm whitespace-nowrap overflow-hidden text-ellipsis">
+                <div class="text-nimbus-text-lighter font-medium text-sm whitespace-nowrap overflow-hidden text-ellipsis">
                   {{ member.memberName }}
                 </div>
                 @if (roleLabel(member)) {
-                  <div class="text-discord-text-muted text-xs whitespace-nowrap overflow-hidden text-ellipsis">
+                  <div class="text-nimbus-text-muted text-xs whitespace-nowrap overflow-hidden text-ellipsis">
                     {{ roleLabel(member) }}
                   </div>
                 }
@@ -64,29 +64,29 @@
 
       @if (getOfflineMembers().length > 0) {
         <div class="px-2">
-          <div class="px-2 py-1.5 text-xs font-semibold text-discord-text-muted uppercase tracking-wider mb-2">
+          <div class="px-2 py-1.5 text-xs font-semibold text-nimbus-text-muted uppercase tracking-wider mb-2">
             Offline — {{ getOfflineMembers().length }}
           </div>
 
           @for (member of getOfflineMembers(); track member.memberId) {
-            <div class="px-2 py-1.5 mx-2 rounded cursor-pointer text-sm text-discord-text hover:bg-discord-hover hover:text-discord-text-light transition-colors duration-100 flex items-center min-w-0 group opacity-60" (click)="openUserProfile(member)">
+            <div class="px-2 py-1.5 mx-2 rounded cursor-pointer text-sm text-nimbus-text hover:bg-nimbus-hover hover:text-nimbus-text-light transition-colors duration-100 flex items-center min-w-0 group opacity-60" (click)="openUserProfile(member)">
               <div class="relative flex-shrink-0 mr-3">
                 @if (member.userPic) {
                   <div class="w-8 h-8 rounded-full overflow-hidden">
                     <img [src]="member.userPic" [alt]="member.memberName" class="w-full h-full object-cover">
                   </div>
                 } @else {
-                  <div class="w-8 h-8 bg-discord-light rounded-full flex items-center justify-center text-discord-text-muted font-semibold text-sm">
+                  <div class="w-8 h-8 bg-nimbus-light rounded-full flex items-center justify-center text-nimbus-text-muted font-semibold text-sm">
                     {{ member.memberName.charAt(0).toUpperCase() }}
                   </div>
                 }
               </div>
               <div class="flex-1 min-w-0">
-                <div class="text-discord-text-muted font-medium text-sm whitespace-nowrap overflow-hidden text-ellipsis">
+                <div class="text-nimbus-text-muted font-medium text-sm whitespace-nowrap overflow-hidden text-ellipsis">
                   {{ member.memberName }}
                 </div>
                 @if (roleLabel(member)) {
-                  <div class="text-discord-text-muted text-xs whitespace-nowrap overflow-hidden text-ellipsis">
+                  <div class="text-nimbus-text-muted text-xs whitespace-nowrap overflow-hidden text-ellipsis">
                     {{ roleLabel(member) }}
                   </div>
                 }

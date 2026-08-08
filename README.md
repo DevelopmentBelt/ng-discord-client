@@ -1,9 +1,9 @@
-# NgDiscordClient
+# Nimbus
 
-![ng-discord-logo](src/assets/images/ADISC_LOGO4.png)
+![nimbus-logo](src/assets/images/ADISC_LOGO4.png)
 
 ## About
-ng-discord is a simplified Discord remake made with the Angular framework. Anyone is free to use ng-discord for any purposes they intend to. Just follow the license rules :)
+**Nimbus** is a privacy-first community messaging app — private-by-default communities, Phantom E2EE channels, and a local-first key vault. Anyone is free to use Nimbus for any purpose they intend. Just follow the license rules :)
 
 ## Getting started (Docker)
 
@@ -23,7 +23,7 @@ Then open http://localhost:4200 and **register a new account**. There is no seed
 | WebSocket | ws://localhost:8080 |
 | MySQL     | localhost:3306 |
 
-Default DB credentials are in `.env.example` (`ng_discord` / `ng_discord`). Schema loads automatically on first start (empty database).
+Default DB credentials are in `.env.example` (`nimbus` / `nimbus`). Schema loads automatically on first start (empty database).
 
 Useful commands:
 

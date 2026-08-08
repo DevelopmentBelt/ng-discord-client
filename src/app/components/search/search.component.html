@@ -1,23 +1,23 @@
 <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-  <div class="bg-discord-lighter border border-discord-border rounded-lg shadow-xl w-full max-w-4xl max-h-[80vh] flex flex-col">
+  <div class="bg-nimbus-lighter border border-nimbus-border rounded-lg shadow-xl w-full max-w-4xl max-h-[80vh] flex flex-col">
     <!-- Search Header -->
-    <div class="px-6 py-4 border-b border-discord-border flex items-center justify-between">
+    <div class="px-6 py-4 border-b border-nimbus-border flex items-center justify-between">
       <div class="flex items-center space-x-3">
-        <div class="w-8 h-8 bg-discord-blue rounded flex items-center justify-center">
+        <div class="w-8 h-8 bg-nimbus-blue rounded flex items-center justify-center">
           <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
           </svg>
         </div>
         <div>
-          <h3 class="text-lg font-semibold text-discord-text-lighter">Search Messages</h3>
-          <p class="text-sm text-discord-text-muted">
+          <h3 class="text-lg font-semibold text-nimbus-text-lighter">Search Messages</h3>
+          <p class="text-sm text-nimbus-text-muted">
             {{ searchInChannel() ? 'Searching in #' + channelName : 'Searching in ' + serverName }}
           </p>
         </div>
       </div>
       <button 
         (click)="close()"
-        class="p-2 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150"
+        class="p-2 text-nimbus-text-muted hover:text-nimbus-text-light hover:bg-nimbus-hover rounded transition-colors duration-150"
       >
         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
           <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
@@ -26,7 +26,7 @@
     </div>
 
     <!-- Search Input and Options -->
-    <div class="px-6 py-4 border-b border-discord-border">
+    <div class="px-6 py-4 border-b border-nimbus-border">
       <div class="flex space-x-3">
         <div class="flex-1 relative">
           <input
@@ -35,16 +35,16 @@
             [(ngModel)]="searchQuery"
             (keydown)="onSearchKeydown($event)"
             placeholder="Search for messages..."
-            class="w-full bg-discord-light text-discord-text-light border-0 rounded-lg px-4 py-3 text-sm focus:bg-discord-light focus:outline-none focus:ring-2 focus:ring-discord-blue/50 transition-all duration-200"
+            class="w-full bg-nimbus-light text-nimbus-text-light border-0 rounded-lg px-4 py-3 text-sm focus:bg-nimbus-light focus:outline-none focus:ring-2 focus:rinimbus-blue/50 transition-all duration-200"
           />
-          <div class="absolute right-3 top-1/2 transform -translate-y-1/2 text-discord-text-muted text-xs">
+          <div class="absolute right-3 top-1/2 transform -translate-y-1/2 text-nimbus-text-muted text-xs">
             Press Enter to search, Esc to close
           </div>
         </div>
         <button
           (click)="performSearch()"
           [disabled]="isSearching() || !searchQuery().trim()"
-          class="px-6 py-3 bg-discord-blue hover:bg-discord-blue-dark disabled:bg-discord-medium disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors duration-200 flex items-center space-x-2"
+          class="px-6 py-3 bg-nimbus-blue hover:bg-nimbus-blue-dark disabled:bg-nimbus-medium disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors duration-200 flex items-center space-x-2"
         >
           <svg *ngIf="!isSearching()" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
@@ -58,25 +58,25 @@
 
       <!-- Search Options -->
       <div class="flex items-center space-x-6 mt-3 text-sm">
-        <label class="flex items-center space-x-2 text-discord-text-muted hover:text-discord-text-light cursor-pointer">
+        <label class="flex items-center space-x-2 text-nimbus-text-muted hover:text-nimbus-text-light cursor-pointer">
           <input
             type="checkbox"
             [(ngModel)]="searchInChannel"
-            class="rounded border-discord-border text-discord-blue focus:ring-discord-blue"
+            class="rounded border-nimbus-border text-nimbus-blue focus:rinimbus-blue"
           />
           <span>Search in current channel only</span>
         </label>
-        <label class="flex items-center space-x-2 text-discord-text-muted hover:text-discord-text-light cursor-pointer">
+        <label class="flex items-center space-x-2 text-nimbus-text-muted hover:text-nimbus-text-light cursor-pointer">
           <input
             type="checkbox"
             [(ngModel)]="caseSensitive"
-            class="rounded border-discord-border text-discord-blue focus:ring-discord-blue"
+            class="rounded border-nimbus-border text-nimbus-blue focus:rinimbus-blue"
           />
           <span>Case sensitive</span>
         </label>
         <button
           (click)="clearSearch()"
-          class="text-discord-text-muted hover:text-discord-text-light transition-colors duration-150"
+          class="text-nimbus-text-muted hover:text-nimbus-text-light transition-colors duration-150"
         >
           Clear
         </button>
@@ -88,12 +88,12 @@
       @if (hasSearched() && !isSearching()) {
         @if (searchResults().length > 0) {
           <div class="space-y-4">
-            <div class="flex items-center justify-between text-sm text-discord-text-muted">
+            <div class="flex items-center justify-between text-sm text-nimbus-text-muted">
               <span>{{ totalResults() }} result{{ totalResults() !== 1 ? 's' : '' }} found</span>
               @if (searchResults().length >= resultsPerPage) {
                 <button
                   (click)="loadMoreResults()"
-                  class="text-discord-blue hover:text-discord-blue-dark transition-colors duration-150"
+                  class="text-nimbus-blue hover:text-nimbus-blue-dark transition-colors duration-150"
                 >
                   Load more results
                 </button>
@@ -102,22 +102,22 @@
 
             @for (result of searchResults(); track result.message.id) {
               <div 
-                class="bg-discord-medium hover:bg-discord-light/50 rounded-lg p-4 cursor-pointer transition-colors duration-150 border border-discord-border"
+                class="bg-nimbus-medium hover:bg-nimbus-light/50 rounded-lg p-4 cursor-pointer transition-colors duration-150 border border-nimbus-border"
                 (click)="selectMessage(result.message)"
               >
                 <div class="flex items-start space-x-3">
-                  <div class="w-8 h-8 bg-discord-blue rounded-full flex items-center justify-center text-discord-text-lighter font-semibold text-sm flex-shrink-0">
+                  <div class="w-8 h-8 bg-nimbus-blue rounded-full flex items-center justify-center text-nimbus-text-lighter font-semibold text-sm flex-shrink-0">
                     {{ result.message.author?.username?.charAt(0) || 'U' }}
                   </div>
                   <div class="flex-1 min-w-0">
                     <div class="flex items-center space-x-2 mb-2">
-                      <span class="text-discord-text-lighter font-medium">{{ result.message.author?.username || 'Unknown User' }}</span>
-                      <span class="text-discord-text-muted text-xs">{{ formatTimestamp(result.message.postedTimestamp) }}</span>
+                      <span class="text-nimbus-text-lighter font-medium">{{ result.message.author?.username || 'Unknown User' }}</span>
+                      <span class="text-nimbus-text-muted text-xs">{{ formatTimestamp(result.message.postedTimestamp) }}</span>
                       @if (!searchInChannel()) {
-                        <span class="text-discord-text-muted text-xs">#{{ result.channelName }}</span>
+                        <span class="text-nimbus-text-muted text-xs">#{{ result.channelName }}</span>
                       }
                     </div>
-                    <div class="text-discord-text-light" [innerHTML]="result.highlightText"></div>
+                    <div class="text-nimbus-text-light" [innerHTML]="result.highlightText"></div>
                   </div>
                 </div>
               </div>
@@ -125,24 +125,24 @@
           </div>
         } @else {
           <div class="text-center py-12">
-            <div class="w-16 h-16 bg-discord-medium rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg class="w-8 h-8 text-discord-text-muted" fill="currentColor" viewBox="0 0 20 20">
+            <div class="w-16 h-16 bg-nimbus-medium rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg class="w-8 h-8 text-nimbus-text-muted" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
               </svg>
             </div>
-            <h4 class="text-lg font-medium text-discord-text-lighter mb-2">No results found</h4>
-            <p class="text-discord-text-muted">Try adjusting your search terms or search options</p>
+            <h4 class="text-lg font-medium text-nimbus-text-lighter mb-2">No results found</h4>
+            <p class="text-nimbus-text-muted">Try adjusting your search terms or search options</p>
           </div>
         }
       } @else if (!hasSearched()) {
         <div class="text-center py-12">
-          <div class="w-16 h-16 bg-discord-medium rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg class="w-8 h-8 text-discord-text-muted" fill="currentColor" viewBox="0 0 20 20">
+          <div class="w-16 h-16 bg-nimbus-medium rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-nimbus-text-muted" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
             </svg>
           </div>
-          <h4 class="text-lg font-medium text-discord-text-lighter mb-2">Search for messages</h4>
-          <p class="text-discord-text-muted">Enter your search terms above to find messages</p>
+          <h4 class="text-lg font-medium text-nimbus-text-lighter mb-2">Search for messages</h4>
+          <p class="text-nimbus-text-muted">Enter your search terms above to find messages</p>
         </div>
       }
     </div>

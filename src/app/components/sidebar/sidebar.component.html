@@ -1,26 +1,26 @@
-<div class="h-full flex flex-col items-center bg-discord-dark" id="angcord_servers">
+<div class="h-full flex flex-col items-center bg-nimbus-dark" id="nimbus_servers">
   <div class="flex-1 min-h-0 w-full overflow-y-auto overflow-x-hidden py-4 space-y-2 flex flex-col items-center">
     <!-- Home Button -->
     <div
-      class="w-12 h-12 rounded-xl cursor-pointer transition-all duration-200 hover:rounded-2xl hover:bg-discord-hover group relative flex-shrink-0"
-      [ngClass]="(selectedServerId() == 'home') ? 'bg-discord-blue rounded-2xl' : 'bg-discord-medium'"
+      class="w-12 h-12 rounded-xl cursor-pointer transition-all duration-200 hover:rounded-2xl hover:bg-nimbus-hover group relative flex-shrink-0"
+      [ngClass]="(selectedServerId() == 'home') ? 'bg-nimbus-blue rounded-2xl' : 'bg-nimbus-medium'"
       (click)="selectHome()"
     >
       <div class="w-full h-full flex items-center justify-center">
-        <svg class="w-6 h-6 text-discord-text-lighter" fill="currentColor" viewBox="0 0 20 20">
+        <svg class="w-6 h-6 text-nimbus-text-lighter" fill="currentColor" viewBox="0 0 20 20">
           <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/>
         </svg>
       </div>
-      <div class="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-0 bg-discord-text-lighter rounded-r-full transition-all duration-200 opacity-0 group-hover:h-8 group-hover:opacity-100"></div>
+      <div class="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-0 bg-nimbus-text-lighter rounded-r-full transition-all duration-200 opacity-0 group-hover:h-8 group-hover:opacity-100"></div>
     </div>
 
     <!-- Inbox Button -->
     <div
-      class="w-12 h-12 rounded-xl cursor-pointer transition-all duration-200 hover:rounded-2xl hover:bg-discord-hover group relative bg-discord-medium flex-shrink-0"
+      class="w-12 h-12 rounded-xl cursor-pointer transition-all duration-200 hover:rounded-2xl hover:bg-nimbus-hover group relative bg-nimbus-medium flex-shrink-0"
       (click)="openInbox()"
     >
       <div class="w-full h-full flex items-center justify-center relative">
-        <svg class="w-6 h-6 text-discord-text-muted group-hover:text-discord-text-light transition-colors duration-200" fill="currentColor" viewBox="0 0 20 20">
+        <svg class="w-6 h-6 text-nimbus-text-muted group-hover:text-nimbus-text-light transition-colors duration-200" fill="currentColor" viewBox="0 0 20 20">
           <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
           <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
         </svg>
@@ -31,69 +31,69 @@
           [color]="'red'"
         ></app-notification-badge>
       </div>
-      <div class="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-0 bg-discord-text-lighter rounded-r-full transition-all duration-200 opacity-0 group-hover:h-8 group-hover:opacity-100"></div>
+      <div class="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-0 bg-nimbus-text-lighter rounded-r-full transition-all duration-200 opacity-0 group-hover:h-8 group-hover:opacity-100"></div>
     </div>
 
     <!-- Separator -->
-    <div class="w-8 h-px bg-discord-border rounded-full flex-shrink-0"></div>
+    <div class="w-8 h-px bg-nimbus-border rounded-full flex-shrink-0"></div>
 
     <!-- Server List -->
     @for (server of sidebarServers(); track server) {
       <div
-        class="w-12 h-12 rounded-xl cursor-pointer transition-all duration-200 hover:rounded-2xl hover:bg-discord-hover group relative flex-shrink-0"
-        [ngClass]="(selectedServerId() == server.serverId) ? 'bg-discord-blue rounded-2xl' : 'bg-discord-medium'"
+        class="w-12 h-12 rounded-xl cursor-pointer transition-all duration-200 hover:rounded-2xl hover:bg-nimbus-hover group relative flex-shrink-0"
+        [ngClass]="(selectedServerId() == server.serverId) ? 'bg-nimbus-blue rounded-2xl' : 'bg-nimbus-medium'"
         (click)="selectServer(server);"
       >
         <sidebar-server [server]="server">
         </sidebar-server>
-        <div class="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-0 bg-discord-text-lighter rounded-r-full transition-all duration-200 opacity-0 group-hover:h-8 group-hover:opacity-100"></div>
+        <div class="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-0 bg-nimbus-text-lighter rounded-r-full transition-all duration-200 opacity-0 group-hover:h-8 group-hover:opacity-100"></div>
       </div>
     }
 
     <!-- Add Server Button -->
     <div
-      class="w-12 h-12 rounded-xl cursor-pointer transition-all duration-200 hover:rounded-2xl hover:bg-discord-hover group relative bg-discord-medium flex-shrink-0"
+      class="w-12 h-12 rounded-xl cursor-pointer transition-all duration-200 hover:rounded-2xl hover:bg-nimbus-hover group relative bg-nimbus-medium flex-shrink-0"
       (click)="addServer();"
     >
       <div class="w-full h-full flex items-center justify-center">
-        <svg class="w-6 h-6 text-discord-text-muted group-hover:text-discord-text-light transition-colors duration-200" fill="currentColor" viewBox="0 0 20 20">
+        <svg class="w-6 h-6 text-nimbus-text-muted group-hover:text-nimbus-text-light transition-colors duration-200" fill="currentColor" viewBox="0 0 20 20">
           <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
         </svg>
       </div>
-      <div class="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-0 bg-discord-text-lighter rounded-r-full transition-all duration-200 opacity-0 group-hover:h-8 group-hover:opacity-100"></div>
+      <div class="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-0 bg-nimbus-text-lighter rounded-r-full transition-all duration-200 opacity-0 group-hover:h-8 group-hover:opacity-100"></div>
     </div>
 
     <!-- Join private community via invite -->
     <div
-      class="w-12 h-12 rounded-xl cursor-pointer transition-all duration-200 hover:rounded-2xl hover:bg-discord-hover group relative bg-discord-medium flex-shrink-0"
+      class="w-12 h-12 rounded-xl cursor-pointer transition-all duration-200 hover:rounded-2xl hover:bg-nimbus-hover group relative bg-nimbus-medium flex-shrink-0"
       (click)="openJoinInvite()"
       title="Join with invite code"
     >
       <div class="w-full h-full flex items-center justify-center">
-        <svg class="w-6 h-6 text-discord-text-muted group-hover:text-discord-text-light transition-colors duration-200" fill="currentColor" viewBox="0 0 20 20">
+        <svg class="w-6 h-6 text-nimbus-text-muted group-hover:text-nimbus-text-light transition-colors duration-200" fill="currentColor" viewBox="0 0 20 20">
           <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
         </svg>
       </div>
-      <div class="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-0 bg-discord-text-lighter rounded-r-full transition-all duration-200 opacity-0 group-hover:h-8 group-hover:opacity-100"></div>
+      <div class="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-0 bg-nimbus-text-lighter rounded-r-full transition-all duration-200 opacity-0 group-hover:h-8 group-hover:opacity-100"></div>
     </div>
 
     <!-- Explore Public Servers Button (opt-in directory) -->
     <div
-      class="w-12 h-12 rounded-xl cursor-pointer transition-all duration-200 hover:rounded-2xl hover:bg-discord-hover group relative bg-discord-medium flex-shrink-0"
+      class="w-12 h-12 rounded-xl cursor-pointer transition-all duration-200 hover:rounded-2xl hover:bg-nimbus-hover group relative bg-nimbus-medium flex-shrink-0"
       (click)="exploreServers();"
       title="Explore public communities"
     >
       <div class="w-full h-full flex items-center justify-center">
-        <svg class="w-6 h-6 text-discord-text-muted group-hover:text-discord-text-light transition-colors duration-200" fill="currentColor" viewBox="0 0 20 20">
+        <svg class="w-6 h-6 text-nimbus-text-muted group-hover:text-nimbus-text-light transition-colors duration-200" fill="currentColor" viewBox="0 0 20 20">
           <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
         </svg>
       </div>
-      <div class="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-0 bg-discord-text-lighter rounded-r-full transition-all duration-200 opacity-0 group-hover:h-8 group-hover:opacity-100"></div>
+      <div class="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-0 bg-nimbus-text-lighter rounded-r-full transition-all duration-200 opacity-0 group-hover:h-8 group-hover:opacity-100"></div>
     </div>
   </div>
 
   <!-- User / Logout — pinned to bottom -->
-  <div class="w-full flex-shrink-0 flex flex-col items-center gap-2 py-3 border-t border-discord-border bg-discord-dark">
+  <div class="w-full flex-shrink-0 flex flex-col items-center gap-2 py-3 border-t border-nimbus-border bg-nimbus-dark">
     <button
       type="button"
       class="avatar-effect avatar-effect--sidebar relative"
@@ -109,14 +109,14 @@
         }
       </span>
       <span
-        class="absolute -bottom-0.5 -right-0.5 z-10 w-3.5 h-3.5 rounded-full border-2 border-discord-darker pointer-events-none"
+        class="absolute -bottom-0.5 -right-0.5 z-10 w-3.5 h-3.5 rounded-full border-2 border-nimbus-darker pointer-events-none"
         [ngClass]="presenceDotClass()"
         aria-hidden="true"
       ></span>
     </button>
     <button
       type="button"
-      class="w-10 h-8 mx-auto flex items-center justify-center rounded-lg text-[10px] uppercase tracking-wide bg-discord-medium text-discord-text-muted hover:bg-red-500 hover:text-white transition-colors"
+      class="w-10 h-8 mx-auto flex items-center justify-center rounded-lg text-[10px] uppercase tracking-wide bg-nimbus-medium text-nimbus-text-muted hover:bg-red-500 hover:text-white transition-colors"
       title="Log out"
       (click)="logout()"
     >
@@ -135,14 +135,14 @@
 
 @if (showJoinInvite()) {
   <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" (click)="closeJoinInvite()">
-    <div class="bg-discord-lighter border border-discord-border rounded-lg shadow-xl w-full max-w-md p-5" (click)="$event.stopPropagation()">
-      <h3 class="text-lg font-semibold text-discord-text-lighter mb-1">Join private community</h3>
-      <p class="text-sm text-discord-text-muted mb-4">
+    <div class="bg-nimbus-lighter border border-nimbus-border rounded-lg shadow-xl w-full max-w-md p-5" (click)="$event.stopPropagation()">
+      <h3 class="text-lg font-semibold text-nimbus-text-lighter mb-1">Join private community</h3>
+      <p class="text-sm text-nimbus-text-muted mb-4">
         Most communities are invite-only. Enter a code shared by a member.
       </p>
       <input
         type="text"
-        class="w-full px-3 py-2 rounded-md bg-discord-dark border border-discord-border text-discord-text-light uppercase tracking-wider focus:outline-none focus:border-discord-blue mb-2"
+        class="w-full px-3 py-2 rounded-md bg-nimbus-dark border border-nimbus-border text-nimbus-text-light uppercase tracking-wider focus:outline-none focus:border-nimbus-blue mb-2"
         placeholder="Invite code"
         [ngModel]="inviteCodeInput()"
         (ngModelChange)="inviteCodeInput.set($event)"
@@ -154,14 +154,14 @@
       <div class="flex justify-end gap-2 mt-3">
         <button
           type="button"
-          class="px-4 py-2 rounded-md bg-discord-medium hover:bg-discord-hover text-discord-text-light"
+          class="px-4 py-2 rounded-md bg-nimbus-medium hover:bg-nimbus-hover text-nimbus-text-light"
           (click)="closeJoinInvite()"
         >
           Cancel
         </button>
         <button
           type="button"
-          class="px-4 py-2 rounded-md bg-discord-blue hover:bg-discord-blue-dark text-white disabled:opacity-50"
+          class="px-4 py-2 rounded-md bg-nimbus-blue hover:bg-nimbus-blue-dark text-white disabled:opacity-50"
           [disabled]="inviteJoining()"
           (click)="joinWithInvite()"
         >

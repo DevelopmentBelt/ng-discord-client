@@ -11,9 +11,9 @@ class MailService
    */
   public static function sendPasswordReset(string $toEmail, string $resetUrl): bool
   {
-    $subject = 'Reset your Angcord password';
+    $subject = 'Reset your Nimbus password';
     $body = "Hi,\n\n"
-      . "We received a request to reset your Angcord password.\n"
+      . "We received a request to reset your Nimbus password.\n"
       . "Open this link to choose a new password (expires in 1 hour):\n\n"
       . $resetUrl . "\n\n"
       . "If you did not request this, you can ignore this email.\n";
@@ -25,7 +25,7 @@ class MailService
       return false;
     }
 
-    $from = (string) ($_ENV['MAIL_FROM'] ?? getenv('MAIL_FROM') ?: 'noreply@angcord.local');
+    $from = (string) ($_ENV['MAIL_FROM'] ?? getenv('MAIL_FROM') ?: 'noreply@nimbus.local');
     $headers = [
       'From: ' . $from,
       'Reply-To: ' . $from,

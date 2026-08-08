@@ -1,42 +1,42 @@
-<div class="h-full w-full bg-discord-lighter flex flex-col">
-  <div class="px-4 py-3 border-b border-discord-border bg-discord-lighter flex-shrink-0 flex items-center gap-3">
-    <div class="w-8 h-8 rounded-full bg-discord-blue flex items-center justify-center text-white font-semibold">
+<div class="h-full w-full bg-nimbus-lighter flex flex-col">
+  <div class="px-4 py-3 border-b border-nimbus-border bg-nimbus-lighter flex-shrink-0 flex items-center gap-3">
+    <div class="w-8 h-8 rounded-full bg-nimbus-blue flex items-center justify-center text-white font-semibold">
       {{ participantName().charAt(0).toUpperCase() }}
     </div>
     <div>
-      <h5 class="m-0 text-lg font-semibold text-discord-text-lighter">{{ participantName() }}</h5>
-      <p class="m-0 text-sm text-discord-text-muted">Direct Message</p>
+      <h5 class="m-0 text-lg font-semibold text-nimbus-text-lighter">{{ participantName() }}</h5>
+      <p class="m-0 text-sm text-nimbus-text-muted">Direct Message</p>
     </div>
   </div>
 
   <div class="flex-1 overflow-y-auto pb-2.5 px-4">
     @if (isLoading()) {
-      <div class="h-full flex items-center justify-center text-discord-text-muted text-sm">Loading messages...</div>
+      <div class="h-full flex items-center justify-center text-nimbus-text-muted text-sm">Loading messages...</div>
     } @else if (messages().length === 0) {
-      <div class="h-full flex items-center justify-center text-discord-text-muted text-sm px-6 text-center">
+      <div class="h-full flex items-center justify-center text-nimbus-text-muted text-sm px-6 text-center">
         No messages yet. Say hello to {{ participantName() }}.
       </div>
     } @else {
       @for (msg of messages(); track msg.id; let i = $index) {
-        <div class="hover:bg-discord-light/30 rounded-lg transition-colors duration-150">
+        <div class="hover:bg-nimbus-light/30 rounded-lg transition-colors duration-150">
           <div class="flex px-2 py-3 items-start gap-4">
             <div class="flex-shrink-0 w-10 text-center">
               @if (i === 0 || messages()[i - 1]?.author?.userId !== msg.author.userId) {
-                <div class="w-10 h-10 bg-discord-blue rounded-full flex items-center justify-center text-discord-text-lighter font-semibold text-sm">
+                <div class="w-10 h-10 bg-nimbus-blue rounded-full flex items-center justify-center text-nimbus-text-lighter font-semibold text-sm">
                   {{ msg.author.username?.charAt(0) || 'U' }}
                 </div>
               } @else {
-                <span class="text-xs text-discord-text-muted-light">{{ msg.postedTimestamp | datetimeFormatter: 'h:mm A' }}</span>
+                <span class="text-xs text-nimbus-text-muted-light">{{ msg.postedTimestamp | datetimeFormatter: 'h:mm A' }}</span>
               }
             </div>
             <div class="flex-1 min-w-0">
               @if (i === 0 || messages()[i - 1]?.author?.userId !== msg.author.userId) {
                 <div class="flex items-baseline gap-2 mb-1">
-                  <span class="font-semibold text-discord-text-lighter text-sm">{{ msg.author.username }}</span>
-                  <span class="text-xs text-discord-text-muted">{{ msg.postedTimestamp | datetimeFormatter: 'MMM D, YYYY h:mm A' }}</span>
+                  <span class="font-semibold text-nimbus-text-lighter text-sm">{{ msg.author.username }}</span>
+                  <span class="text-xs text-nimbus-text-muted">{{ msg.postedTimestamp | datetimeFormatter: 'MMM D, YYYY h:mm A' }}</span>
                 </div>
               }
-              <div class="text-discord-text text-sm whitespace-pre-wrap break-words">{{ msg.rawText }}</div>
+              <div class="text-nimbus-text text-sm whitespace-pre-wrap break-words">{{ msg.rawText }}</div>
             </div>
           </div>
         </div>
@@ -48,11 +48,11 @@
     @if (sendError()) {
       <div class="mb-2 text-sm text-red-400">{{ sendError() }}</div>
     }
-    <div class="bg-discord-medium rounded-lg px-4 py-3 flex items-center gap-3">
+    <div class="bg-nimbus-medium rounded-lg px-4 py-3 flex items-center gap-3">
       <input
         #messageBox
         type="text"
-        class="flex-1 bg-transparent outline-none text-discord-text placeholder:text-discord-text-muted"
+        class="flex-1 bg-transparent outline-none text-nimbus-text placeholder:text-nimbus-text-muted"
         [placeholder]="'Message @' + participantName()"
         [ngModel]="draft()"
         (ngModelChange)="draft.set($event)"
@@ -60,7 +60,7 @@
       >
       <button
         type="button"
-        class="px-3 py-1.5 rounded bg-discord-blue text-white text-sm font-medium hover:bg-discord-blue-dark disabled:opacity-50"
+        class="px-3 py-1.5 rounded bg-nimbus-blue text-white text-sm font-medium hover:bg-nimbus-blue-dark disabled:opacity-50"
         [disabled]="!draft().trim()"
         (click)="send()"
       >

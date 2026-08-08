@@ -1,5 +1,5 @@
 import {ChangeDetectionStrategy, Component, OnInit, computed, signal, WritableSignal, HostListener, ElementRef} from '@angular/core';
-import {AngcordContentComponent} from "./angcord-content/angcord-content.component";
+import {NimbusContentComponent} from "./nimbus-content/nimbus-content.component";
 import {MemberSidebarComponent} from "./member-sidebar/member-sidebar.component";
 import {ChannelSidebarComponent} from "./channel-sidebar/channel-sidebar.component";
 import {DmChatComponent} from "../dm-chat/dm-chat.component";
@@ -13,7 +13,7 @@ import {AuthService} from "../../services/auth-service/auth.service";
   templateUrl: './ang-content.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    AngcordContentComponent,
+    NimbusContentComponent,
     MemberSidebarComponent,
     ChannelSidebarComponent,
     DmChatComponent
@@ -174,12 +174,14 @@ export class AngContentComponent implements OnInit {
       main: this.mainContentWidth(),
       right: this.rightSidebarWidth()
     };
-    localStorage.setItem('discord-layout-widths', JSON.stringify(widths));
+    localStorage.setItem('nimbus-layout-widths', JSON.stringify(widths));
   }
 
   private loadSavedWidths(): void {
     try {
-      const saved = localStorage.getItem('discord-layout-widths');
+      const saved =
+        localStorage.getItem('nimbus-layout-widths') ||
+        localStorage.getItem('discord-layout-widths');
       if (saved) {
         const widths = JSON.parse(saved);
         this.leftSidebarWidth.set(widths.left || 25);

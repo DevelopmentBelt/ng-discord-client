@@ -167,7 +167,7 @@ The emoji picker automatically uses your Discord theme CSS variables. If you wan
 }
 
 .emoji-button {
-  background-color: var(--discord-blue);
+  background-color: var(--nimbus-blue);
   border: none;
   color: white;
   padding: 8px 12px;
@@ -175,7 +175,7 @@ The emoji picker automatically uses your Discord theme CSS variables. If you wan
   cursor: pointer;
   
   &:hover {
-    background-color: var(--discord-blue-dark);
+    background-color: var(--nimbus-blue-dark);
   }
 }
 ```

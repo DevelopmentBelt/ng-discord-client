@@ -44,12 +44,12 @@
 }
 
 // Hover effects for inbox items
-.hover\:bg-discord-hover:hover {
+.hover\:bg-nimbus-hover:hover {
   background-color: rgba(79, 84, 92, 0.3);
 }
 
 // Filter panel transitions
-.bg-discord-lighter {
+.bg-nimbus-lighter {
   transition: all 0.2s ease-in-out;
 }
 
@@ -64,16 +64,16 @@
 }
 
 // Button hover states
-.hover\:bg-discord-blue-dark:hover {
+.hover\:bg-nimbus-blue-dark:hover {
   background-color: #4752c4;
 }
 
-.hover\:bg-discord-hover:hover {
+.hover\:bg-nimbus-hover:hover {
   background-color: rgba(79, 84, 92, 0.3);
 }
 
 // Icon hover effects
-.hover\:text-discord-text-light:hover {
+.hover\:text-nimbus-text-light:hover {
   color: #dcddde;
 }
 
@@ -111,7 +111,7 @@
 }
 
 // Unread indicator animation
-.bg-discord-blue {
+.bg-nimbus-blue {
   animation: bounce 1s infinite;
 }
 

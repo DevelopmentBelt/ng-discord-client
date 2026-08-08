@@ -299,7 +299,7 @@ export class LoginComponent implements OnInit {
   get subheading(): string {
     switch (this.mode()) {
       case 'register':
-        return 'Join Angcord and start chatting.';
+        return 'Join Nimbus — private communities under cover.';
       case 'forgot':
         return "Enter your account email and we'll send reset instructions.";
       case 'reset':

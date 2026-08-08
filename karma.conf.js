@@ -25,7 +25,7 @@ module.exports = function (config) {
       suppressAll: true // removes the duplicated traces
     },
     coverageReporter: {
-      dir: require('path').join(__dirname, './coverage/ng-discord-client'),
+      dir: require('path').join(__dirname, './coverage/nimbus'),
       subdir: '.',
       reporters: [
         { type: 'html' },

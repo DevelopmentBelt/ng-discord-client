@@ -1,11 +1,11 @@
 <div class="absolute w-screen h-screen grid place-items-center bg-cover bg-no-repeat bg-center" style="background-image: url('https://wallpaperaccess.com/full/3053366.png');">
-  <form class="p-8 bg-discord-medium rounded-md shadow-lg max-w-md w-full mx-4" [formGroup]="form" (ngSubmit)="submit()">
+  <form class="p-8 bg-nimbus-medium rounded-md shadow-lg max-w-md w-full mx-4" [formGroup]="form" (ngSubmit)="submit()">
     <div class="text-center">
       <div class="flex flex-col items-center">
-        <div class="text-2xl font-semibold text-discord-text-lighter mb-2">
+        <div class="text-2xl font-semibold text-nimbus-text-lighter mb-2">
           {{ heading }}
         </div>
-        <div class="text-base text-discord-text-muted mb-5">
+        <div class="text-base text-nimbus-text-muted mb-5">
           {{ subheading }}
         </div>
 
@@ -22,7 +22,7 @@
               <div class="mt-3">
                 <button
                   type="button"
-                  class="text-discord-blue hover:underline font-medium"
+                  class="text-nimbus-blue hover:underline font-medium"
                   (click)="continueWithResetUrl()"
                 >
                   Continue to reset password
@@ -35,7 +35,7 @@
         <div class="w-full mb-5 text-left">
           @if (mode() === 'login') {
             <div class="mb-5">
-              <h5 class="text-xs font-semibold text-discord-text-muted uppercase mb-2">
+              <h5 class="text-xs font-semibold text-nimbus-text-muted uppercase mb-2">
                 Email or Username
                 @if (fieldError('identifier')) {
                   <span class="text-red-400 font-normal italic normal-case ml-1">- {{ fieldError('identifier') }}</span>
@@ -46,14 +46,14 @@
                 formControlName="identifier"
                 autocomplete="username"
                 placeholder="Enter your email or username"
-                class="w-full h-10 px-3 font-medium text-base text-discord-text bg-discord-dark border border-discord-border rounded outline-none transition-colors duration-200 focus:border-discord-blue"
+                class="w-full h-10 px-3 font-medium text-base text-nimbus-text bg-nimbus-dark border border-nimbus-border rounded outline-none transition-colors duration-200 focus:border-nimbus-blue"
               >
             </div>
           }
 
           @if (mode() === 'register' || mode() === 'forgot') {
             <div class="mb-5">
-              <h5 class="text-xs font-semibold text-discord-text-muted uppercase mb-2">
+              <h5 class="text-xs font-semibold text-nimbus-text-muted uppercase mb-2">
                 Email
                 @if (fieldError('email')) {
                   <span class="text-red-400 font-normal italic normal-case ml-1">- {{ fieldError('email') }}</span>
@@ -64,14 +64,14 @@
                 formControlName="email"
                 autocomplete="email"
                 placeholder="name@example.com"
-                class="w-full h-10 px-3 font-medium text-base text-discord-text bg-discord-dark border border-discord-border rounded outline-none transition-colors duration-200 focus:border-discord-blue"
+                class="w-full h-10 px-3 font-medium text-base text-nimbus-text bg-nimbus-dark border border-nimbus-border rounded outline-none transition-colors duration-200 focus:border-nimbus-blue"
               >
             </div>
           }
 
           @if (mode() === 'register') {
             <div class="mb-5">
-              <h5 class="text-xs font-semibold text-discord-text-muted uppercase mb-2">
+              <h5 class="text-xs font-semibold text-nimbus-text-muted uppercase mb-2">
                 Username
                 @if (fieldError('username')) {
                   <span class="text-red-400 font-normal italic normal-case ml-1">- {{ fieldError('username') }}</span>
@@ -82,14 +82,14 @@
                 formControlName="username"
                 autocomplete="username"
                 placeholder="cooluser"
-                class="w-full h-10 px-3 font-medium text-base text-discord-text bg-discord-dark border border-discord-border rounded outline-none transition-colors duration-200 focus:border-discord-blue"
+                class="w-full h-10 px-3 font-medium text-base text-nimbus-text bg-nimbus-dark border border-nimbus-border rounded outline-none transition-colors duration-200 focus:border-nimbus-blue"
               >
             </div>
           }
 
           @if (mode() === 'login' || mode() === 'register' || mode() === 'reset') {
             <div class="mb-5">
-              <h5 class="text-xs font-semibold text-discord-text-muted uppercase mb-2">
+              <h5 class="text-xs font-semibold text-nimbus-text-muted uppercase mb-2">
                 {{ mode() === 'reset' ? 'New Password' : 'Password' }}
                 @if (fieldError('password')) {
                   <span class="text-red-400 font-normal italic normal-case ml-1">- {{ fieldError('password') }}</span>
@@ -99,14 +99,14 @@
                 type="password"
                 formControlName="password"
                 autocomplete="{{ mode() === 'login' ? 'current-password' : 'new-password' }}"
-                class="w-full h-10 px-3 font-medium text-base text-discord-text bg-discord-dark border border-discord-border rounded outline-none transition-colors duration-200 focus:border-discord-blue"
+                class="w-full h-10 px-3 font-medium text-base text-nimbus-text bg-nimbus-dark border border-nimbus-border rounded outline-none transition-colors duration-200 focus:border-nimbus-blue"
               >
             </div>
           }
 
           @if (mode() === 'login') {
             <div class="mb-5 -mt-3">
-              <button type="button" class="text-sm text-discord-blue hover:underline font-medium" (click)="switchMode('forgot')">
+              <button type="button" class="text-sm text-nimbus-blue hover:underline font-medium" (click)="switchMode('forgot')">
                 Forgot your password?
               </button>
             </div>
@@ -114,7 +114,7 @@
 
           @if (mode() === 'register' || mode() === 'reset') {
             <div class="mb-5">
-              <h5 class="text-xs font-semibold text-discord-text-muted uppercase mb-2">
+              <h5 class="text-xs font-semibold text-nimbus-text-muted uppercase mb-2">
                 Confirm Password
                 @if (confirmPasswordError) {
                   <span class="text-red-400 font-normal italic normal-case ml-1">- {{ confirmPasswordError }}</span>
@@ -124,7 +124,7 @@
                 type="password"
                 formControlName="confirmPassword"
                 autocomplete="new-password"
-                class="w-full h-10 px-3 font-medium text-base text-discord-text bg-discord-dark border border-discord-border rounded outline-none transition-colors duration-200 focus:border-discord-blue"
+                class="w-full h-10 px-3 font-medium text-base text-nimbus-text bg-nimbus-dark border border-nimbus-border rounded outline-none transition-colors duration-200 focus:border-nimbus-blue"
               >
             </div>
           }
@@ -133,7 +133,7 @@
         <div class="w-full">
           <button
             type="submit"
-            class="w-full h-11 bg-discord-blue text-white rounded font-medium text-sm uppercase tracking-wider transition-all duration-200 hover:bg-discord-blue-dark hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
+            class="w-full h-11 bg-nimbus-blue text-white rounded font-medium text-sm uppercase tracking-wider transition-all duration-200 hover:bg-nimbus-blue-dark hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
             [disabled]="isLoading()"
           >
             @if (isLoading()) {
@@ -145,20 +145,20 @@
           </button>
         </div>
 
-        <div class="w-full mt-4 text-sm text-discord-text-muted text-left">
+        <div class="w-full mt-4 text-sm text-nimbus-text-muted text-left">
           @if (mode() === 'login') {
             Need an account?
-            <button type="button" class="text-discord-blue hover:underline font-medium ml-1" (click)="switchMode('register')">
+            <button type="button" class="text-nimbus-blue hover:underline font-medium ml-1" (click)="switchMode('register')">
               Register
             </button>
           } @else if (mode() === 'register') {
             Already have an account?
-            <button type="button" class="text-discord-blue hover:underline font-medium ml-1" (click)="switchMode('login')">
+            <button type="button" class="text-nimbus-blue hover:underline font-medium ml-1" (click)="switchMode('login')">
               Login
             </button>
           } @else {
             Remember your password?
-            <button type="button" class="text-discord-blue hover:underline font-medium ml-1" (click)="switchMode('login')">
+            <button type="button" class="text-nimbus-blue hover:underline font-medium ml-1" (click)="switchMode('login')">
               Back to Login
             </button>
           }

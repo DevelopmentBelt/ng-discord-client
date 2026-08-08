@@ -17,7 +17,7 @@
   }
   
   .status-indicator {
-    box-shadow: 0 0 0 2px var(--discord-lighter);
+    box-shadow: 0 0 0 2px var(--nimbus-lighter);
   }
   
   .role-badge {
@@ -52,8 +52,8 @@
 }
 
 // Additional utility classes that might be missing
-.bg-discord-blue-dark {
-  background-color: var(--discord-blue-dark);
+.bg-nimbus-blue-dark {
+  background-color: var(--nimbus-blue-dark);
 }
 
 .bg-yellow-600 {

@@ -15,23 +15,24 @@ import {
   providedIn: 'root'
 })
 export class ThemePreferencesService {
-  private readonly STORAGE_KEY = 'angcord-preferences';
+  private readonly STORAGE_KEY = 'nimbus-preferences';
+  private readonly LEGACY_STORAGE_KEYS = ['angcord-preferences'];
 
   private readonly cssVarMap: Record<ThemeColorKey, { hex: string; rgb: string }> = {
-    dark: { hex: '--discord-dark', rgb: '--discord-dark-rgb' },
-    darker: { hex: '--discord-darker', rgb: '--discord-darker-rgb' },
-    medium: { hex: '--discord-medium', rgb: '--discord-medium-rgb' },
-    lighter: { hex: '--discord-lighter', rgb: '--discord-lighter-rgb' },
-    light: { hex: '--discord-light', rgb: '--discord-light-rgb' },
-    blue: { hex: '--discord-blue', rgb: '--discord-blue-rgb' },
-    blueDark: { hex: '--discord-blue-dark', rgb: '--discord-blue-dark-rgb' },
-    text: { hex: '--discord-text', rgb: '--discord-text-rgb' },
-    textLight: { hex: '--discord-text-light', rgb: '--discord-text-light-rgb' },
-    textLighter: { hex: '--discord-text-lighter', rgb: '--discord-text-lighter-rgb' },
-    textMuted: { hex: '--discord-text-muted', rgb: '--discord-text-muted-rgb' },
-    textMutedLight: { hex: '--discord-text-muted-light', rgb: '--discord-text-muted-light-rgb' },
-    hover: { hex: '--discord-hover', rgb: '--discord-hover-rgb' },
-    border: { hex: '--discord-border', rgb: '--discord-border-rgb' }
+    dark: { hex: '--nimbus-dark', rgb: '--nimbus-dark-rgb' },
+    darker: { hex: '--nimbus-darker', rgb: '--nimbus-darker-rgb' },
+    medium: { hex: '--nimbus-medium', rgb: '--nimbus-medium-rgb' },
+    lighter: { hex: '--nimbus-lighter', rgb: '--nimbus-lighter-rgb' },
+    light: { hex: '--nimbus-light', rgb: '--nimbus-light-rgb' },
+    blue: { hex: '--nimbus-blue', rgb: '--nimbus-blue-rgb' },
+    blueDark: { hex: '--nimbus-blue-dark', rgb: '--nimbus-blue-dark-rgb' },
+    text: { hex: '--nimbus-text', rgb: '--nimbus-text-rgb' },
+    textLight: { hex: '--nimbus-text-light', rgb: '--nimbus-text-light-rgb' },
+    textLighter: { hex: '--nimbus-text-lighter', rgb: '--nimbus-text-lighter-rgb' },
+    textMuted: { hex: '--nimbus-text-muted', rgb: '--nimbus-text-muted-rgb' },
+    textMutedLight: { hex: '--nimbus-text-muted-light', rgb: '--nimbus-text-muted-light-rgb' },
+    hover: { hex: '--nimbus-hover', rgb: '--nimbus-hover-rgb' },
+    border: { hex: '--nimbus-border', rgb: '--nimbus-border-rgb' }
   };
 
   private readonly prefsSignal = signal<AppPreferences>(this.cloneDefaults());
@@ -195,7 +196,7 @@ export class ThemePreferencesService {
     });
 
     // hover also used as solid in some places; keep rgba helper for legacy CSS
-    root.style.setProperty('--discord-hover', `rgb(${this.hexToRgbChannels(colors.hover)} / 0.4)`);
+    root.style.setProperty('--nimbus-hover', `rgb(${this.hexToRgbChannels(colors.hover)} / 0.4)`);
 
     root.classList.toggle('theme-compact', prefs.compactMode);
     root.classList.toggle('theme-reduce-motion', prefs.reduceMotion);
@@ -203,7 +204,16 @@ export class ThemePreferencesService {
 
   private readStorage(): AppPreferences {
     try {
-      const raw = localStorage.getItem(this.STORAGE_KEY);
+      let raw = localStorage.getItem(this.STORAGE_KEY);
+      if (!raw) {
+        for (const legacy of this.LEGACY_STORAGE_KEYS) {
+          raw = localStorage.getItem(legacy);
+          if (raw) {
+            localStorage.setItem(this.STORAGE_KEY, raw);
+            break;
+          }
+        }
+      }
       if (!raw) {
         return this.cloneDefaults();
       }

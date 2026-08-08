@@ -138,10 +138,10 @@ The component uses Discord CSS variables for consistent theming:
 
 ```scss
 :root {
-  --discord-dark: #202225;
-  --discord-lighter: #36393f;
-  --discord-blue: #5865f2;
-  --discord-text-light: #dcddde;
+  --nimbus-dark: #202225;
+  --nimbus-lighter: #36393f;
+  --nimbus-blue: #5865f2;
+  --nimbus-text-light: #dcddde;
   // ... more variables
 }
 ```

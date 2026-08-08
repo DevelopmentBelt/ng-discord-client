@@ -5,7 +5,8 @@ import { IdentityKeyService } from './identity-key.service';
 import { ServerWebService } from '../server-web-service/server-web.service';
 import { AuthService } from '../auth-service/auth.service';
 
-const LOCAL_CHANNEL_KEYS = 'angcord-e2ee-channel-keys-v1';
+const LOCAL_CHANNEL_KEYS = 'nimbus-e2ee-channel-keys-v1';
+const LEGACY_CHANNEL_KEYS = 'angcord-e2ee-channel-keys-v1';
 
 /**
  * True E2EE channel keys: AES keys never leave the client in plaintext.
@@ -113,7 +114,7 @@ export class PhantomKeyService {
       return {};
     }
     try {
-      const all = JSON.parse(localStorage.getItem(LOCAL_CHANNEL_KEYS) || '{}');
+      const all = this.readChannelKeyStore();
       return { ...(all?.[String(userId)] || {}) };
     } catch {
       return {};
@@ -126,7 +127,7 @@ export class PhantomKeyService {
       return;
     }
     try {
-      const all = JSON.parse(localStorage.getItem(LOCAL_CHANNEL_KEYS) || '{}');
+      const all = this.readChannelKeyStore();
       all[String(userId)] = {
         ...(all[String(userId)] || {}),
         ...channelKeys
@@ -196,13 +197,31 @@ export class PhantomKeyService {
     return key;
   }
 
+  private readChannelKeyStore(): Record<string, any> {
+    try {
+      const current = localStorage.getItem(LOCAL_CHANNEL_KEYS);
+      if (current) {
+        return JSON.parse(current || '{}');
+      }
+      const legacy = localStorage.getItem(LEGACY_CHANNEL_KEYS);
+      if (legacy) {
+        const parsed = JSON.parse(legacy || '{}');
+        localStorage.setItem(LOCAL_CHANNEL_KEYS, JSON.stringify(parsed));
+        return parsed;
+      }
+    } catch {
+      // ignore
+    }
+    return {};
+  }
+
   private loadLocalRaw(channelId: number): Uint8Array | null {
     const userId = this.authService.currentUser()?.id;
     if (!userId) {
       return null;
     }
     try {
-      const all = JSON.parse(localStorage.getItem(LOCAL_CHANNEL_KEYS) || '{}');
+      const all = this.readChannelKeyStore();
       const b64 = all?.[String(userId)]?.[String(channelId)];
       return b64 ? this.cryptoService.base64ToBytes(b64) : null;
     } catch {
@@ -216,7 +235,7 @@ export class PhantomKeyService {
       return;
     }
     try {
-      const all = JSON.parse(localStorage.getItem(LOCAL_CHANNEL_KEYS) || '{}');
+      const all = this.readChannelKeyStore();
       if (!all[String(userId)]) {
         all[String(userId)] = {};
       }
@@ -233,7 +252,7 @@ export class PhantomKeyService {
       return;
     }
     try {
-      const all = JSON.parse(localStorage.getItem(LOCAL_CHANNEL_KEYS) || '{}');
+      const all = this.readChannelKeyStore();
       if (all?.[String(userId)]) {
         delete all[String(userId)][String(channelId)];
         localStorage.setItem(LOCAL_CHANNEL_KEYS, JSON.stringify(all));

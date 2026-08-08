@@ -222,7 +222,7 @@ export class ServerCreationModalComponent implements OnInit {
     } else if (count > 400) {
       return 'text-yellow-500';
     } else {
-      return 'text-discord-text-muted';
+      return 'text-nimbus-text-muted';
     }
   }
 }

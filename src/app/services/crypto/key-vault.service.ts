@@ -116,7 +116,7 @@ export class KeyVaultService {
   async exportBackupFile(passphrase: string): Promise<void> {
     const blob = await this.createEncryptedBackup(passphrase);
     const user = this.authService.currentUser();
-    const filename = `angcord-vault-${user?.username || 'backup'}-${Date.now()}.angvault`;
+    const filename = `nimbus-vault-${user?.username || 'backup'}-${Date.now()}.nimbusvault`;
     const file = new Blob([blob], { type: 'application/octet-stream' });
     const url = URL.createObjectURL(file);
     const a = document.createElement('a');

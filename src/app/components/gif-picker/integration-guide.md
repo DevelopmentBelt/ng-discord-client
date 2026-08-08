@@ -131,7 +131,7 @@ The GIF picker automatically uses your Discord theme CSS variables. If you want 
 }
 
 .gif-button {
-  background-color: var(--discord-blue);
+  background-color: var(--nimbus-blue);
   border: none;
   color: white;
   padding: 8px 12px;
@@ -139,7 +139,7 @@ The GIF picker automatically uses your Discord theme CSS variables. If you want 
   cursor: pointer;
   
   &:hover {
-    background-color: var(--discord-blue-dark);
+    background-color: var(--nimbus-blue-dark);
   }
 }
 ```

@@ -231,7 +231,7 @@ export class InboxModalComponent implements OnInit {
       case InboxPriority.LOW:
         return 'text-green-500';
       default:
-        return 'text-discord-text-muted';
+        return 'text-nimbus-text-muted';
     }
   }
 

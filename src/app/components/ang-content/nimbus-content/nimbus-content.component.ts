@@ -30,8 +30,8 @@ import { GifPickerComponent, GifResult } from '../../gif-picker/gif-picker.compo
 import * as moment from 'moment';
 
 @Component({
-  selector: 'angcord-content',
-  templateUrl: './angcord-content.component.html',
+  selector: 'nimbus-content',
+  templateUrl: './nimbus-content.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     DatetimeFormatterPipe,
@@ -41,7 +41,7 @@ import * as moment from 'moment';
   ],
   standalone: true
 })
-export class AngcordContentComponent implements OnInit, OnDestroy {
+export class NimbusContentComponent implements OnInit, OnDestroy {
   server = input<Server>();
   channel = input<Channel>();
 

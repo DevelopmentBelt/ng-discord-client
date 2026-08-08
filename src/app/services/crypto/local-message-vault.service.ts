@@ -3,9 +3,10 @@ import { AuthService } from '../auth-service/auth.service';
 import { KeyVaultCryptoService } from './key-vault-crypto.service';
 import { Message } from '../../models/message/message';
 
-const DB_NAME = 'angcord-local-vault-v1';
+const DB_NAME = 'nimbus-local-vault-v1';
 const STORE = 'messages';
-const LOCAL_KEY_PREFIX = 'angcord-local-vault-key-v1-';
+const LOCAL_KEY_PREFIX = 'nimbus-local-vault-key-v1-';
+const LEGACY_KEY_PREFIX = 'angcord-local-vault-key-v1-';
 
 interface VaultRecord {
   id: string;
@@ -38,8 +39,11 @@ export class LocalMessageVaultService {
     if (!uid) {
       return null;
     }
-    const existing = localStorage.getItem(LOCAL_KEY_PREFIX + uid);
+    const existing =
+      localStorage.getItem(LOCAL_KEY_PREFIX + uid) ||
+      localStorage.getItem(LEGACY_KEY_PREFIX + uid);
     if (existing) {
+      localStorage.setItem(LOCAL_KEY_PREFIX + uid, existing);
       return existing;
     }
     const raw = crypto.getRandomValues(new Uint8Array(32));

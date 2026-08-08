@@ -1,21 +1,21 @@
 <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" (keydown)="onKeydown($event)">
-  <div class="bg-discord-lighter border border-discord-border rounded-lg shadow-xl w-full max-w-4xl max-h-[80vh] flex flex-col">
+  <div class="bg-nimbus-lighter border border-nimbus-border rounded-lg shadow-xl w-full max-w-4xl max-h-[80vh] flex flex-col">
     <!-- Modal Header -->
-    <div class="px-6 py-4 border-b border-discord-border flex items-center justify-between">
+    <div class="px-6 py-4 border-b border-nimbus-border flex items-center justify-between">
       <div class="flex items-center space-x-3">
-        <div class="w-10 h-10 bg-discord-blue rounded-full flex items-center justify-center flex-shrink-0">
+        <div class="w-10 h-10 bg-nimbus-blue rounded-full flex items-center justify-center flex-shrink-0">
           <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/>
           </svg>
         </div>
         <div>
-          <h3 class="text-lg font-semibold text-discord-text-lighter">Server Settings</h3>
-          <p class="text-sm text-discord-text-muted">{{ server()?.serverName || 'Unknown Server' }}</p>
+          <h3 class="text-lg font-semibold text-nimbus-text-lighter">Server Settings</h3>
+          <p class="text-sm text-nimbus-text-muted">{{ server()?.serverName || 'Unknown Server' }}</p>
         </div>
       </div>
       <button 
         (click)="close()"
-        class="p-2 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150"
+        class="p-2 text-nimbus-text-muted hover:text-nimbus-text-light hover:bg-nimbus-hover rounded transition-colors duration-150"
         title="Close"
       >
         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -25,14 +25,14 @@
     </div>
 
     <!-- Tab Navigation -->
-    <div class="px-6 py-2 border-b border-discord-border">
+    <div class="px-6 py-2 border-b border-nimbus-border">
       <div class="flex space-x-1">
         <button 
           (click)="switchTab('overview')"
           class="px-4 py-2 text-sm font-medium rounded-md transition-colors duration-150"
           [ngClass]="activeTab() === 'overview' 
-            ? 'bg-discord-blue text-white' 
-            : 'text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover'"
+            ? 'bg-nimbus-blue text-white' 
+            : 'text-nimbus-text-muted hover:text-nimbus-text-light hover:bg-nimbus-hover'"
         >
           Overview
         </button>
@@ -40,8 +40,8 @@
           (click)="switchTab('roles')"
           class="px-4 py-2 text-sm font-medium rounded-md transition-colors duration-150"
           [ngClass]="activeTab() === 'roles' 
-            ? 'bg-discord-blue text-white' 
-            : 'text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover'"
+            ? 'bg-nimbus-blue text-white' 
+            : 'text-nimbus-text-muted hover:text-nimbus-text-light hover:bg-nimbus-hover'"
         >
           Roles
         </button>
@@ -49,8 +49,8 @@
           (click)="switchTab('channels')"
           class="px-4 py-2 text-sm font-medium rounded-md transition-colors duration-150"
           [ngClass]="activeTab() === 'channels' 
-            ? 'bg-discord-blue text-white' 
-            : 'text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover'"
+            ? 'bg-nimbus-blue text-white' 
+            : 'text-nimbus-text-muted hover:text-nimbus-text-light hover:bg-nimbus-hover'"
         >
           Channels
         </button>
@@ -58,8 +58,8 @@
           (click)="switchTab('privacy')"
           class="px-4 py-2 text-sm font-medium rounded-md transition-colors duration-150"
           [ngClass]="activeTab() === 'privacy' 
-            ? 'bg-discord-blue text-white' 
-            : 'text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover'"
+            ? 'bg-nimbus-blue text-white' 
+            : 'text-nimbus-text-muted hover:text-nimbus-text-light hover:bg-nimbus-hover'"
         >
           Privacy
         </button>
@@ -67,8 +67,8 @@
           (click)="switchTab('users')"
           class="px-4 py-2 text-sm font-medium rounded-md transition-colors duration-150"
           [ngClass]="activeTab() === 'users' 
-            ? 'bg-discord-blue text-white' 
-            : 'text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover'"
+            ? 'bg-nimbus-blue text-white' 
+            : 'text-nimbus-text-muted hover:text-nimbus-text-light hover:bg-nimbus-hover'"
         >
           Users
         </button>
@@ -83,11 +83,11 @@
           <!-- Server Information -->
           <div>
             <div class="flex items-center justify-between mb-4">
-              <h4 class="text-sm font-semibold text-discord-text-muted uppercase tracking-wider">Server Information</h4>
+              <h4 class="text-sm font-semibold text-nimbus-text-muted uppercase tracking-wider">Server Information</h4>
               @if (!isEditing()) {
                 <button 
                   (click)="toggleEdit()"
-                  class="px-3 py-1.5 bg-discord-blue hover:bg-discord-blue-dark text-white text-sm font-medium rounded-md transition-colors duration-150"
+                  class="px-3 py-1.5 bg-nimbus-blue hover:bg-nimbus-blue-dark text-white text-sm font-medium rounded-md transition-colors duration-150"
                 >
                   Edit
                 </button>
@@ -97,33 +97,33 @@
             @if (isEditing()) {
               <div class="space-y-4">
                 <div>
-                  <label class="block text-sm font-medium text-discord-text-muted mb-2">Server Name</label>
+                  <label class="block text-sm font-medium text-nimbus-text-muted mb-2">Server Name</label>
                   <input 
                     type="text" 
                     [(ngModel)]="serverName"
-                    class="w-full bg-discord-light text-discord-text-light border border-discord-border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-discord-blue/50 transition-all duration-200"
+                    class="w-full bg-nimbus-light text-nimbus-text-light border border-nimbus-border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:rinimbus-blue/50 transition-all duration-200"
                     placeholder="Enter server name"
                   />
                 </div>
                 <div>
-                  <label class="block text-sm font-medium text-discord-text-muted mb-2">Description</label>
+                  <label class="block text-sm font-medium text-nimbus-text-muted mb-2">Description</label>
                   <textarea 
                     [(ngModel)]="serverDescription"
                     rows="3"
-                    class="w-full bg-discord-light text-discord-text-light border border-discord-border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-discord-blue/50 transition-all duration-200"
+                    class="w-full bg-nimbus-light text-nimbus-text-light border border-nimbus-border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:rinimbus-blue/50 transition-all duration-200"
                     placeholder="Enter server description"
                   ></textarea>
                 </div>
                 <div class="flex space-x-2">
                   <button 
                     (click)="saveChanges()"
-                    class="px-4 py-2 bg-discord-blue hover:bg-discord-blue-dark text-white font-medium rounded-md transition-colors duration-150"
+                    class="px-4 py-2 bg-nimbus-blue hover:bg-nimbus-blue-dark text-white font-medium rounded-md transition-colors duration-150"
                   >
                     Save Changes
                   </button>
                   <button 
                     (click)="cancelEdit()"
-                    class="px-4 py-2 bg-discord-medium hover:bg-discord-hover text-discord-text-light font-medium rounded-md transition-colors duration-150"
+                    class="px-4 py-2 bg-nimbus-medium hover:bg-nimbus-hover text-nimbus-text-light font-medium rounded-md transition-colors duration-150"
                   >
                     Cancel
                   </button>
@@ -132,16 +132,16 @@
             } @else {
               <div class="space-y-3">
                 <div class="flex items-center justify-between">
-                  <span class="text-discord-text-muted">Server Name</span>
-                  <span class="text-discord-text-light">{{ serverName() }}</span>
+                  <span class="text-nimbus-text-muted">Server Name</span>
+                  <span class="text-nimbus-text-light">{{ serverName() }}</span>
                 </div>
                 <div class="flex items-start justify-between">
-                  <span class="text-discord-text-muted">Description</span>
-                  <span class="text-discord-text-light text-right max-w-xs">{{ serverDescription() || 'No description set' }}</span>
+                  <span class="text-nimbus-text-muted">Description</span>
+                  <span class="text-nimbus-text-light text-right max-w-xs">{{ serverDescription() || 'No description set' }}</span>
                 </div>
                 <div class="flex items-center justify-between">
-                  <span class="text-discord-text-muted">Owner ID</span>
-                  <span class="text-discord-text-light font-mono text-sm">{{ server()?.ownerId || 'Unknown' }}</span>
+                  <span class="text-nimbus-text-muted">Owner ID</span>
+                  <span class="text-nimbus-text-light font-mono text-sm">{{ server()?.ownerId || 'Unknown' }}</span>
                 </div>
               </div>
             }
@@ -150,7 +150,7 @@
           <!-- Danger Zone -->
           <div class="border border-red-500/20 rounded-lg p-4 bg-red-500/5">
             <h4 class="text-sm font-semibold text-red-400 uppercase tracking-wider mb-3">Danger Zone</h4>
-            <p class="text-sm text-discord-text-muted mb-4">Once you delete a server, there is no going back. Please be certain.</p>
+            <p class="text-sm text-nimbus-text-muted mb-4">Once you delete a server, there is no going back. Please be certain.</p>
             <button 
               (click)="deleteServer()"
               class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-md transition-colors duration-150"
@@ -165,10 +165,10 @@
       @if (activeTab() === 'roles') {
         <div class="space-y-4">
           <div class="flex items-center justify-between">
-            <h4 class="text-sm font-semibold text-discord-text-muted uppercase tracking-wider">Server Roles</h4>
+            <h4 class="text-sm font-semibold text-nimbus-text-muted uppercase tracking-wider">Server Roles</h4>
             <button 
               (click)="createRole()"
-              class="px-3 py-1.5 bg-discord-blue hover:bg-discord-blue-dark text-white text-sm font-medium rounded-md transition-colors duration-150"
+              class="px-3 py-1.5 bg-nimbus-blue hover:bg-nimbus-blue-dark text-white text-sm font-medium rounded-md transition-colors duration-150"
             >
               Create Role
             </button>
@@ -176,28 +176,28 @@
           
           <div class="space-y-2">
             @for (role of serverRoles(); track role.id) {
-              <div class="flex items-center justify-between p-3 bg-discord-medium rounded-lg hover:bg-discord-light/50 transition-colors duration-200">
+              <div class="flex items-center justify-between p-3 bg-nimbus-medium rounded-lg hover:bg-nimbus-light/50 transition-colors duration-200">
                 <div class="flex items-center space-x-3">
                   <div class="w-4 h-4 rounded-full" [style.background-color]="role.color"></div>
-                  <span class="font-medium text-discord-text-light" [style]="getRoleColorStyle(role.color)">{{ role.name }}</span>
+                  <span class="font-medium text-nimbus-text-light" [style]="getRoleColorStyle(role.color)">{{ role.name }}</span>
                   @if (role.hoist) {
-                    <span class="px-2 py-1 bg-discord-dark text-xs text-discord-text-muted rounded">Hoisted</span>
+                    <span class="px-2 py-1 bg-nimbus-dark text-xs text-nimbus-text-muted rounded">Hoisted</span>
                   }
                   @if (role.mentionable) {
-                    <span class="px-2 py-1 bg-discord-dark text-xs text-discord-text-muted rounded">Mentionable</span>
+                    <span class="px-2 py-1 bg-nimbus-dark text-xs text-nimbus-text-muted rounded">Mentionable</span>
                   }
                   @if (role.managed) {
-                    <span class="px-2 py-1 bg-discord-dark text-xs text-discord-text-muted rounded">Managed</span>
+                    <span class="px-2 py-1 bg-nimbus-dark text-xs text-nimbus-text-muted rounded">Managed</span>
                   }
                 </div>
                 <div class="flex items-center space-x-4">
-                  <span class="text-sm text-discord-text-muted">{{ role.memberCount }} members</span>
+                  <span class="text-sm text-nimbus-text-muted">{{ role.memberCount }} members</span>
                   <div class="flex space-x-1">
                     @for (permission of role.permissions.slice(0, 2); track permission) {
-                      <span class="px-2 py-1 bg-discord-dark text-xs text-discord-text-muted rounded">{{ permission }}</span>
+                      <span class="px-2 py-1 bg-nimbus-dark text-xs text-nimbus-text-muted rounded">{{ permission }}</span>
                     }
                     @if (role.permissions.length > 2) {
-                      <span class="px-2 py-1 bg-discord-dark text-xs text-discord-text-muted rounded">+{{ role.permissions.length - 2 }}</span>
+                      <span class="px-2 py-1 bg-nimbus-dark text-xs text-nimbus-text-muted rounded">+{{ role.permissions.length - 2 }}</span>
                     }
                   </div>
                   <div class="flex space-x-2">
@@ -205,7 +205,7 @@
                     <button 
                       (click)="moveRoleUp(role)"
                       [disabled]="!canMoveUp(role)"
-                      class="p-1 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                      class="p-1 text-nimbus-text-muted hover:text-nimbus-text-light hover:bg-nimbus-hover rounded transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Move Up"
                     >
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -217,7 +217,7 @@
                     <button 
                       (click)="moveRoleDown(role)"
                       [disabled]="!canMoveDown(role)"
-                      class="p-1 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                      class="p-1 text-nimbus-text-muted hover:text-nimbus-text-light hover:bg-nimbus-hover rounded transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Move Down"
                     >
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -227,7 +227,7 @@
                     
                     <button 
                       (click)="editRole(role)"
-                      class="p-1 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150"
+                      class="p-1 text-nimbus-text-muted hover:text-nimbus-text-light hover:bg-nimbus-hover rounded transition-colors duration-150"
                       title="Edit Role"
                     >
                       <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -236,7 +236,7 @@
                     </button>
                     <button 
                       (click)="duplicateRole(role)"
-                      class="p-1 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150"
+                      class="p-1 text-nimbus-text-muted hover:text-nimbus-text-light hover:bg-nimbus-hover rounded transition-colors duration-150"
                       title="Duplicate Role"
                     >
                       <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -247,7 +247,7 @@
                     @if (!role.managed) {
                       <button 
                         (click)="deleteRole(role)"
-                        class="p-1 text-discord-text-muted hover:text-red-400 hover:bg-discord-hover rounded transition-colors duration-150"
+                        class="p-1 text-nimbus-text-muted hover:text-red-400 hover:bg-nimbus-hover rounded transition-colors duration-150"
                         title="Delete Role"
                       >
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -267,10 +267,10 @@
       @if (activeTab() === 'channels') {
         <div class="space-y-4">
           <div class="flex items-center justify-between">
-            <h4 class="text-sm font-semibold text-discord-text-muted uppercase tracking-wider">Server Channels</h4>
+            <h4 class="text-sm font-semibold text-nimbus-text-muted uppercase tracking-wider">Server Channels</h4>
             <button 
               (click)="createChannel()"
-              class="px-3 py-1.5 bg-discord-blue hover:bg-discord-blue-dark text-white text-sm font-medium rounded-md transition-colors duration-150"
+              class="px-3 py-1.5 bg-nimbus-blue hover:bg-nimbus-blue-dark text-white text-sm font-medium rounded-md transition-colors duration-150"
             >
               Create Channel
             </button>
@@ -278,7 +278,7 @@
           
           <div class="space-y-4">
             @if (topLevelChannels().length === 0) {
-              <div class="p-4 rounded-lg bg-discord-medium text-sm text-discord-text-muted">
+              <div class="p-4 rounded-lg bg-nimbus-medium text-sm text-nimbus-text-muted">
                 No channels found for this server yet.
               </div>
             }
@@ -287,20 +287,20 @@
               <div class="space-y-2">
                 <!-- Category Header -->
                 @if (channel.type === 'category') {
-                  <div class="flex items-center justify-between p-2 bg-discord-dark rounded-lg">
+                  <div class="flex items-center justify-between p-2 bg-nimbus-dark rounded-lg">
                     <div class="flex items-center space-x-2">
-                      <svg class="w-4 h-4 text-discord-text-muted" fill="currentColor" viewBox="0 0 20 20">
+                      <svg class="w-4 h-4 text-nimbus-text-muted" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/>
                       </svg>
-                      <span class="font-medium text-discord-text-light">{{ channel.name }}</span>
-                      <span class="text-xs text-discord-text-muted">{{ getChannelsInCategory(channel.id).length }} channels</span>
+                      <span class="font-medium text-nimbus-text-light">{{ channel.name }}</span>
+                      <span class="text-xs text-nimbus-text-muted">{{ getChannelsInCategory(channel.id).length }} channels</span>
                     </div>
                     <div class="flex space-x-2">
                       <!-- Move Up Button -->
                       <button 
                         (click)="moveChannelUp(channel)"
                         [disabled]="!canMoveChannelUp(channel)"
-                        class="p-1 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                        class="p-1 text-nimbus-text-muted hover:text-nimbus-text-light hover:bg-nimbus-hover rounded transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Move Up"
                       >
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -312,7 +312,7 @@
                       <button 
                         (click)="moveChannelDown(channel)"
                         [disabled]="!canMoveChannelDown(channel)"
-                        class="p-1 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                        class="p-1 text-nimbus-text-muted hover:text-nimbus-text-light hover:bg-nimbus-hover rounded transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Move Down"
                       >
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -322,7 +322,7 @@
                       
                       <button 
                         (click)="editChannel(channel)"
-                        class="p-1 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150"
+                        class="p-1 text-nimbus-text-muted hover:text-nimbus-text-light hover:bg-nimbus-hover rounded transition-colors duration-150"
                         title="Edit Category"
                       >
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -331,7 +331,7 @@
                       </button>
                       <button 
                         (click)="duplicateChannel(channel)"
-                        class="p-1 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150"
+                        class="p-1 text-nimbus-text-muted hover:text-nimbus-text-light hover:bg-nimbus-hover rounded transition-colors duration-150"
                         title="Duplicate Category"
                       >
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -341,7 +341,7 @@
                       </button>
                       <button 
                         (click)="deleteChannel(channel)"
-                        class="p-1 text-discord-text-muted hover:text-red-400 hover:bg-discord-hover rounded transition-colors duration-150"
+                        class="p-1 text-nimbus-text-muted hover:text-red-400 hover:bg-nimbus-hover rounded transition-colors duration-150"
                         title="Delete Category"
                       >
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -354,12 +354,12 @@
                   <!-- Category Channels -->
                   <div class="ml-4 space-y-2">
                     @for (subChannel of getChannelsInCategory(channel.id); track subChannel.type + '-' + subChannel.id) {
-                      <div class="flex items-center justify-between p-3 bg-discord-medium rounded-lg hover:bg-discord-light/50 transition-colors duration-200">
+                      <div class="flex items-center justify-between p-3 bg-nimbus-medium rounded-lg hover:bg-nimbus-light/50 transition-colors duration-200">
                         <div class="flex items-center space-x-3">
                           <div
                             class="w-5 h-5"
                             [class.text-violet-300]="!!subChannel.isPhantom"
-                            [class.text-discord-text-muted]="!subChannel.isPhantom"
+                            [class.text-nimbus-text-muted]="!subChannel.isPhantom"
                           >
                             @if (subChannel.isPhantom) {
                               <span class="font-bold text-sm">∅</span>
@@ -373,7 +373,7 @@
                               </svg>
                             }
                           </div>
-                          <span class="font-medium text-discord-text-light"># {{ subChannel.name }}</span>
+                          <span class="font-medium text-nimbus-text-light"># {{ subChannel.name }}</span>
                           @if (subChannel.isPhantom) {
                             <span class="px-2 py-1 bg-violet-500/20 text-violet-300 text-xs rounded">Phantom</span>
                           }
@@ -381,22 +381,22 @@
                             <span class="px-2 py-1 bg-red-500/20 text-red-400 text-xs rounded">NSFW</span>
                           }
                           @if (subChannel.topic) {
-                            <span class="text-sm text-discord-text-muted truncate max-w-xs">{{ subChannel.topic }}</span>
+                            <span class="text-sm text-nimbus-text-muted truncate max-w-xs">{{ subChannel.topic }}</span>
                           }
                         </div>
                         <div class="flex items-center space-x-4">
                           @if (subChannel.type === 'text' && subChannel.slowmode && subChannel.slowmode > 0) {
-                            <span class="text-sm text-discord-text-muted">Slowmode: {{ subChannel.slowmode }}s</span>
+                            <span class="text-sm text-nimbus-text-muted">Slowmode: {{ subChannel.slowmode }}s</span>
                           }
                           @if (subChannel.type === 'voice' && subChannel.userLimit) {
-                            <span class="text-sm text-discord-text-muted">Limit: {{ subChannel.userLimit }}</span>
+                            <span class="text-sm text-nimbus-text-muted">Limit: {{ subChannel.userLimit }}</span>
                           }
                           <div class="flex space-x-2">
                             <!-- Move Up Button -->
                             <button 
                               (click)="moveChannelUp(subChannel)"
                               [disabled]="!canMoveChannelUp(subChannel)"
-                              class="p-1 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                              class="p-1 text-nimbus-text-muted hover:text-nimbus-text-light hover:bg-nimbus-hover rounded transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
                               title="Move Up"
                             >
                               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -408,7 +408,7 @@
                             <button 
                               (click)="moveChannelDown(subChannel)"
                               [disabled]="!canMoveChannelDown(subChannel)"
-                              class="p-1 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                              class="p-1 text-nimbus-text-muted hover:text-nimbus-text-light hover:bg-nimbus-hover rounded transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
                               title="Move Down"
                             >
                               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -418,7 +418,7 @@
                             
                             <button 
                               (click)="editChannel(subChannel)"
-                              class="p-1 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150"
+                              class="p-1 text-nimbus-text-muted hover:text-nimbus-text-light hover:bg-nimbus-hover rounded transition-colors duration-150"
                               title="Edit Channel"
                             >
                               <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -427,7 +427,7 @@
                             </button>
                             <button 
                               (click)="duplicateChannel(subChannel)"
-                              class="p-1 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150"
+                              class="p-1 text-nimbus-text-muted hover:text-nimbus-text-light hover:bg-nimbus-hover rounded transition-colors duration-150"
                               title="Duplicate Channel"
                             >
                               <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -437,7 +437,7 @@
                             </button>
                             <button 
                               (click)="deleteChannel(subChannel)"
-                              class="p-1 text-discord-text-muted hover:text-red-400 hover:bg-discord-hover rounded transition-colors duration-150"
+                              class="p-1 text-nimbus-text-muted hover:text-red-400 hover:bg-nimbus-hover rounded transition-colors duration-150"
                               title="Delete Channel"
                             >
                               <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -451,9 +451,9 @@
                   </div>
                 } @else {
                   <!-- Standalone Channel -->
-                  <div class="flex items-center justify-between p-3 bg-discord-medium rounded-lg hover:bg-discord-light/50 transition-colors duration-200">
+                  <div class="flex items-center justify-between p-3 bg-nimbus-medium rounded-lg hover:bg-nimbus-light/50 transition-colors duration-200">
                     <div class="flex items-center space-x-3">
-                      <div class="w-5 h-5 text-discord-text-muted">
+                      <div class="w-5 h-5 text-nimbus-text-muted">
                         @if (channel.type === 'text') {
                           <svg fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd"/>
@@ -464,19 +464,19 @@
                           </svg>
                         }
                       </div>
-                      <span class="font-medium text-discord-text-light"># {{ channel.name }}</span>
+                      <span class="font-medium text-nimbus-text-light"># {{ channel.name }}</span>
                       @if (channel.nsfw) {
                         <span class="px-2 py-1 bg-red-500/20 text-red-400 text-xs rounded">NSFW</span>
                       }
                     </div>
                     <div class="flex items-center space-x-4">
-                      <span class="text-sm text-discord-text-muted">Position: {{ channel.position }}</span>
+                      <span class="text-sm text-nimbus-text-muted">Position: {{ channel.position }}</span>
                       <div class="flex space-x-2">
                         <!-- Move Up Button -->
                         <button 
                           (click)="moveChannelUp(channel)"
                           [disabled]="!canMoveChannelUp(channel)"
-                          class="p-1 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                          class="p-1 text-nimbus-text-muted hover:text-nimbus-text-light hover:bg-nimbus-hover rounded transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
                           title="Move Up"
                         >
                           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -488,7 +488,7 @@
                         <button 
                           (click)="moveChannelDown(channel)"
                           [disabled]="!canMoveChannelDown(channel)"
-                          class="p-1 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                          class="p-1 text-nimbus-text-muted hover:text-nimbus-text-light hover:bg-nimbus-hover rounded transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
                           title="Move Down"
                         >
                           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -498,7 +498,7 @@
                         
                         <button 
                           (click)="editChannel(channel)"
-                          class="p-1 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150"
+                          class="p-1 text-nimbus-text-muted hover:text-nimbus-text-light hover:bg-nimbus-hover rounded transition-colors duration-150"
                           title="Edit Channel"
                         >
                           <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -507,7 +507,7 @@
                         </button>
                         <button 
                           (click)="duplicateChannel(channel)"
-                          class="p-1 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150"
+                          class="p-1 text-nimbus-text-muted hover:text-nimbus-text-light hover:bg-nimbus-hover rounded transition-colors duration-150"
                           title="Duplicate Channel"
                         >
                           <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -517,7 +517,7 @@
                         </button>
                         <button 
                           (click)="deleteChannel(channel)"
-                          class="p-1 text-discord-text-muted hover:text-red-400 hover:bg-discord-hover rounded transition-colors duration-150"
+                          class="p-1 text-nimbus-text-muted hover:text-red-400 hover:bg-nimbus-hover rounded transition-colors duration-150"
                           title="Delete Channel"
                         >
                           <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -537,22 +537,22 @@
       <!-- Privacy Tab -->
       @if (activeTab() === 'privacy') {
         <div class="space-y-6">
-          <div class="rounded-lg border border-discord-border bg-discord-medium/40 p-4 space-y-3">
-            <h4 class="text-sm font-semibold text-discord-text-muted uppercase tracking-wider">Your alias in this community</h4>
-            <p class="text-sm text-discord-text-muted">
+          <div class="rounded-lg border border-nimbus-border bg-nimbus-medium/40 p-4 space-y-3">
+            <h4 class="text-sm font-semibold text-nimbus-text-muted uppercase tracking-wider">Your alias in this community</h4>
+            <p class="text-sm text-nimbus-text-muted">
               Use a different display name/avatar here without changing your global profile.
             </p>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
               <input
                 type="text"
-                class="w-full px-3 py-2 rounded-md bg-discord-dark border border-discord-border text-discord-text-light"
+                class="w-full px-3 py-2 rounded-md bg-nimbus-dark border border-nimbus-border text-nimbus-text-light"
                 placeholder="Alias name"
                 [ngModel]="aliasName()"
                 (ngModelChange)="aliasName.set($event)"
               />
               <input
                 type="url"
-                class="w-full px-3 py-2 rounded-md bg-discord-dark border border-discord-border text-discord-text-light"
+                class="w-full px-3 py-2 rounded-md bg-nimbus-dark border border-nimbus-border text-nimbus-text-light"
                 placeholder="Alias avatar URL (optional)"
                 [ngModel]="aliasPic()"
                 (ngModelChange)="aliasPic.set($event)"
@@ -560,7 +560,7 @@
             </div>
             <button
               type="button"
-              class="px-3 py-1.5 bg-discord-blue hover:bg-discord-blue-dark text-white text-sm font-medium rounded-md disabled:opacity-50"
+              class="px-3 py-1.5 bg-nimbus-blue hover:bg-nimbus-blue-dark text-white text-sm font-medium rounded-md disabled:opacity-50"
               [disabled]="aliasSaving()"
               (click)="saveAlias()"
             >
@@ -568,17 +568,17 @@
             </button>
           </div>
 
-          <div class="rounded-lg border border-discord-border bg-discord-medium/40 p-4 space-y-3">
-            <h4 class="text-sm font-semibold text-discord-text-muted uppercase tracking-wider">Community visibility</h4>
-            <p class="text-sm text-discord-text-muted">
+          <div class="rounded-lg border border-nimbus-border bg-nimbus-medium/40 p-4 space-y-3">
+            <h4 class="text-sm font-semibold text-nimbus-text-muted uppercase tracking-wider">Community visibility</h4>
+            <p class="text-sm text-nimbus-text-muted">
               Communities are private by default. Private communities require an invite code to join and are hidden from the public directory.
             </p>
             <div class="flex items-center justify-between gap-4">
               <div>
-                <div class="text-discord-text-light font-medium">
+                <div class="text-nimbus-text-light font-medium">
                   {{ isPublicCommunity() ? 'Public directory listing' : 'Invite-only (private)' }}
                 </div>
-                <p class="text-xs text-discord-text-muted mt-1">
+                <p class="text-xs text-nimbus-text-muted mt-1">
                   {{ isPublicCommunity()
                     ? 'Anyone can find and join this community.'
                     : 'Only people with an invite code can join.' }}
@@ -591,29 +591,29 @@
                   [ngModel]="isPublicCommunity()"
                   (ngModelChange)="togglePublicDiscovery($event)"
                 />
-                <div class="w-11 h-6 bg-discord-dark peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-discord-blue/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-discord-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-discord-blue"></div>
+                <div class="w-11 h-6 bg-nimbus-dark peer-focus:outline-none peer-focus:ring-4 peer-focus:rinimbus-blue/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-nimbus-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-nimbus-blue"></div>
               </label>
             </div>
           </div>
 
           <div class="space-y-3">
             <div class="flex items-center justify-between">
-              <h4 class="text-sm font-semibold text-discord-text-muted uppercase tracking-wider">Invite codes</h4>
+              <h4 class="text-sm font-semibold text-nimbus-text-muted uppercase tracking-wider">Invite codes</h4>
               <button
                 type="button"
-                class="px-3 py-1.5 bg-discord-blue hover:bg-discord-blue-dark text-white text-sm font-medium rounded-md"
+                class="px-3 py-1.5 bg-nimbus-blue hover:bg-nimbus-blue-dark text-white text-sm font-medium rounded-md"
                 [disabled]="inviteBusy()"
                 (click)="createInvite()"
               >
                 {{ inviteBusy() ? 'Creating…' : 'Create invite' }}
               </button>
             </div>
-            <p class="text-sm text-discord-text-muted">
+            <p class="text-sm text-nimbus-text-muted">
               Share a code so trusted people can join without listing the community publicly.
             </p>
 
             @if (latestInviteCode()) {
-              <div class="flex items-center gap-2 p-3 rounded-md bg-discord-dark border border-discord-border">
+              <div class="flex items-center gap-2 p-3 rounded-md bg-nimbus-dark border border-nimbus-border">
                 <code class="flex-1 text-violet-200 tracking-wider">{{ latestInviteCode() }}</code>
                 <button
                   type="button"
@@ -627,10 +627,10 @@
 
             <div class="space-y-2">
               @for (invite of serverInvites(); track invite.code) {
-                <div class="flex items-center justify-between p-3 rounded-md bg-discord-medium">
+                <div class="flex items-center justify-between p-3 rounded-md bg-nimbus-medium">
                   <div>
-                    <div class="font-mono text-discord-text-light tracking-wider">{{ invite.code }}</div>
-                    <div class="text-xs text-discord-text-muted">
+                    <div class="font-mono text-nimbus-text-light tracking-wider">{{ invite.code }}</div>
+                    <div class="text-xs text-nimbus-text-muted">
                       Uses: {{ invite.uses }}{{ invite.maxUses ? ' / ' + invite.maxUses : '' }}
                       @if (invite.expiresAt) {
                         · Expires {{ invite.expiresAt }}
@@ -641,14 +641,14 @@
                   </div>
                   <button
                     type="button"
-                    class="text-sm text-discord-text-muted hover:text-discord-text-light"
+                    class="text-sm text-nimbus-text-muted hover:text-nimbus-text-light"
                     (click)="copyInviteCode(invite.code)"
                   >
                     Copy
                   </button>
                 </div>
               } @empty {
-                <div class="text-sm text-discord-text-muted">No active invites yet.</div>
+                <div class="text-sm text-nimbus-text-muted">No active invites yet.</div>
               }
             </div>
           </div>
@@ -666,13 +666,13 @@
                 placeholder="Search members..." 
                 [(ngModel)]="memberSearchQuery"
                 (input)="memberSearchQuery.set($any($event.target).value)"
-                class="w-full px-3 py-2 bg-discord-medium border border-discord-border rounded-md text-discord-text-light placeholder-discord-text-muted focus:outline-none focus:ring-2 focus:ring-discord-blue focus:border-transparent"
+                class="w-full px-3 py-2 bg-nimbus-medium border border-nimbus-border rounded-md text-nimbus-text-light placeholder-nimbus-text-muted focus:outline-none focus:ring-2 focus:rinimbus-blue focus:border-transparent"
               >
             </div>
             <select 
               [(ngModel)]="memberFilterRole"
               (change)="memberFilterRole.set($any($event.target).value)"
-              class="px-3 py-2 bg-discord-medium border border-discord-border rounded-md text-discord-text-light focus:outline-none focus:ring-2 focus:ring-discord-blue focus:border-transparent"
+              class="px-3 py-2 bg-nimbus-medium border border-nimbus-border rounded-md text-nimbus-text-light focus:outline-none focus:ring-2 focus:rinimbus-blue focus:border-transparent"
             >
               <option value="all">All Roles</option>
               @for (role of availableRoles(); track role) {
@@ -682,7 +682,7 @@
             <select 
               [(ngModel)]="memberFilterStatus"
               (change)="memberFilterStatus.set($any($event.target).value)"
-              class="px-3 py-2 bg-discord-medium border border-discord-border rounded-md text-discord-text-light focus:outline-none focus:ring-2 focus:ring-discord-blue focus:border-transparent"
+              class="px-3 py-2 bg-nimbus-medium border border-nimbus-border rounded-md text-nimbus-text-light focus:outline-none focus:ring-2 focus:rinimbus-blue focus:border-transparent"
             >
               <option value="all">All Status</option>
               <option value="online">Online</option>
@@ -695,36 +695,36 @@
           <!-- Members List -->
           @if (isLoadingMembers()) {
             <div class="text-center py-8">
-              <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-discord-blue mx-auto"></div>
-              <p class="text-discord-text-muted mt-2">Loading members...</p>
+              <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-nimbus-blue mx-auto"></div>
+              <p class="text-nimbus-text-muted mt-2">Loading members...</p>
             </div>
           } @else if (filteredMembers().length === 0) {
             <div class="text-center py-8">
-              <p class="text-discord-text-muted">No members found.</p>
+              <p class="text-nimbus-text-muted">No members found.</p>
             </div>
           } @else {
             <div class="space-y-2">
               @for (member of filteredMembers(); track member.memberId) {
-                <div class="flex items-center justify-between p-3 bg-discord-medium rounded-lg hover:bg-discord-light/50 transition-colors duration-200 cursor-pointer" (click)="openUserProfile(member)">
+                <div class="flex items-center justify-between p-3 bg-nimbus-medium rounded-lg hover:bg-nimbus-light/50 transition-colors duration-200 cursor-pointer" (click)="openUserProfile(member)">
                   <div class="flex items-center space-x-3">
                     <div class="relative">
                       <div class="w-10 h-10 rounded-full overflow-hidden">
                         @if (member.userPic) {
                           <img [src]="member.userPic" [alt]="member.memberName" class="w-full h-full object-cover">
                         } @else {
-                          <div class="w-full h-full bg-discord-blue flex items-center justify-center text-white font-semibold">
+                          <div class="w-full h-full bg-nimbus-blue flex items-center justify-center text-white font-semibold">
                             {{ member.memberName.charAt(0).toUpperCase() }}
                           </div>
                         }
                       </div>
                       <!-- Status Indicator -->
-                      <div class="absolute bottom-0 right-0 w-3 h-3 bg-discord-lighter rounded-full border-2 border-discord-lighter flex items-center justify-center">
+                      <div class="absolute bottom-0 right-0 w-3 h-3 bg-nimbus-lighter rounded-full border-2 border-nimbus-lighter flex items-center justify-center">
                         <div class="w-2 h-2 rounded-full" [class]="getStatusColor(member.status)"></div>
                       </div>
                     </div>
                     <div>
                       <div class="flex items-center space-x-2">
-                        <span class="font-medium text-discord-text-light">{{ member.memberName }}</span>
+                        <span class="font-medium text-nimbus-text-light">{{ member.memberName }}</span>
                         @if (member.isOwner) {
                           <span class="px-2 py-1 bg-yellow-600 text-white text-xs rounded">Owner</span>
                         }
@@ -732,7 +732,7 @@
                           <span class="px-2 py-1 bg-red-600 text-white text-xs rounded">Admin</span>
                         }
                       </div>
-                      <div class="flex items-center space-x-2 text-sm text-discord-text-muted">
+                      <div class="flex items-center space-x-2 text-sm text-nimbus-text-muted">
                         <span>{{ member.username }}</span>
                         <span>•</span>
                         <span>{{ member.roles.join(', ') }}</span>
@@ -743,7 +743,7 @@
                   </div>
                   
                   <!-- Click indicator -->
-                  <div class="text-discord-text-muted">
+                  <div class="text-nimbus-text-muted">
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
                     </svg>
@@ -757,10 +757,10 @@
     </div>
 
     <!-- Modal Footer -->
-    <div class="px-6 py-4 border-t border-discord-border flex items-center justify-end">
+    <div class="px-6 py-4 border-t border-nimbus-border flex items-center justify-end">
       <button 
         (click)="close()"
-        class="px-4 py-2 bg-discord-medium hover:bg-discord-hover text-discord-text-light font-medium rounded-md transition-colors duration-150"
+        class="px-4 py-2 bg-nimbus-medium hover:bg-nimbus-hover text-nimbus-text-light font-medium rounded-md transition-colors duration-150"
       >
         Close
       </button>

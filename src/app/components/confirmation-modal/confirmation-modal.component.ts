@@ -76,6 +76,6 @@ export class ConfirmationModalComponent {
     if (this.data()?.isDestructive) {
       return `${baseClass} bg-red-600 hover:bg-red-700 text-white`;
     }
-    return `${baseClass} bg-discord-blue hover:bg-discord-blue-dark text-white`;
+    return `${baseClass} bg-nimbus-blue hover:bg-nimbus-blue-dark text-white`;
   }
 }

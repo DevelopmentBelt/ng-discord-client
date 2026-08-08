@@ -1,13 +1,13 @@
-<div class="h-screen flex flex-col overflow-hidden bg-discord-darker">
-  <div class="h-12 bg-discord-lighter border-b border-discord-border flex-shrink-0 flex items-center px-4">
+<div class="h-screen flex flex-col overflow-hidden bg-nimbus-darker">
+  <div class="h-12 bg-nimbus-lighter border-b border-nimbus-border flex-shrink-0 flex items-center px-4">
     <div class="flex items-center space-x-3">
-      <div class="w-6 h-6 bg-discord-blue rounded"></div>
-      <span class="text-discord-text-lighter font-semibold text-lg">Angcord</span>
+      <div class="w-6 h-6 bg-nimbus-blue rounded"></div>
+      <span class="text-nimbus-text-lighter font-semibold text-lg">Nimbus</span>
     </div>
   </div>
 
   <div class="flex-1 flex overflow-hidden">
-    <div class="bg-discord-dark border-r border-discord-border min-w-[272px] max-w-[40%] flex-shrink-0" [style.width.%]="leftSidebarWidth()">
+    <div class="bg-nimbus-dark border-r border-nimbus-border min-w-[272px] max-w-[40%] flex-shrink-0" [style.width.%]="leftSidebarWidth()">
       <channel-sidebar
         (selectedServerChange)="handleServerChange($event)"
         (selectedChannelChange)="handleChannelChange($event)"
@@ -18,34 +18,34 @@
     </div>
 
     <div
-      class="w-1 bg-discord-border cursor-col-resize hover:bg-discord-blue transition-colors duration-200 flex-shrink-0 relative z-10 group"
+      class="w-1 bg-nimbus-border cursor-col-resize hover:bg-nimbus-blue transition-colors duration-200 flex-shrink-0 relative z-10 group"
       (mousedown)="startResizing($event, 'left')"
     >
-      <div class="absolute inset-0 bg-transparent group-hover:bg-discord-blue/20 transition-colors duration-200"></div>
+      <div class="absolute inset-0 bg-transparent group-hover:bg-nimbus-blue/20 transition-colors duration-200"></div>
     </div>
 
-    <div class="bg-discord-lighter border-r border-discord-border min-w-[300px] flex-1 flex-shrink-0" [style.width.%]="mainContentWidth()">
+    <div class="bg-nimbus-lighter border-r border-nimbus-border min-w-[300px] flex-1 flex-shrink-0" [style.width.%]="mainContentWidth()">
       @if (isHomeView()) {
         @if (selectedConversation()) {
           <app-dm-chat [conversation]="selectedConversation()"></app-dm-chat>
         } @else {
-          <div class="h-full w-full bg-discord-lighter flex flex-col">
-            <div class="px-4 py-3 border-b border-discord-border bg-discord-lighter flex-shrink-0">
-              <h5 class="m-0 text-lg font-semibold text-discord-text-lighter">Direct Messages</h5>
-              <p class="m-0 text-sm text-discord-text-muted">Chat privately with other users</p>
+          <div class="h-full w-full bg-nimbus-lighter flex flex-col">
+            <div class="px-4 py-3 border-b border-nimbus-border bg-nimbus-lighter flex-shrink-0">
+              <h5 class="m-0 text-lg font-semibold text-nimbus-text-lighter">Direct Messages</h5>
+              <p class="m-0 text-sm text-nimbus-text-muted">Chat privately with other users</p>
             </div>
             <div class="flex-1 flex items-center justify-center px-8">
               <div class="max-w-md text-center">
-                <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-discord-blue flex items-center justify-center text-white text-2xl font-semibold">
+                <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-nimbus-blue flex items-center justify-center text-white text-2xl font-semibold">
                   {{ currentUsername().charAt(0).toUpperCase() }}
                 </div>
-                <h2 class="text-2xl font-semibold text-discord-text-lighter mb-2">
+                <h2 class="text-2xl font-semibold text-nimbus-text-lighter mb-2">
                   Welcome back, {{ currentUsername() }}
                 </h2>
-                <p class="text-discord-text-muted mb-4">
+                <p class="text-nimbus-text-muted mb-4">
                   Start a DM from the left by entering a username, or open an existing conversation.
                 </p>
-                <p class="text-sm text-discord-text-muted">
+                <p class="text-sm text-nimbus-text-muted">
                   You can also pick a server from the rail to join channel chat.
                 </p>
               </div>
@@ -53,13 +53,13 @@
           </div>
         }
       } @else if (selectedChannel()) {
-        <angcord-content
+        <nimbus-content
           [server]="selectedServer()"
           [channel]="selectedChannel()"
         >
-        </angcord-content>
+        </nimbus-content>
       } @else {
-        <div class="h-full w-full flex items-center justify-center text-discord-text-muted text-sm px-6 text-center">
+        <div class="h-full w-full flex items-center justify-center text-nimbus-text-muted text-sm px-6 text-center">
           This server has no channels yet.
         </div>
       }
@@ -67,13 +67,13 @@
 
     @if (!isHomeView()) {
       <div
-        class="w-1 bg-discord-border cursor-col-resize hover:bg-discord-blue transition-colors duration-200 flex-shrink-0 relative z-10 group"
+        class="w-1 bg-nimbus-border cursor-col-resize hover:bg-nimbus-blue transition-colors duration-200 flex-shrink-0 relative z-10 group"
         (mousedown)="startResizing($event, 'right')"
       >
-        <div class="absolute inset-0 bg-transparent group-hover:bg-discord-blue/20 transition-colors duration-200"></div>
+        <div class="absolute inset-0 bg-transparent group-hover:bg-nimbus-blue/20 transition-colors duration-200"></div>
       </div>
 
-      <div class="bg-discord-medium min-w-[200px] max-w-[40%] flex-shrink-0" [style.width.%]="rightSidebarWidth()">
+      <div class="bg-nimbus-medium min-w-[200px] max-w-[40%] flex-shrink-0" [style.width.%]="rightSidebarWidth()">
         <member-sidebar [server]="selectedServer()"></member-sidebar>
       </div>
     }

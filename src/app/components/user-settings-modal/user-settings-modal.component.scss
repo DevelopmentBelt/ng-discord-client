@@ -26,7 +26,7 @@
   color: #fff;
   background: rgba(0, 0, 0, 0.25);
   border-color: rgba(255, 255, 255, 0.08);
-  box-shadow: inset 0 -2px 0 var(--discord-blue);
+  box-shadow: inset 0 -2px 0 var(--nimbus-blue);
 }
 
 .profile-card {
@@ -39,7 +39,7 @@
 
 .profile-card__banner {
   height: 88px;
-  background: linear-gradient(135deg, var(--discord-blue), #3ba55d);
+  background: linear-gradient(135deg, var(--nimbus-blue), #3ba55d);
   background-size: cover;
   background-position: center;
 }
@@ -107,7 +107,7 @@
 }
 
 .profile-card--classic .profile-card__banner {
-  background: linear-gradient(135deg, var(--discord-blue), var(--discord-blue-dark));
+  background: linear-gradient(135deg, var(--nimbus-blue), var(--nimbus-blue-dark));
 }
 
 .profile-card--midnight .profile-card__banner {
@@ -159,15 +159,15 @@
 .card-option:hover,
 .effect-option:hover,
 .presence-option:hover {
-  border-color: rgb(var(--discord-blue-rgb) / 0.55);
+  border-color: rgb(var(--nimbus-blue-rgb) / 0.55);
   transform: translateY(-1px);
 }
 
 .card-option--active,
 .effect-option--active,
 .presence-option--active {
-  border-color: var(--discord-blue);
-  background: rgb(var(--discord-blue-rgb) / 0.15);
+  border-color: var(--nimbus-blue);
+  background: rgb(var(--nimbus-blue-rgb) / 0.15);
 }
 
 .card-option__swatch,
@@ -179,7 +179,7 @@
 }
 
 .card-option__swatch[data-card='classic'] {
-  background: linear-gradient(135deg, var(--discord-blue), var(--discord-blue-dark));
+  background: linear-gradient(135deg, var(--nimbus-blue), var(--nimbus-blue-dark));
 }
 
 .card-option__swatch[data-card='midnight'] {
@@ -289,14 +289,14 @@
 
 .theme-preset:hover,
 .accent-option:hover {
-  border-color: rgb(var(--discord-blue-rgb) / 0.55);
+  border-color: rgb(var(--nimbus-blue-rgb) / 0.55);
   transform: translateY(-1px);
 }
 
 .theme-preset--active,
 .accent-option--active {
-  border-color: var(--discord-blue);
-  background: rgb(var(--discord-blue-rgb) / 0.15);
+  border-color: var(--nimbus-blue);
+  background: rgb(var(--nimbus-blue-rgb) / 0.15);
 }
 
 .theme-preset__swatches {
@@ -315,13 +315,13 @@
 .accent-option__label {
   font-size: 0.85rem;
   font-weight: 600;
-  color: var(--discord-text-lighter);
+  color: var(--nimbus-text-lighter);
 }
 
 .theme-preset__desc,
 .accent-option__desc {
   font-size: 0.72rem;
-  color: var(--discord-text-muted);
+  color: var(--nimbus-text-muted);
 }
 
 .theme-live-preview {
@@ -413,12 +413,12 @@
 .color-field__label {
   font-size: 0.85rem;
   font-weight: 600;
-  color: var(--discord-text-lighter);
+  color: var(--nimbus-text-lighter);
 }
 
 .color-field__desc {
   font-size: 0.72rem;
-  color: var(--discord-text-muted);
+  color: var(--nimbus-text-muted);
 }
 
 .color-field__controls {
@@ -434,7 +434,7 @@
   border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(0, 0, 0, 0.35);
-  color: var(--discord-text-light);
+  color: var(--nimbus-text-light);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.75rem;
 }
@@ -498,7 +498,7 @@
 
 .pref-toggle input {
   margin-top: 3px;
-  accent-color: var(--discord-blue);
+  accent-color: var(--nimbus-blue);
 }
 
 .pref-toggle__label {

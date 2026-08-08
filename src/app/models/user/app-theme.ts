@@ -102,7 +102,7 @@ export const THEME_PRESETS: ThemePreset[] = [
   {
     id: 'classic',
     label: 'Classic',
-    description: 'Original Angcord dark',
+    description: 'Original Nimbus dark',
     colors: { ...DEFAULT_THEME_COLORS }
   },
   {
@@ -264,7 +264,7 @@ export const DEFAULT_PREFERENCES: AppPreferences = {
 };
 
 export const ACCENT_OPTIONS: AccentOption[] = [
-  { id: 'blurple', label: 'Blurple', description: 'Classic Angcord', hex: '#5865f2' },
+  { id: 'blurple', label: 'Blurple', description: 'Classic Nimbus', hex: '#5865f2' },
   { id: 'emerald', label: 'Emerald', description: 'Fresh green', hex: '#23a559' },
   { id: 'rose', label: 'Rose', description: 'Soft pink', hex: '#eb459e' },
   { id: 'amber', label: 'Amber', description: 'Warm gold', hex: '#f0b232' },

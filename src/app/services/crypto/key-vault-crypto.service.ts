@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
 
-const PREFIX = 'ANGVAULT1:';
+const PREFIX = 'NIMBUSVAULT1:';
+/** Legacy Angcord backups still decrypt */
+const LEGACY_PREFIXES = ['NIMBUSVAULT1:', 'ANGVAULT1:'];
 const PBKDF2_ITERATIONS = 310_000;
 
 export interface VaultPayloadV1 {
@@ -22,7 +24,16 @@ export class KeyVaultCryptoService {
   readonly prefix = PREFIX;
 
   isVaultBlob(value: string): boolean {
-    return typeof value === 'string' && value.startsWith(PREFIX);
+    return typeof value === 'string' && LEGACY_PREFIXES.some((p) => value.startsWith(p));
+  }
+
+  private vaultBody(blob: string): string {
+    for (const prefix of LEGACY_PREFIXES) {
+      if (blob.startsWith(prefix)) {
+        return blob.slice(prefix.length);
+      }
+    }
+    return blob;
   }
 
   async encryptPayload(payload: VaultPayloadV1, passphrase: string): Promise<string> {
@@ -44,7 +55,7 @@ export class KeyVaultCryptoService {
     if (!this.isVaultBlob(blob)) {
       throw new Error('Invalid vault backup format');
     }
-    const parts = blob.slice(PREFIX.length).split(':');
+    const parts = this.vaultBody(blob).split(':');
     if (parts.length !== 4) {
       throw new Error('Corrupt vault backup');
     }

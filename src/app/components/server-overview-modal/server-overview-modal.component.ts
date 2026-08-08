@@ -300,9 +300,9 @@ export class ServerOverviewModalComponent implements OnInit {
       'online': 'text-green-400',
       'idle': 'text-yellow-400',
       'dnd': 'text-red-400',
-      'offline': 'text-discord-text-muted'
+      'offline': 'text-nimbus-text-muted'
     };
-    return colors[status] || 'text-discord-text-muted';
+    return colors[status] || 'text-nimbus-text-muted';
   }
 
   /**
@@ -564,8 +564,8 @@ export class ServerOverviewModalComponent implements OnInit {
    * Get boost level color
    */
   getBoostLevelColor(level: number): string {
-    const colors = ['text-discord-text-muted', 'text-pink-400', 'text-purple-400', 'text-yellow-400'];
-    return colors[level] || 'text-discord-text-muted';
+    const colors = ['text-nimbus-text-muted', 'text-pink-400', 'text-purple-400', 'text-yellow-400'];
+    return colors[level] || 'text-nimbus-text-muted';
   }
 
   /**

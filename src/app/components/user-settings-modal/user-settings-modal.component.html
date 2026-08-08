@@ -1,17 +1,17 @@
 <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" (click)="close()" (keydown)="onKeydown($event)">
   <div
-    class="bg-discord-lighter border border-discord-border rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col"
+    class="bg-nimbus-lighter border border-nimbus-border rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col"
     (click)="$event.stopPropagation()"
   >
-    <div class="px-6 py-4 border-b border-discord-border flex items-center justify-between flex-shrink-0">
+    <div class="px-6 py-4 border-b border-nimbus-border flex items-center justify-between flex-shrink-0">
       <div>
-        <h3 class="text-lg font-semibold text-discord-text-lighter">User Settings</h3>
-        <p class="text-sm text-discord-text-muted">Profile, presence, and app appearance</p>
+        <h3 class="text-lg font-semibold text-nimbus-text-lighter">User Settings</h3>
+        <p class="text-sm text-nimbus-text-muted">Profile, presence, and app appearance</p>
       </div>
       <button
         type="button"
         (click)="close()"
-        class="p-2 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150"
+        class="p-2 text-nimbus-text-muted hover:text-nimbus-text-light hover:bg-nimbus-hover rounded transition-colors duration-150"
         title="Close"
       >
         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -50,7 +50,7 @@
     @if (activeTab() === 'profile') {
       <form class="flex-1 overflow-y-auto px-6 py-5 space-y-6" (ngSubmit)="save()">
         <div>
-          <label class="block text-xs font-semibold text-discord-text-muted uppercase tracking-wider mb-2">Preview</label>
+          <label class="block text-xs font-semibold text-nimbus-text-muted uppercase tracking-wider mb-2">Preview</label>
           <div class="profile-card" [ngClass]="cardClass()">
             <div class="profile-card__banner" [ngStyle]="bannerStyle()"></div>
             <div class="profile-card__body">
@@ -86,11 +86,11 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
           <div class="space-y-4">
             <div>
-              <label class="block text-xs font-semibold text-discord-text-muted uppercase tracking-wider mb-1">Display name</label>
+              <label class="block text-xs font-semibold text-nimbus-text-muted uppercase tracking-wider mb-1">Display name</label>
               <input
                 type="text"
                 maxlength="64"
-                class="w-full px-3 py-2 rounded-md bg-discord-dark border border-discord-border text-discord-text-light focus:outline-none focus:border-discord-blue"
+                class="w-full px-3 py-2 rounded-md bg-nimbus-dark border border-nimbus-border text-nimbus-text-light focus:outline-none focus:border-nimbus-blue"
                 placeholder="How you appear to others"
                 [ngModel]="displayName()"
                 (ngModelChange)="displayName.set($event)"
@@ -99,12 +99,12 @@
             </div>
 
             <div>
-              <label class="block text-xs font-semibold text-discord-text-muted uppercase tracking-wider mb-1">Username</label>
+              <label class="block text-xs font-semibold text-nimbus-text-muted uppercase tracking-wider mb-1">Username</label>
               <input
                 type="text"
                 required
                 maxlength="32"
-                class="w-full px-3 py-2 rounded-md bg-discord-dark border border-discord-border text-discord-text-light focus:outline-none focus:border-discord-blue"
+                class="w-full px-3 py-2 rounded-md bg-nimbus-dark border border-nimbus-border text-nimbus-text-light focus:outline-none focus:border-nimbus-blue"
                 [ngModel]="username()"
                 (ngModelChange)="username.set($event)"
                 name="username"
@@ -113,11 +113,11 @@
 
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="block text-xs font-semibold text-discord-text-muted uppercase tracking-wider mb-1">Pronouns</label>
+                <label class="block text-xs font-semibold text-nimbus-text-muted uppercase tracking-wider mb-1">Pronouns</label>
                 <input
                   type="text"
                   maxlength="32"
-                  class="w-full px-3 py-2 rounded-md bg-discord-dark border border-discord-border text-discord-text-light focus:outline-none focus:border-discord-blue"
+                  class="w-full px-3 py-2 rounded-md bg-nimbus-dark border border-nimbus-border text-nimbus-text-light focus:outline-none focus:border-nimbus-blue"
                   placeholder="they/them"
                   [ngModel]="pronouns()"
                   (ngModelChange)="pronouns.set($event)"
@@ -125,11 +125,11 @@
                 />
               </div>
               <div>
-                <label class="block text-xs font-semibold text-discord-text-muted uppercase tracking-wider mb-1">Email</label>
+                <label class="block text-xs font-semibold text-nimbus-text-muted uppercase tracking-wider mb-1">Email</label>
                 <input
                   type="email"
                   disabled
-                  class="w-full px-3 py-2 rounded-md bg-discord-dark/60 border border-discord-border text-discord-text-muted cursor-not-allowed"
+                  class="w-full px-3 py-2 rounded-md bg-nimbus-dark/60 border border-nimbus-border text-nimbus-text-muted cursor-not-allowed"
                   [ngModel]="email()"
                   name="email"
                 />
@@ -137,11 +137,11 @@
             </div>
 
             <div>
-              <label class="block text-xs font-semibold text-discord-text-muted uppercase tracking-wider mb-1">Custom status</label>
+              <label class="block text-xs font-semibold text-nimbus-text-muted uppercase tracking-wider mb-1">Custom status</label>
               <input
                 type="text"
                 maxlength="128"
-                class="w-full px-3 py-2 rounded-md bg-discord-dark border border-discord-border text-discord-text-light focus:outline-none focus:border-discord-blue"
+                class="w-full px-3 py-2 rounded-md bg-nimbus-dark border border-nimbus-border text-nimbus-text-light focus:outline-none focus:border-nimbus-blue"
                 placeholder="What are you up to?"
                 [ngModel]="customStatus()"
                 (ngModelChange)="customStatus.set($event)"
@@ -150,10 +150,10 @@
             </div>
 
             <div>
-              <label class="block text-xs font-semibold text-discord-text-muted uppercase tracking-wider mb-1">Avatar URL</label>
+              <label class="block text-xs font-semibold text-nimbus-text-muted uppercase tracking-wider mb-1">Avatar URL</label>
               <input
                 type="url"
-                class="w-full px-3 py-2 rounded-md bg-discord-dark border border-discord-border text-discord-text-light placeholder-discord-text-muted focus:outline-none focus:border-discord-blue"
+                class="w-full px-3 py-2 rounded-md bg-nimbus-dark border border-nimbus-border text-nimbus-text-light placeholder-nimbus-text-muted focus:outline-none focus:border-nimbus-blue"
                 placeholder="https://example.com/avatar.png"
                 [ngModel]="userPic()"
                 (ngModelChange)="userPic.set($event)"
@@ -162,10 +162,10 @@
             </div>
 
             <div>
-              <label class="block text-xs font-semibold text-discord-text-muted uppercase tracking-wider mb-1">Banner URL</label>
+              <label class="block text-xs font-semibold text-nimbus-text-muted uppercase tracking-wider mb-1">Banner URL</label>
               <input
                 type="url"
-                class="w-full px-3 py-2 rounded-md bg-discord-dark border border-discord-border text-discord-text-light placeholder-discord-text-muted focus:outline-none focus:border-discord-blue"
+                class="w-full px-3 py-2 rounded-md bg-nimbus-dark border border-nimbus-border text-nimbus-text-light placeholder-nimbus-text-muted focus:outline-none focus:border-nimbus-blue"
                 placeholder="https://example.com/banner.jpg"
                 [ngModel]="bannerUrl()"
                 (ngModelChange)="bannerUrl.set($event)"
@@ -174,11 +174,11 @@
             </div>
 
             <div>
-              <label class="block text-xs font-semibold text-discord-text-muted uppercase tracking-wider mb-1">Bio</label>
+              <label class="block text-xs font-semibold text-nimbus-text-muted uppercase tracking-wider mb-1">Bio</label>
               <textarea
                 rows="3"
                 maxlength="255"
-                class="w-full px-3 py-2 rounded-md bg-discord-dark border border-discord-border text-discord-text-light placeholder-discord-text-muted focus:outline-none focus:border-discord-blue resize-none"
+                class="w-full px-3 py-2 rounded-md bg-nimbus-dark border border-nimbus-border text-nimbus-text-light placeholder-nimbus-text-muted focus:outline-none focus:border-nimbus-blue resize-none"
                 placeholder="Tell people a little about yourself"
                 [ngModel]="userBio()"
                 (ngModelChange)="userBio.set($event)"
@@ -189,7 +189,7 @@
 
           <div class="space-y-5">
             <div>
-              <label class="block text-xs font-semibold text-discord-text-muted uppercase tracking-wider mb-2">Presence</label>
+              <label class="block text-xs font-semibold text-nimbus-text-muted uppercase tracking-wider mb-2">Presence</label>
               <div class="grid grid-cols-2 gap-2">
                 @for (option of presenceOptions; track option.id) {
                   <button
@@ -209,7 +209,7 @@
             </div>
 
             <div>
-              <label class="block text-xs font-semibold text-discord-text-muted uppercase tracking-wider mb-2">Profile card</label>
+              <label class="block text-xs font-semibold text-nimbus-text-muted uppercase tracking-wider mb-2">Profile card</label>
               <div class="grid grid-cols-2 gap-2">
                 @for (card of cards; track card.id) {
                   <button
@@ -227,7 +227,7 @@
             </div>
 
             <div>
-              <label class="block text-xs font-semibold text-discord-text-muted uppercase tracking-wider mb-2">Avatar effect</label>
+              <label class="block text-xs font-semibold text-nimbus-text-muted uppercase tracking-wider mb-2">Avatar effect</label>
               <div class="grid grid-cols-2 gap-2">
                 @for (effect of effects; track effect.id) {
                   <button
@@ -261,14 +261,14 @@
           <button
             type="button"
             (click)="close()"
-            class="px-4 py-2 rounded-md text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover transition-colors"
+            class="px-4 py-2 rounded-md text-nimbus-text-muted hover:text-nimbus-text-light hover:bg-nimbus-hover transition-colors"
           >
             Cancel
           </button>
           <button
             type="submit"
             [disabled]="saving()"
-            class="px-4 py-2 rounded-md bg-discord-blue hover:bg-discord-blue-dark text-white font-medium disabled:opacity-50 transition-colors"
+            class="px-4 py-2 rounded-md bg-nimbus-blue hover:bg-nimbus-blue-dark text-white font-medium disabled:opacity-50 transition-colors"
           >
             {{ saving() ? 'Saving…' : 'Save Changes' }}
           </button>
@@ -279,8 +279,8 @@
     @if (activeTab() === 'appearance') {
       <div class="flex-1 overflow-y-auto px-6 py-5 space-y-6">
         <div>
-          <label class="block text-xs font-semibold text-discord-text-muted uppercase tracking-wider mb-2">Theme presets</label>
-          <p class="text-sm text-discord-text-muted mb-3">Apply a full color scheme instantly, then fine-tune anything below.</p>
+          <label class="block text-xs font-semibold text-nimbus-text-muted uppercase tracking-wider mb-2">Theme presets</label>
+          <p class="text-sm text-nimbus-text-muted mb-3">Apply a full color scheme instantly, then fine-tune anything below.</p>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
             @for (preset of themePresets; track preset.id) {
               <button
@@ -301,7 +301,7 @@
             }
           </div>
           @if (themePresetId() === 'custom') {
-            <p class="text-xs text-discord-text-muted mt-2">Custom palette — your individual color tweaks are active.</p>
+            <p class="text-xs text-nimbus-text-muted mt-2">Custom palette — your individual color tweaks are active.</p>
           }
         </div>
 
@@ -323,8 +323,8 @@
         </div>
 
         <div>
-          <label class="block text-xs font-semibold text-discord-text-muted uppercase tracking-wider mb-2">Accent shortcuts</label>
-          <p class="text-sm text-discord-text-muted mb-3">Quickly recolor buttons, links, and focus rings.</p>
+          <label class="block text-xs font-semibold text-nimbus-text-muted uppercase tracking-wider mb-2">Accent shortcuts</label>
+          <p class="text-sm text-nimbus-text-muted mb-3">Quickly recolor buttons, links, and focus rings.</p>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
             @for (accent of accentOptions; track accent.id) {
               <button
@@ -346,7 +346,7 @@
 
         <div class="custom-accent-row">
           <div>
-            <label class="block text-xs font-semibold text-discord-text-muted uppercase tracking-wider mb-1">Custom accent</label>
+            <label class="block text-xs font-semibold text-nimbus-text-muted uppercase tracking-wider mb-1">Custom accent</label>
             <div class="flex items-center gap-3">
               <input
                 type="color"
@@ -358,7 +358,7 @@
               <input
                 type="text"
                 maxlength="7"
-                class="flex-1 px-3 py-2 rounded-md bg-discord-dark border border-discord-border text-discord-text-light focus:outline-none focus:border-discord-blue font-mono text-sm"
+                class="flex-1 px-3 py-2 rounded-md bg-nimbus-dark border border-nimbus-border text-nimbus-text-light focus:outline-none focus:border-nimbus-blue font-mono text-sm"
                 [ngModel]="customAccent()"
                 (ngModelChange)="onCustomAccentInput($event)"
                 name="customAccentHex"
@@ -373,7 +373,7 @@
 
         <div class="space-y-4">
           <div>
-            <label class="block text-xs font-semibold text-discord-text-muted uppercase tracking-wider mb-2">Surfaces</label>
+            <label class="block text-xs font-semibold text-nimbus-text-muted uppercase tracking-wider mb-2">Surfaces</label>
             <div class="color-grid">
               @for (field of surfaceFields(); track field.key) {
                 <label class="color-field">
@@ -404,7 +404,7 @@
           </div>
 
           <div>
-            <label class="block text-xs font-semibold text-discord-text-muted uppercase tracking-wider mb-2">Accent colors</label>
+            <label class="block text-xs font-semibold text-nimbus-text-muted uppercase tracking-wider mb-2">Accent colors</label>
             <div class="color-grid">
               @for (field of accentFields(); track field.key) {
                 <label class="color-field">
@@ -435,7 +435,7 @@
           </div>
 
           <div>
-            <label class="block text-xs font-semibold text-discord-text-muted uppercase tracking-wider mb-2">Text</label>
+            <label class="block text-xs font-semibold text-nimbus-text-muted uppercase tracking-wider mb-2">Text</label>
             <div class="color-grid">
               @for (field of textFields(); track field.key) {
                 <label class="color-field">
@@ -466,7 +466,7 @@
           </div>
 
           <div>
-            <label class="block text-xs font-semibold text-discord-text-muted uppercase tracking-wider mb-2">Chrome</label>
+            <label class="block text-xs font-semibold text-nimbus-text-muted uppercase tracking-wider mb-2">Chrome</label>
             <div class="color-grid">
               @for (field of chromeFields(); track field.key) {
                 <label class="color-field">
@@ -498,7 +498,7 @@
         </div>
 
         <div class="space-y-3">
-          <label class="block text-xs font-semibold text-discord-text-muted uppercase tracking-wider">Layout & motion</label>
+          <label class="block text-xs font-semibold text-nimbus-text-muted uppercase tracking-wider">Layout & motion</label>
           <label class="pref-toggle">
             <input
               type="checkbox"
@@ -529,14 +529,14 @@
           <button
             type="button"
             (click)="resetAppearance()"
-            class="px-4 py-2 rounded-md text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover transition-colors"
+            class="px-4 py-2 rounded-md text-nimbus-text-muted hover:text-nimbus-text-light hover:bg-nimbus-hover transition-colors"
           >
             Reset to defaults
           </button>
           <button
             type="button"
             (click)="close()"
-            class="px-4 py-2 rounded-md bg-discord-blue hover:bg-discord-blue-dark text-white font-medium transition-colors"
+            class="px-4 py-2 rounded-md bg-nimbus-blue hover:bg-nimbus-blue-dark text-white font-medium transition-colors"
           >
             Done
           </button>
@@ -546,29 +546,29 @@
 
     @if (activeTab() === 'privacy') {
       <div class="flex-1 overflow-y-auto px-6 py-5 space-y-6">
-        <div class="rounded-lg border border-discord-border bg-discord-medium/40 p-4 space-y-3">
-          <h4 class="text-sm font-semibold text-discord-text-lighter">End-to-end encryption</h4>
-          <p class="text-sm text-discord-text-muted">
+        <div class="rounded-lg border border-nimbus-border bg-nimbus-medium/40 p-4 space-y-3">
+          <h4 class="text-sm font-semibold text-nimbus-text-lighter">End-to-end encryption</h4>
+          <p class="text-sm text-nimbus-text-muted">
             Your ECDH identity key stays on this device. Phantom channels use client-held AES keys wrapped for each member — the server never receives plaintext channel keys.
           </p>
         </div>
 
-        <div class="space-y-3 rounded-lg border border-discord-border bg-discord-medium/40 p-4">
-          <h4 class="text-sm font-semibold text-discord-text-lighter">Local-first key vault</h4>
-          <p class="text-sm text-discord-text-muted">
+        <div class="space-y-3 rounded-lg border border-nimbus-border bg-nimbus-medium/40 p-4">
+          <h4 class="text-sm font-semibold text-nimbus-text-lighter">Local-first key vault</h4>
+          <p class="text-sm text-nimbus-text-muted">
             Back up your identity key, Phantom channel keys, and local message-vault key with a passphrase.
-            The server only stores an opaque <code class="text-xs">ANGVAULT1</code> blob it cannot decrypt.
+            The server only stores an opaque <code class="text-xs">NIMBUSVAULT1</code> blob it cannot decrypt.
             Restoring unlocks Phantom history on a new device.
           </p>
           @if (vaultBackupAt()) {
             <p class="text-xs text-emerald-400">Server backup updated {{ vaultBackupAt() }}</p>
           } @else {
-            <p class="text-xs text-discord-text-muted">No server vault backup yet.</p>
+            <p class="text-xs text-nimbus-text-muted">No server vault backup yet.</p>
           }
           <div class="grid gap-2 sm:grid-cols-2">
             <input
               type="password"
-              class="px-3 py-2 rounded-md bg-discord-dark border border-discord-border text-discord-text-light"
+              class="px-3 py-2 rounded-md bg-nimbus-dark border border-nimbus-border text-nimbus-text-light"
               placeholder="Vault passphrase (min 8 chars)"
               autocomplete="new-password"
               name="vaultPassphrase"
@@ -577,7 +577,7 @@
             />
             <input
               type="password"
-              class="px-3 py-2 rounded-md bg-discord-dark border border-discord-border text-discord-text-light"
+              class="px-3 py-2 rounded-md bg-nimbus-dark border border-nimbus-border text-nimbus-text-light"
               placeholder="Confirm (required for upload)"
               autocomplete="new-password"
               name="vaultPassphraseConfirm"
@@ -585,13 +585,13 @@
               (ngModelChange)="vaultPassphraseConfirm.set($event)"
             />
           </div>
-          <p class="text-xs text-discord-text-muted">
+          <p class="text-xs text-nimbus-text-muted">
             Restore and download only need the passphrase. Confirm is required when uploading a new backup.
           </p>
           <div class="flex flex-wrap gap-2">
             <button
               type="button"
-              class="px-3 py-2 rounded-md bg-discord-blue hover:bg-discord-blue-dark text-white text-sm font-medium disabled:opacity-50"
+              class="px-3 py-2 rounded-md bg-nimbus-blue hover:bg-nimbus-blue-dark text-white text-sm font-medium disabled:opacity-50"
               [disabled]="vaultBusy()"
               (click)="uploadVaultBackup()"
             >
@@ -599,7 +599,7 @@
             </button>
             <button
               type="button"
-              class="px-3 py-2 rounded-md bg-discord-medium hover:bg-discord-hover text-discord-text-light text-sm disabled:opacity-50"
+              class="px-3 py-2 rounded-md bg-nimbus-medium hover:bg-nimbus-hover text-nimbus-text-light text-sm disabled:opacity-50"
               [disabled]="vaultBusy()"
               (click)="restoreVaultFromServer()"
             >
@@ -607,19 +607,19 @@
             </button>
             <button
               type="button"
-              class="px-3 py-2 rounded-md bg-discord-medium hover:bg-discord-hover text-discord-text-light text-sm disabled:opacity-50"
+              class="px-3 py-2 rounded-md bg-nimbus-medium hover:bg-nimbus-hover text-nimbus-text-light text-sm disabled:opacity-50"
               [disabled]="vaultBusy()"
               (click)="downloadVaultFile()"
             >
-              {{ vaultBusy() ? 'Working…' : 'Download .angvault file' }}
+              {{ vaultBusy() ? 'Working…' : 'Download .nimbusvault file' }}
             </button>
             <label
-              class="px-3 py-2 rounded-md bg-discord-medium hover:bg-discord-hover text-discord-text-light text-sm cursor-pointer"
+              class="px-3 py-2 rounded-md bg-nimbus-medium hover:bg-nimbus-hover text-nimbus-text-light text-sm cursor-pointer"
               [class.opacity-50]="vaultBusy()"
               [class.pointer-events-none]="vaultBusy()"
             >
-              Import .angvault file
-              <input type="file" accept=".angvault,text/plain" class="hidden" [disabled]="vaultBusy()" (change)="onVaultFileSelected($event)" />
+              Import .nimbusvault file
+              <input type="file" accept=".nimbusvault,.angvault,text/plain" class="hidden" [disabled]="vaultBusy()" (change)="onVaultFileSelected($event)" />
             </label>
             @if (vaultBackupAt()) {
               <button
@@ -637,7 +637,7 @@
               class="text-sm"
               [class.text-emerald-400]="vaultStatusKind() === 'ok'"
               [class.text-red-400]="vaultStatusKind() === 'err'"
-              [class.text-discord-text-muted]="vaultStatusKind() === ''"
+              [class.text-nimbus-text-muted]="vaultStatusKind() === ''"
             >
               {{ vaultStatus() }}
             </p>
@@ -645,10 +645,10 @@
         </div>
 
         <div class="space-y-3">
-          <h4 class="text-sm font-semibold text-discord-text-muted uppercase tracking-wider">Direct message privacy</h4>
+          <h4 class="text-sm font-semibold text-nimbus-text-muted uppercase tracking-wider">Direct message privacy</h4>
           <div class="space-y-2">
             @for (option of dmPolicyOptions; track option.id) {
-              <label class="flex items-start gap-3 p-3 rounded-md bg-discord-medium cursor-pointer hover:bg-discord-hover">
+              <label class="flex items-start gap-3 p-3 rounded-md bg-nimbus-medium cursor-pointer hover:bg-nimbus-hover">
                 <input
                   type="radio"
                   class="mt-1"
@@ -658,15 +658,15 @@
                   (change)="dmPolicy.set(option.id)"
                 />
                 <span>
-                  <span class="block text-discord-text-light font-medium">{{ option.label }}</span>
-                  <span class="block text-xs text-discord-text-muted">{{ option.help }}</span>
+                  <span class="block text-nimbus-text-light font-medium">{{ option.label }}</span>
+                  <span class="block text-xs text-nimbus-text-muted">{{ option.help }}</span>
                 </span>
               </label>
             }
           </div>
           <button
             type="button"
-            class="px-4 py-2 rounded-md bg-discord-blue hover:bg-discord-blue-dark text-white text-sm font-medium disabled:opacity-50"
+            class="px-4 py-2 rounded-md bg-nimbus-blue hover:bg-nimbus-blue-dark text-white text-sm font-medium disabled:opacity-50"
             [disabled]="dmBusy()"
             (click)="saveDmPolicy()"
           >
@@ -676,11 +676,11 @@
 
         @if (dmPolicy() === 'allowlist') {
           <div class="space-y-3">
-            <h4 class="text-sm font-semibold text-discord-text-muted uppercase tracking-wider">DM allowlist</h4>
+            <h4 class="text-sm font-semibold text-nimbus-text-muted uppercase tracking-wider">DM allowlist</h4>
             <div class="flex gap-2">
               <input
                 type="text"
-                class="flex-1 px-3 py-2 rounded-md bg-discord-dark border border-discord-border text-discord-text-light"
+                class="flex-1 px-3 py-2 rounded-md bg-nimbus-dark border border-nimbus-border text-nimbus-text-light"
                 placeholder="Username"
                 [ngModel]="dmAllowUsername()"
                 (ngModelChange)="dmAllowUsername.set($event)"
@@ -688,7 +688,7 @@
               />
               <button
                 type="button"
-                class="px-3 py-2 rounded-md bg-discord-medium hover:bg-discord-hover text-discord-text-light text-sm"
+                class="px-3 py-2 rounded-md bg-nimbus-medium hover:bg-nimbus-hover text-nimbus-text-light text-sm"
                 (click)="addAllowlistUser()"
               >
                 Add
@@ -696,8 +696,8 @@
             </div>
             <div class="space-y-2">
               @for (entry of dmAllowlist(); track entry.id) {
-                <div class="flex items-center justify-between p-2 rounded-md bg-discord-medium">
-                  <span class="text-discord-text-light">&#64;{{ entry.username }}</span>
+                <div class="flex items-center justify-between p-2 rounded-md bg-nimbus-medium">
+                  <span class="text-nimbus-text-light">&#64;{{ entry.username }}</span>
                   <button
                     type="button"
                     class="text-xs text-red-400 hover:text-red-300"
@@ -707,7 +707,7 @@
                   </button>
                 </div>
               } @empty {
-                <p class="text-sm text-discord-text-muted">No one on your allowlist yet.</p>
+                <p class="text-sm text-nimbus-text-muted">No one on your allowlist yet.</p>
               }
             </div>
           </div>

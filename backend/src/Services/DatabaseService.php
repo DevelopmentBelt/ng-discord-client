@@ -8,9 +8,9 @@ class DatabaseService {
   private PDO | null $pdo;
   public function __construct() {
     $host = $_ENV['DB_HOST'] ?? getenv('DB_HOST') ?: 'localhost';
-    $db = $_ENV['DB_NAME'] ?? getenv('DB_NAME') ?: 'ng_discord';
-    $user = $_ENV['DB_USER'] ?? getenv('DB_USER') ?: 'ng_discord';
-    $pass = $_ENV['DB_PASS'] ?? getenv('DB_PASS') ?: 'ng_discord';
+    $db = $_ENV['DB_NAME'] ?? getenv('DB_NAME') ?: 'nimbus';
+    $user = $_ENV['DB_USER'] ?? getenv('DB_USER') ?: 'nimbus';
+    $pass = $_ENV['DB_PASS'] ?? getenv('DB_PASS') ?: 'nimbus';
     $charset = $_ENV['DB_CHARSET'] ?? getenv('DB_CHARSET') ?: 'utf8mb4';
     $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
 

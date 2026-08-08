@@ -1,21 +1,21 @@
 <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-  <div class="bg-discord-lighter border border-discord-border rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col">
+  <div class="bg-nimbus-lighter border border-nimbus-border rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col">
     <!-- Header -->
-    <div class="px-6 py-4 border-b border-discord-border flex items-center justify-between">
+    <div class="px-6 py-4 border-b border-nimbus-border flex items-center justify-between">
       <div class="flex items-center space-x-3">
-        <div class="w-8 h-8 bg-discord-blue rounded flex items-center justify-center">
+        <div class="w-8 h-8 bg-nimbus-blue rounded flex items-center justify-center">
           <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
           </svg>
         </div>
         <div>
-          <h3 class="text-lg font-semibold text-discord-text-lighter">Server Discovery</h3>
-          <p class="text-sm text-discord-text-muted">Find and join amazing communities</p>
+          <h3 class="text-lg font-semibold text-nimbus-text-lighter">Server Discovery</h3>
+          <p class="text-sm text-nimbus-text-muted">Find and join amazing communities</p>
         </div>
       </div>
       <button 
         (click)="close()"
-        class="p-2 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150"
+        class="p-2 text-nimbus-text-muted hover:text-nimbus-text-light hover:bg-nimbus-hover rounded transition-colors duration-150"
       >
         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
           <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
@@ -24,7 +24,7 @@
     </div>
 
     <!-- Search and Filters -->
-    <div class="px-6 py-4 border-b border-discord-border">
+    <div class="px-6 py-4 border-b border-nimbus-border">
       <div class="flex flex-col space-y-4">
         <!-- Search Bar -->
         <div class="flex space-x-3">
@@ -34,9 +34,9 @@
               [(ngModel)]="searchQuery"
               (input)="onSearchInput()"
               placeholder="Search servers..."
-              class="w-full bg-discord-light text-discord-text-light border-0 rounded-lg px-4 py-3 text-sm focus:bg-discord-light focus:outline-none focus:ring-2 focus:ring-discord-blue/50 transition-all duration-200"
+              class="w-full bg-nimbus-light text-nimbus-text-light border-0 rounded-lg px-4 py-3 text-sm focus:bg-nimbus-light focus:outline-none focus:ring-2 focus:rinimbus-blue/50 transition-all duration-200"
             />
-            <div class="absolute right-3 top-1/2 transform -translate-y-1/2 text-discord-text-muted">
+            <div class="absolute right-3 top-1/2 transform -translate-y-1/2 text-nimbus-text-muted">
               <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
               </svg>
@@ -46,11 +46,11 @@
 
         <!-- Category Filter -->
         <div class="flex items-center space-x-4">
-          <span class="text-sm font-medium text-discord-text-muted">Category:</span>
+          <span class="text-sm font-medium text-nimbus-text-muted">Category:</span>
           <select 
             [(ngModel)]="selectedCategory"
             (change)="onCategoryChange()"
-            class="bg-discord-light text-discord-text-light border-0 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-discord-blue/50"
+            class="bg-nimbus-light text-nimbus-text-light border-0 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:rinimbus-blue/50"
           >
             @for (category of categories; track category) {
               <option [value]="category">{{ category.charAt(0).toUpperCase() + category.slice(1) }}</option>
@@ -60,14 +60,14 @@
 
         <!-- Tag Filters -->
         <div class="flex items-center space-x-4">
-          <span class="text-sm font-medium text-discord-text-muted">Tags:</span>
+          <span class="text-sm font-medium text-nimbus-text-muted">Tags:</span>
           <div class="flex flex-wrap gap-2">
             @for (tag of availableTags; track tag) {
               <button
                 (click)="toggleTag(tag)"
                 [class]="selectedTags().includes(tag) 
-                  ? 'bg-discord-blue text-white' 
-                  : 'bg-discord-medium text-discord-text-muted hover:bg-discord-light hover:text-discord-text-light'"
+                  ? 'bg-nimbus-blue text-white' 
+                  : 'bg-nimbus-medium text-nimbus-text-muted hover:bg-nimbus-light hover:text-nimbus-text-light'"
                 class="px-3 py-1 rounded-full text-xs font-medium transition-colors duration-200"
               >
                 {{ tag }}
@@ -82,22 +82,22 @@
     <div class="flex-1 overflow-y-auto px-6 py-4">
       @if (isLoading()) {
         <div class="flex items-center justify-center py-12">
-          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-discord-blue"></div>
+          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-nimbus-blue"></div>
         </div>
       } @else if (filteredServers().length === 0) {
         <div class="text-center py-12">
-          <div class="w-16 h-16 bg-discord-medium rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg class="w-8 h-8 text-discord-text-muted" fill="currentColor" viewBox="0 0 20 20">
+          <div class="w-16 h-16 bg-nimbus-medium rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-nimbus-text-muted" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
             </svg>
           </div>
-          <h4 class="text-lg font-medium text-discord-text-lighter mb-2">No servers found</h4>
-          <p class="text-discord-text-muted">Try adjusting your search terms or filters</p>
+          <h4 class="text-lg font-medium text-nimbus-text-lighter mb-2">No servers found</h4>
+          <p class="text-nimbus-text-muted">Try adjusting your search terms or filters</p>
         </div>
       } @else {
         <!-- Results Count -->
         <div class="flex items-center justify-between mb-4">
-          <span class="text-sm text-discord-text-muted">
+          <span class="text-sm text-nimbus-text-muted">
             {{ totalServers() }} server{{ totalServers() !== 1 ? 's' : '' }} found
           </span>
         </div>
@@ -105,34 +105,34 @@
         <!-- Server Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           @for (server of paginatedServers; track server.serverId) {
-            <div class="bg-discord-medium hover:bg-discord-light/50 rounded-lg p-4 border border-discord-border transition-colors duration-200">
+            <div class="bg-nimbus-medium hover:bg-nimbus-light/50 rounded-lg p-4 border border-nimbus-border transition-colors duration-200">
               <!-- Server Header -->
               <div class="flex items-start space-x-3 mb-3">
                 <div class="w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
                   @if (server.iconURL) {
                     <img [src]="server.iconURL" [alt]="server.serverName" class="w-full h-full object-cover">
                   } @else {
-                    <div class="w-full h-full bg-discord-blue flex items-center justify-center text-white font-bold text-lg">
+                    <div class="w-full h-full bg-nimbus-blue flex items-center justify-center text-white font-bold text-lg">
                       {{ server.serverName.charAt(0) }}
                     </div>
                   }
                 </div>
                 <div class="flex-1 min-w-0">
-                  <h4 class="text-discord-text-lighter font-semibold text-sm truncate">{{ server.serverName }}</h4>
-                  <p class="text-discord-text-muted text-xs">{{ formatMemberCount(server.memberCount) }} members</p>
+                  <h4 class="text-nimbus-text-lighter font-semibold text-sm truncate">{{ server.serverName }}</h4>
+                  <p class="text-nimbus-text-muted text-xs">{{ formatMemberCount(server.memberCount) }} members</p>
                 </div>
               </div>
 
               <!-- Server Description -->
-              <p class="text-discord-text-light text-sm mb-3 line-clamp-2">{{ server.serverDescription }}</p>
+              <p class="text-nimbus-text-light text-sm mb-3 line-clamp-2">{{ server.serverDescription }}</p>
 
               <!-- Server Tags -->
               <div class="flex flex-wrap gap-1 mb-3">
                 @for (tag of server.tags.slice(0, 3); track tag) {
-                  <span class="px-2 py-1 bg-discord-dark text-discord-text-muted text-xs rounded">{{ tag }}</span>
+                  <span class="px-2 py-1 bg-nimbus-dark text-nimbus-text-muted text-xs rounded">{{ tag }}</span>
                 }
                 @if (server.tags.length > 3) {
-                  <span class="px-2 py-1 bg-discord-dark text-discord-text-muted text-xs rounded">+{{ server.tags.length - 3 }}</span>
+                  <span class="px-2 py-1 bg-nimbus-dark text-nimbus-text-muted text-xs rounded">+{{ server.tags.length - 3 }}</span>
                 }
               </div>
 
@@ -140,8 +140,8 @@
               <button
                 (click)="server.isJoined ? leaveServer(server) : joinServer(server)"
                 [class]="server.isJoined 
-                  ? 'w-full bg-discord-dark hover:bg-discord-dark/80 text-discord-text-muted hover:text-discord-text-light' 
-                  : 'w-full bg-discord-blue hover:bg-discord-blue-dark text-white'"
+                  ? 'w-full bg-nimbus-dark hover:bg-nimbus-dark/80 text-nimbus-text-muted hover:text-nimbus-text-light' 
+                  : 'w-full bg-nimbus-blue hover:bg-nimbus-blue-dark text-white'"
                 class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
               >
                 {{ server.isJoined ? 'Leave Server' : 'Join Server' }}
@@ -156,7 +156,7 @@
             <button
               (click)="goToPage(currentPage() - 1)"
               [disabled]="currentPage() === 1"
-              class="px-3 py-2 bg-discord-medium hover:bg-discord-light disabled:bg-discord-dark disabled:cursor-not-allowed text-discord-text-light rounded-lg transition-colors duration-200"
+              class="px-3 py-2 bg-nimbus-medium hover:bg-nimbus-light disabled:bg-nimbus-dark disabled:cursor-not-allowed text-nimbus-text-light rounded-lg transition-colors duration-200"
             >
               Previous
             </button>
@@ -165,8 +165,8 @@
               <button
                 (click)="goToPage(page)"
                 [class]="page === currentPage() 
-                  ? 'bg-discord-blue text-white' 
-                  : 'bg-discord-medium hover:bg-discord-light text-discord-text-light'"
+                  ? 'bg-nimbus-blue text-white' 
+                  : 'bg-nimbus-medium hover:bg-nimbus-light text-nimbus-text-light'"
                 class="px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
               >
                 {{ page }}
@@ -176,7 +176,7 @@
             <button
               (click)="goToPage(currentPage() + 1)"
               [disabled]="currentPage() === totalPages"
-              class="px-3 py-2 bg-discord-medium hover:bg-discord-light disabled:bg-discord-dark disabled:cursor-not-allowed text-discord-text-light rounded-lg transition-colors duration-200"
+              class="px-3 py-2 bg-nimbus-medium hover:bg-nimbus-light disabled:bg-nimbus-dark disabled:cursor-not-allowed text-nimbus-text-light rounded-lg transition-colors duration-200"
             >
               Next
             </button>

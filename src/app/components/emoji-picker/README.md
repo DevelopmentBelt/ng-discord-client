@@ -106,13 +106,13 @@ The component uses CSS custom properties that match your Discord theme:
 
 ```css
 :root {
-  --discord-dark: #202225;
-  --discord-medium: #2f3136;
-  --discord-lighter: #36393f;
-  --discord-blue: #5865f2;
-  --discord-text: #b5b9c0;
-  --discord-text-light: #dcddde;
-  --discord-text-lighter: #ffffff;
+  --nimbus-dark: #202225;
+  --nimbus-medium: #2f3136;
+  --nimbus-lighter: #36393f;
+  --nimbus-blue: #5865f2;
+  --nimbus-text: #b5b9c0;
+  --nimbus-text-light: #dcddde;
+  --nimbus-text-lighter: #ffffff;
 }
 ```
 

@@ -32,7 +32,7 @@ The search functionality has been implemented to allow users to search for messa
    - Added `searchServerMessages()` method for server-wide search
    - Supports pagination with limit/offset parameters
 
-3. **AngcordContentComponent** (Updated)
+3. **NimbusContentComponent** (Updated)
    - Integrated search button functionality
    - Manages search component visibility
    - Handles search result selection
@@ -237,4 +237,4 @@ When adding new search features:
 5. Update this documentation
 
 ## License
-This search functionality is part of the Angcord Discord client application.
+This search functionality is part of the Nimbus Discord client application.

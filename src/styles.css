@@ -10,48 +10,48 @@
   color: white;
 }
 
-/* Discord-like base styles as fallback */
+/* Nimbus base styles as fallback */
 body {
   margin: 0;
   padding: 0;
   font-family: 'Whitney', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background-color: var(--discord-lighter);
-  color: var(--discord-text-light);
+  background-color: var(--nimbus-lighter);
+  color: var(--nimbus-text-light);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom Discord color variables (RGB channels power Tailwind opacity modifiers) */
+/* Nimbus color variables (RGB channels power Tailwind opacity modifiers) */
 :root {
-  --discord-dark: #202225;
-  --discord-darker: #1e1f23;
-  --discord-medium: #2f3136;
-  --discord-lighter: #36393f;
-  --discord-light: #40444b;
-  --discord-blue: #5865f2;
-  --discord-blue-dark: #404eed;
-  --discord-text: #b5b9c0;
-  --discord-text-light: #dcddde;
-  --discord-text-lighter: #ffffff;
-  --discord-text-muted: #949ba4;
-  --discord-text-muted-light: #afafaf;
-  --discord-hover: rgba(79, 84, 92, 0.4);
-  --discord-border: #202225;
+  --nimbus-dark: #202225;
+  --nimbus-darker: #1e1f23;
+  --nimbus-medium: #2f3136;
+  --nimbus-lighter: #36393f;
+  --nimbus-light: #40444b;
+  --nimbus-blue: #5865f2;
+  --nimbus-blue-dark: #404eed;
+  --nimbus-text: #b5b9c0;
+  --nimbus-text-light: #dcddde;
+  --nimbus-text-lighter: #ffffff;
+  --nimbus-text-muted: #949ba4;
+  --nimbus-text-muted-light: #afafaf;
+  --nimbus-hover: rgba(79, 84, 92, 0.4);
+  --nimbus-border: #202225;
 
-  --discord-dark-rgb: 32 34 37;
-  --discord-darker-rgb: 30 31 35;
-  --discord-medium-rgb: 47 49 54;
-  --discord-lighter-rgb: 54 57 63;
-  --discord-light-rgb: 64 68 75;
-  --discord-blue-rgb: 88 101 242;
-  --discord-blue-dark-rgb: 64 78 237;
-  --discord-text-rgb: 181 185 192;
-  --discord-text-light-rgb: 220 221 222;
-  --discord-text-lighter-rgb: 255 255 255;
-  --discord-text-muted-rgb: 148 155 164;
-  --discord-text-muted-light-rgb: 175 175 175;
-  --discord-hover-rgb: 79 84 92;
-  --discord-border-rgb: 32 34 37;
+  --nimbus-dark-rgb: 32 34 37;
+  --nimbus-darker-rgb: 30 31 35;
+  --nimbus-medium-rgb: 47 49 54;
+  --nimbus-lighter-rgb: 54 57 63;
+  --nimbus-light-rgb: 64 68 75;
+  --nimbus-blue-rgb: 88 101 242;
+  --nimbus-blue-dark-rgb: 64 78 237;
+  --nimbus-text-rgb: 181 185 192;
+  --nimbus-text-light-rgb: 220 221 222;
+  --nimbus-text-lighter-rgb: 255 255 255;
+  --nimbus-text-muted-rgb: 148 155 164;
+  --nimbus-text-muted-light-rgb: 175 175 175;
+  --nimbus-hover-rgb: 79 84 92;
+  --nimbus-border-rgb: 32 34 37;
 }
 
 html.theme-compact .msg-row > div {
@@ -84,29 +84,29 @@ html.theme-reduce-motion *::after {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--discord-dark);
+  background: var(--nimbus-dark);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--discord-light);
+  background: var(--nimbus-light);
 }
 
 /* Firefox scrollbar */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--discord-dark) transparent;
+  scrollbar-color: var(--nimbus-dark) transparent;
 }
 
 /* Selection styling */
 ::selection {
-  background: rgb(var(--discord-blue-rgb) / 0.3);
+  background: rgb(var(--nimbus-blue-rgb) / 0.3);
   color: #ffffff;
 }
 
 /* Focus outline for accessibility */
 *:focus {
-  outline: 2px solid var(--discord-blue);
+  outline: 2px solid var(--nimbus-blue);
   outline-offset: 2px;
 }
 
@@ -117,7 +117,7 @@ button, a, [role="button"] {
 
 /* Input focus states */
 input:focus, textarea:focus {
-  box-shadow: 0 0 0 2px rgb(var(--discord-blue-rgb) / 0.3);
+  box-shadow: 0 0 0 2px rgb(var(--nimbus-blue-rgb) / 0.3);
 }
 
 /* Smooth transitions for all elements */
@@ -177,7 +177,7 @@ input:focus, textarea:focus {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--discord-blue);
+  background: var(--nimbus-blue);
   color: #fff;
   font-weight: 700;
   font-size: 1.35rem;
@@ -202,17 +202,17 @@ input:focus, textarea:focus {
 }
 
 .avatar-effect--ring {
-  background: linear-gradient(135deg, var(--discord-blue), #57f287);
+  background: linear-gradient(135deg, var(--nimbus-blue), #57f287);
   box-shadow: 0 0 0 3px #1e1f22;
 }
 
 .avatar-effect--glow {
   background: #1e1f22;
-  box-shadow: 0 0 0 3px #1e1f22, 0 0 18px 4px rgb(var(--discord-blue-rgb) / 0.65);
+  box-shadow: 0 0 0 3px #1e1f22, 0 0 18px 4px rgb(var(--nimbus-blue-rgb) / 0.65);
 }
 
 .avatar-effect--pulse {
-  background: var(--discord-blue);
+  background: var(--nimbus-blue);
   animation: avatar-pulse 1.8s ease-in-out infinite;
 }
 
@@ -241,10 +241,10 @@ input:focus, textarea:focus {
 @keyframes avatar-pulse {
   0%,
   100% {
-    box-shadow: 0 0 0 3px #1e1f22, 0 0 0 0 rgb(var(--discord-blue-rgb) / 0.55);
+    box-shadow: 0 0 0 3px #1e1f22, 0 0 0 0 rgb(var(--nimbus-blue-rgb) / 0.55);
   }
   50% {
-    box-shadow: 0 0 0 3px #1e1f22, 0 0 0 8px rgb(var(--discord-blue-rgb) / 0);
+    box-shadow: 0 0 0 3px #1e1f22, 0 0 0 8px rgb(var(--nimbus-blue-rgb) / 0);
   }
 }
 

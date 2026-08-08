@@ -42,13 +42,13 @@ export class NotificationBadgeComponent {
   colorClasses = computed(() => {
     switch (this.color()) {
       case 'blue':
-        return 'bg-discord-blue text-white';
+        return 'bg-nimbus-blue text-white';
       case 'green':
         return 'bg-green-500 text-white';
       case 'yellow':
         return 'bg-yellow-500 text-white';
       default:
-        return 'bg-discord-red text-white';
+        return 'bg-nimbus-red text-white';
     }
   });
 }

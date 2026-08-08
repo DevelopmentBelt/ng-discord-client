@@ -531,7 +531,8 @@ class UserController extends Routes
 
     $body = $request->getParsedBody() ?? [];
     $vaultBlob = trim((string) ($body['vaultBlob'] ?? ''));
-    if ($vaultBlob === '' || !str_starts_with($vaultBlob, 'ANGVAULT1:')) {
+    $validPrefix = str_starts_with($vaultBlob, 'NIMBUSVAULT1:') || str_starts_with($vaultBlob, 'ANGVAULT1:');
+    if ($vaultBlob === '' || !$validPrefix) {
       return $this->json($response, ['status' => 'error', 'message' => 'Invalid vault blob'], 400);
     }
     if (strlen($vaultBlob) > 2_000_000) {

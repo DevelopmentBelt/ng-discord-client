@@ -3,7 +3,8 @@ import { firstValueFrom, take } from 'rxjs';
 import { UserWebService } from '../user-web-service/user-web.service';
 import { AuthService } from '../auth-service/auth.service';
 
-const STORAGE_PREFIX = 'angcord-identity-v1-';
+const STORAGE_PREFIX = 'nimbus-identity-v1-';
+const LEGACY_STORAGE_PREFIX = 'angcord-identity-v1-';
 
 /**
  * Per-user ECDH P-256 identity keys.
@@ -111,12 +112,18 @@ export class IdentityKeyService {
 
   private loadLocal(userId: number): { privateKeyPkcs8: string; publicKeySpki: string } | null {
     try {
-      const raw = localStorage.getItem(STORAGE_PREFIX + userId);
+      const raw =
+        localStorage.getItem(STORAGE_PREFIX + userId) ||
+        localStorage.getItem(LEGACY_STORAGE_PREFIX + userId);
       if (!raw) {
         return null;
       }
       const parsed = JSON.parse(raw);
       if (parsed?.privateKeyPkcs8 && parsed?.publicKeySpki) {
+        // Migrate legacy Angcord key storage
+        if (!localStorage.getItem(STORAGE_PREFIX + userId)) {
+          this.saveLocal(userId, parsed);
+        }
         return parsed;
       }
     } catch {

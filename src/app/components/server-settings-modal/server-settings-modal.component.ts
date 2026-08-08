@@ -912,13 +912,13 @@ export class ServerSettingsModalComponent implements OnInit {
    */
   getVerificationLevelColor(level: string): string {
     const colors: { [key: string]: string } = {
-      'None': 'text-discord-text-muted',
+      'None': 'text-nimbus-text-muted',
       'Low': 'text-green-400',
       'Medium': 'text-yellow-400',
       'High': 'text-orange-400',
       'Very High': 'text-red-400'
     };
-    return colors[level] || 'text-discord-text-muted';
+    return colors[level] || 'text-nimbus-text-muted';
   }
 
   /**
