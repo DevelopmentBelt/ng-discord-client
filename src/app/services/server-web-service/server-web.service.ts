@@ -191,13 +191,44 @@ export class ServerWebService {
     return this.serverService.sendPostReq(`servers/${serverId}/channels/${channelId}/phantom/disable`, {}, {});
   }
 
-  getPhantomChannelKey(serverId: string, channelId: number): Observable<{
+  getPhantomKeyShare(serverId: string, channelId: number): Observable<{
     status: string;
     channelId: number;
-    phantomKey: string;
+    wrappedKey: string;
   }> {
     return this.serverService.sendGetRequest(
-      `servers/${serverId}/channels/${channelId}/phantom/key`,
+      `servers/${serverId}/channels/${channelId}/phantom/share`,
+      {}
+    );
+  }
+
+  putPhantomKeyShares(
+    serverId: string,
+    channelId: number,
+    shares: Array<{ userId: number; wrappedKey: string }>
+  ): Observable<{ status: string; saved: number }> {
+    return this.serverService.sendPutReq(
+      `servers/${serverId}/channels/${channelId}/phantom/shares`,
+      { shares },
+      {}
+    );
+  }
+
+  getPhantomShareStatus(serverId: string, channelId: number): Observable<{
+    status: string;
+    holders: number[];
+    members: Array<{ userId: number; publicKey: string }>;
+  }> {
+    return this.serverService.sendGetRequest(
+      `servers/${serverId}/channels/${channelId}/phantom/status`,
+      {}
+    );
+  }
+
+  updateMyMemberAlias(serverId: string, aliasName: string, aliasPic?: string): Observable<any> {
+    return this.serverService.sendPatchReq(
+      `servers/${serverId}/members/me`,
+      { aliasName, aliasPic: aliasPic || '' },
       {}
     );
   }

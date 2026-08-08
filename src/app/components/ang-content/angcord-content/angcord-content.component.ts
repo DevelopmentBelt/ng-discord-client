@@ -133,12 +133,15 @@ export class AngcordContentComponent implements OnInit, OnDestroy {
 
     if (channel.isPhantom) {
       if (this.phantomLoading()) {
-        return 'Phantom channel — loading encryption key…';
+        return 'Phantom channel — loading E2EE key…';
       }
       if (!this.phantomReady()) {
-        return 'Phantom channel — could not load encryption key.';
+        return 'Phantom channel — waiting for an E2EE key share from a member.';
       }
-      return 'Phantom channel — anonymous & encrypted. Authors are never stored.';
+      const ttl = channel.ephemeralTtlSeconds || 0;
+      return ttl > 0
+        ? `Phantom E2EE — anonymous, client-held keys, messages expire after ${ttl}s.`
+        : 'Phantom E2EE — anonymous & encrypted with client-held keys. Authors are never stored.';
     }
 
     if (channel.channelName?.toLowerCase().includes('general')) {
@@ -357,6 +360,10 @@ export class AngcordContentComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
 
     const key = await this.phantomKeys.ensureKey(server.serverId, channel.channelId);
+    if (key) {
+      // Forward secrecy for membership: wrap channel key for members missing a share
+      void this.phantomKeys.syncShares(server.serverId, channel.channelId);
+    }
     this.phantomReady.set(!!key);
     this.phantomLoading.set(false);
     this.cdr.detectChanges();

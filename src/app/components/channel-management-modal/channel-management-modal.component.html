@@ -110,7 +110,7 @@
             }
 
             @if (supportsPhantom()) {
-              <div class="rounded-md border border-violet-500/30 bg-violet-500/10 p-3">
+              <div class="rounded-md border border-violet-500/30 bg-violet-500/10 p-3 space-y-3">
                 <label class="flex items-start space-x-3 cursor-pointer">
                   <input
                     type="checkbox"
@@ -119,12 +119,25 @@
                     class="w-4 h-4 mt-1 text-violet-500 focus:ring-violet-500 border-discord-border rounded"
                   />
                   <div>
-                    <span class="text-violet-200 font-medium">Phantom mode</span>
+                    <span class="text-violet-200 font-medium">Phantom mode (true E2EE)</span>
                     <p class="text-sm text-discord-text-muted">
-                      Recommended for privacy-first communities. Anonymous, encrypted messaging — authors are never stored.
+                      Anonymous messaging with client-held AES keys. The server only stores ECDH-wrapped key shares — never plaintext keys.
                     </p>
                   </div>
                 </label>
+                <div>
+                  <label class="block text-sm font-medium text-violet-200 mb-1">Ephemeral TTL</label>
+                  <select
+                    [ngModel]="ephemeralTtlSeconds()"
+                    (ngModelChange)="ephemeralTtlSeconds.set(+$event)"
+                    class="w-full bg-discord-dark text-discord-text-light border border-discord-border rounded-md px-3 py-2 text-sm"
+                  >
+                    @for (option of ephemeralOptions; track option.value) {
+                      <option [value]="option.value">{{ option.label }}</option>
+                    }
+                  </select>
+                  <p class="text-xs text-discord-text-muted mt-1">Messages auto-delete after this time.</p>
+                </div>
               </div>
             }
 

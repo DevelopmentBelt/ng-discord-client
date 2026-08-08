@@ -26,7 +26,17 @@ export class ChannelManagementModalComponent implements OnInit {
   selectedCategory: WritableSignal<string> = signal('');
   isNsfw: WritableSignal<boolean> = signal(false);
   isPhantom: WritableSignal<boolean> = signal(false);
+  ephemeralTtlSeconds: WritableSignal<number> = signal(0);
   slowmode: WritableSignal<number> = signal(0);
+
+  ephemeralOptions = [
+    { value: 0, label: 'Keep forever' },
+    { value: 60, label: '1 minute' },
+    { value: 300, label: '5 minutes' },
+    { value: 3600, label: '1 hour' },
+    { value: 86400, label: '24 hours' },
+    { value: 604800, label: '7 days' }
+  ];
   userLimit: WritableSignal<number> = signal(0);
   bitrate: WritableSignal<number> = signal(64000);
 
@@ -82,6 +92,7 @@ export class ChannelManagementModalComponent implements OnInit {
       this.selectedCategory.set(String(channel.parentId || channel.categoryId || ''));
       this.isNsfw.set(!!channel.nsfw);
       this.isPhantom.set(!!channel.isPhantom);
+      this.ephemeralTtlSeconds.set(channel.ephemeralTtlSeconds || 0);
       this.slowmode.set(channel.slowmode || 0);
       this.userLimit.set(channel.userLimit || 0);
       this.bitrate.set(channel.bitrate || 64000);
@@ -96,6 +107,7 @@ export class ChannelManagementModalComponent implements OnInit {
     this.isNsfw.set(false);
     // Privacy-first: new text channels default to Phantom
     this.isPhantom.set(true);
+    this.ephemeralTtlSeconds.set(0);
     this.slowmode.set(0);
     this.userLimit.set(0);
     this.bitrate.set(64000);
@@ -159,6 +171,7 @@ export class ChannelManagementModalComponent implements OnInit {
       categoryId: this.selectedCategory() ? Number(this.selectedCategory()) : undefined,
       nsfw: this.isNsfw(),
       isPhantom: this.channelType() === 'text' ? this.isPhantom() : false,
+      ephemeralTtlSeconds: this.channelType() === 'text' ? this.ephemeralTtlSeconds() : 0,
       slowmode: this.slowmode() || undefined,
       userLimit: this.userLimit() || undefined,
       bitrate: this.bitrate() || undefined

@@ -16,4 +16,6 @@ export interface Channel {
   lastActivity?: Date;
   /** Anonymous + encrypted messaging mode (declared & saved on the channel) */
   isPhantom?: boolean;
+  /** Auto-delete messages after N seconds (0 = keep) */
+  ephemeralTtlSeconds?: number;
 }

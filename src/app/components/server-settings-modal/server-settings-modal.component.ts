@@ -11,7 +11,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { take } from 'rxjs';
+import { firstValueFrom, take } from 'rxjs';
 import { Server } from '../../models/server/server';
 import { Member } from '../../models/member/member';
 import { Channel } from '../../models/channel/channel';
@@ -22,6 +22,8 @@ import { ChannelManagementModalComponent } from '../channel-management-modal/cha
 import { ConfirmationModalComponent, ConfirmationData } from '../confirmation-modal/confirmation-modal.component';
 import { UserProfileModalComponent } from '../user-profile-modal/user-profile-modal.component';
 import { ServerWebService } from '../../services/server-web-service/server-web.service';
+import { PhantomKeyService } from '../../services/crypto/phantom-key.service';
+import { AuthService } from '../../services/auth-service/auth.service';
 
 export interface ServerRole {
   id: string;
@@ -48,6 +50,7 @@ export interface ServerChannel {
   userLimit?: number;
   bitrate?: number;
   isPhantom?: boolean;
+  ephemeralTtlSeconds?: number;
 }
 
 export interface Permission {
@@ -115,6 +118,9 @@ export class ServerSettingsModalComponent implements OnInit {
   }>>([]);
   latestInviteCode = signal<string | null>(null);
   inviteBusy = signal(false);
+  aliasName = signal('');
+  aliasPic = signal('');
+  aliasSaving = signal(false);
 
   // Modal states for new UI components
   isConfirmationModalOpen: WritableSignal<boolean> = signal(false);
@@ -171,6 +177,8 @@ export class ServerSettingsModalComponent implements OnInit {
   constructor(
     private alertService: AlertService,
     private serverWebService: ServerWebService,
+    private phantomKeys: PhantomKeyService,
+    private authService: AuthService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -278,6 +286,29 @@ export class ServerSettingsModalComponent implements OnInit {
     this.alertService.success('Copied', 'Invite code copied to clipboard.');
   }
 
+  saveAlias(): void {
+    const server = this.server();
+    if (!server?.serverId || this.aliasSaving()) {
+      return;
+    }
+    this.aliasSaving.set(true);
+    this.serverWebService
+      .updateMyMemberAlias(String(server.serverId), this.aliasName().trim(), this.aliasPic().trim())
+      .pipe(take(1))
+      .subscribe({
+        next: () => {
+          this.aliasSaving.set(false);
+          this.alertService.success('Alias saved', 'This name is shown only in this community.');
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          this.aliasSaving.set(false);
+          this.alertService.error('Could not save alias', err?.error?.error || 'Try again.');
+          this.cdr.markForCheck();
+        }
+      });
+  }
+
   /**
    * Load mock roles until role APIs are available
    */
@@ -361,6 +392,7 @@ export class ServerSettingsModalComponent implements OnInit {
       topic: channel.topic,
       nsfw: !!channel.nsfw,
       isPhantom: !!channel.isPhantom,
+      ephemeralTtlSeconds: channel.ephemeralTtlSeconds || 0,
       slowmode: channel.slowmode,
       userLimit: channel.userLimit,
       bitrate: channel.bitrate
@@ -386,6 +418,12 @@ export class ServerSettingsModalComponent implements OnInit {
         this.serverMembers.set(list);
         const allRoles = list.flatMap((member) => member.roles || []);
         this.availableRoles.set([...new Set(allRoles)]);
+        const me = this.authService.currentUser();
+        const self = me ? list.find((m) => Number(m.userId) === Number(me.id)) : null;
+        if (self) {
+          this.aliasName.set(self.aliasName || '');
+          this.aliasPic.set(self.aliasPic || '');
+        }
         this.isLoadingMembers.set(false);
         this.cdr.markForCheck();
       },
@@ -686,7 +724,7 @@ export class ServerSettingsModalComponent implements OnInit {
   }
 
   /**
-   * Save channel changes
+   * Save channel changes (Phantom E2EE keys distributed client-side)
    */
   saveChannel(channelData: Partial<ServerChannel>): void {
     const server = this.server();
@@ -701,13 +739,17 @@ export class ServerSettingsModalComponent implements OnInit {
       return;
     }
 
+    const wantPhantom = !!channelData.isPhantom;
+    const wasPhantom = !!selected?.isPhantom;
     const payload: Partial<Channel> = {
       channelName: channelData.name,
       categoryId: Number(channelData.categoryId || channelData.parentId || 0),
       type: channelData.type || 'text',
       topic: channelData.topic,
       nsfw: !!channelData.nsfw,
-      isPhantom: !!channelData.isPhantom,
+      // Key material is distributed client-side after create/update
+      isPhantom: false,
+      ephemeralTtlSeconds: Number(channelData.ephemeralTtlSeconds || 0),
       slowmode: channelData.slowmode,
       userLimit: channelData.userLimit,
       bitrate: channelData.bitrate
@@ -718,24 +760,48 @@ export class ServerSettingsModalComponent implements OnInit {
       return;
     }
 
-    const request$ = this.isEditingChannel() && selected
+    const editing = this.isEditingChannel();
+    const request$ = editing && selected
       ? this.serverWebService.updateChannel(String(server.serverId), selected.id, payload)
       : this.serverWebService.createChannel(String(server.serverId), payload);
 
     request$.pipe(take(1)).subscribe({
-      next: () => {
+      next: async (resp) => {
+        const channelId = Number(resp?.channelId || selected?.id || 0);
+        try {
+          if (channelId && wantPhantom && !wasPhantom) {
+            await this.phantomKeys.enableAndDistribute(server.serverId, channelId);
+          } else if (channelId && !wantPhantom && wasPhantom) {
+            await firstValueFrom(
+              this.serverWebService.disablePhantomChannel(String(server.serverId), channelId).pipe(take(1))
+            );
+            this.phantomKeys.clear(channelId);
+          } else if (channelId && wantPhantom && wasPhantom) {
+            await this.phantomKeys.syncShares(server.serverId, channelId);
+          }
+        } catch (err: any) {
+          this.alertService.error(
+            'E2EE setup failed',
+            err?.error?.message || 'Channel saved, but encryption key distribution failed.'
+          );
+          this.loadServerChannels();
+          return;
+        }
+
         this.alertService.success(
-          this.isEditingChannel() ? 'Channel Updated' : 'Channel Created',
-          this.isEditingChannel()
-            ? 'Channel has been updated successfully.'
-            : 'New channel has been created successfully.'
+          editing ? 'Channel Updated' : 'Channel Created',
+          wantPhantom
+            ? `#${payload.channelName} is Phantom with true E2EE.`
+            : editing
+              ? 'Channel has been updated successfully.'
+              : 'New channel has been created successfully.'
         );
         this.closeChannelModal();
         this.loadServerChannels();
       },
       error: (err) => {
         this.alertService.error(
-          this.isEditingChannel() ? 'Could not update channel' : 'Could not create channel',
+          editing ? 'Could not update channel' : 'Could not create channel',
           err?.error?.message || 'Only the server owner can manage channels.'
         );
       }

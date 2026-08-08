@@ -106,11 +106,18 @@ class DirectMessageController extends Routes
         return $this->json($response, ['error' => 'You cannot message yourself'], 400);
       }
 
-      $userCheck = $pdo->prepare('SELECT user_id, user_name, user_pic FROM users WHERE user_id = ?');
+      $this->ensureDmPrivacySchema($pdo);
+      $userCheck = $pdo->prepare('SELECT user_id, user_name, user_pic, dm_policy FROM users WHERE user_id = ?');
       $userCheck->execute([$targetUserId]);
       $other = $userCheck->fetch(PDO::FETCH_ASSOC);
       if (!$other) {
         return $this->json($response, ['error' => 'User not found'], 404);
+      }
+
+      if (!$this->canStartDm($pdo, $userId, $targetUserId, (string) ($other['dm_policy'] ?? 'allowlist'))) {
+        return $this->json($response, [
+          'error' => 'This user only accepts DMs from approved contacts.',
+        ], 403);
       }
 
       $existing = $pdo->prepare(
@@ -259,6 +266,56 @@ class DirectMessageController extends Routes
     $stmt = $pdo->prepare('SELECT 1 FROM dm_participants WHERE conversation_id = ? AND user_id = ?');
     $stmt->execute([$conversationId, $userId]);
     return (bool) $stmt->fetchColumn();
+  }
+
+  private function ensureDmPrivacySchema(PDO $pdo): void
+  {
+    $stmt = $pdo->prepare(
+      'SELECT COUNT(*) FROM information_schema.COLUMNS
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?'
+    );
+    $stmt->execute(['users', 'dm_policy']);
+    if ((int) $stmt->fetchColumn() === 0) {
+      $pdo->exec("ALTER TABLE users ADD COLUMN `dm_policy` VARCHAR(32) NOT NULL DEFAULT 'allowlist'");
+    }
+    $pdo->exec(
+      'CREATE TABLE IF NOT EXISTS dm_allowlist (
+        user_id BIGINT(64) NOT NULL,
+        allowed_user_id BIGINT(64) NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (user_id, allowed_user_id)
+      )'
+    );
+  }
+
+  /**
+   * Privacy-first DM gate based on the recipient's policy.
+   */
+  private function canStartDm(PDO $pdo, int $fromUserId, int $toUserId, string $policy): bool
+  {
+    $policy = $policy ?: 'allowlist';
+    if ($policy === 'everyone') {
+      return true;
+    }
+    if ($policy === 'nobody') {
+      return false;
+    }
+    if ($policy === 'mutual_server') {
+      $stmt = $pdo->prepare(
+        'SELECT COUNT(*) FROM members a
+         INNER JOIN members b ON a.server_id = b.server_id
+         WHERE a.user_id = ? AND b.user_id = ?'
+      );
+      $stmt->execute([$fromUserId, $toUserId]);
+      return (int) $stmt->fetchColumn() > 0;
+    }
+
+    // allowlist (default)
+    $stmt = $pdo->prepare(
+      'SELECT COUNT(*) FROM dm_allowlist WHERE user_id = ? AND allowed_user_id = ?'
+    );
+    $stmt->execute([$toUserId, $fromUserId]);
+    return (int) $stmt->fetchColumn() > 0;
   }
 
   private function toMessage(array $row): array

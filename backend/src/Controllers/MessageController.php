@@ -31,6 +31,12 @@ class MessageController extends Routes {
       return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
     }
 
+    $this->ensureExpiresColumn($conn);
+    // Drop expired ephemeral messages opportunistically
+    $conn->prepare(
+      'DELETE FROM messages WHERE channel_id = ? AND expires_at IS NOT NULL AND expires_at < UTC_TIMESTAMP()'
+    )->execute([$channelId]);
+
     $stmt = $conn->prepare(
       "SELECT m.*, u.user_name, u.user_pic
        FROM messages m
@@ -38,6 +44,7 @@ class MessageController extends Routes {
        JOIN channels ch ON m.channel_id = ch.channel_id
        JOIN categories cat ON ch.category_id = cat.category_id
        WHERE m.channel_id = ? AND cat.server_id = ?
+         AND (m.expires_at IS NULL OR m.expires_at > UTC_TIMESTAMP())
        ORDER BY m.timestamp_posted
        LIMIT 100"
     );
@@ -118,10 +125,22 @@ class MessageController extends Routes {
     // Phantom: authenticate to post, but never persist who wrote it.
     $storedAuthorId = $isAnonymous ? null : $authorId;
 
+    $this->ensureExpiresColumn($conn);
+    $this->ensureEphemeralChannelColumn($conn);
+    $ttlStmt = $conn->prepare('SELECT ephemeral_ttl_seconds FROM channels WHERE channel_id = ? LIMIT 1');
+    $ttlStmt->execute([$channelId]);
+    $ttlSeconds = (int) $ttlStmt->fetchColumn();
+    $expiresAt = null;
+    if ($ttlSeconds > 0) {
+      $expiresAt = gmdate('Y-m-d H:i:s', time() + $ttlSeconds);
+    } elseif (!empty($body['expiresInSeconds'])) {
+      $expiresAt = gmdate('Y-m-d H:i:s', time() + max(60, (int) $body['expiresInSeconds']));
+    }
+
     $conn->beginTransaction();
     $stmt = $conn->prepare(
-      'INSERT INTO messages (channel_id, posted_by_user_id, raw_text, is_anonymous, is_encrypted, timestamp_posted)
-       VALUES (?, ?, ?, ?, ?, ?)'
+      'INSERT INTO messages (channel_id, posted_by_user_id, raw_text, is_anonymous, is_encrypted, timestamp_posted, expires_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)'
     );
     $success = $stmt->execute([
       $channelId,
@@ -130,6 +149,7 @@ class MessageController extends Routes {
       $isAnonymous ? 1 : 0,
       $isEncrypted ? 1 : 0,
       $timestampPosted,
+      $expiresAt,
     ]);
 
     if ($success) {
@@ -145,6 +165,7 @@ class MessageController extends Routes {
           'channelId' => $channelId,
           'isAnonymous' => $isAnonymous,
           'isEncrypted' => $isEncrypted,
+          'expiresAt' => $expiresAt,
           'author' => $isAnonymous
             ? ['userId' => 0, 'username' => 'Anonymous', 'profilePic' => '']
             : null,
@@ -180,6 +201,30 @@ class MessageController extends Routes {
       $pdo->exec('ALTER TABLE messages MODIFY COLUMN raw_text TEXT NOT NULL');
     } catch (\Throwable $e) {
       // ignore
+    }
+  }
+
+  private function ensureExpiresColumn(PDO $pdo): void
+  {
+    $stmt = $pdo->prepare(
+      'SELECT COUNT(*) FROM information_schema.COLUMNS
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?'
+    );
+    $stmt->execute(['messages', 'expires_at']);
+    if ((int) $stmt->fetchColumn() === 0) {
+      $pdo->exec('ALTER TABLE messages ADD COLUMN `expires_at` DATETIME NULL');
+    }
+  }
+
+  private function ensureEphemeralChannelColumn(PDO $pdo): void
+  {
+    $stmt = $pdo->prepare(
+      'SELECT COUNT(*) FROM information_schema.COLUMNS
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?'
+    );
+    $stmt->execute(['channels', 'ephemeral_ttl_seconds']);
+    if ((int) $stmt->fetchColumn() === 0) {
+      $pdo->exec('ALTER TABLE channels ADD COLUMN `ephemeral_ttl_seconds` INT NOT NULL DEFAULT 0');
     }
   }
 

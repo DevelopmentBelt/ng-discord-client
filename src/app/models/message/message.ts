@@ -15,6 +15,8 @@ export interface Message {
   hidden?: boolean;
   isAnonymous?: boolean;
   isEncrypted?: boolean;
+  /** ISO datetime when ephemeral message should disappear */
+  expiresAt?: string | null;
   /** True when ciphertext could not be decrypted locally */
   decryptFailed?: boolean;
 }

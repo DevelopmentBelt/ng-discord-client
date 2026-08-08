@@ -19,8 +19,11 @@ class ServerController extends Routes {
     $this->app->patch('/api/servers/{serverId}/channels/{channelId}', [$this, 'updateChannel']);
     $this->app->post('/api/servers/{serverId}/channels/{channelId}/phantom/enable', [$this, 'enablePhantomChannel']);
     $this->app->post('/api/servers/{serverId}/channels/{channelId}/phantom/disable', [$this, 'disablePhantomChannel']);
-    $this->app->get('/api/servers/{serverId}/channels/{channelId}/phantom/key', [$this, 'getPhantomChannelKey']);
+    $this->app->get('/api/servers/{serverId}/channels/{channelId}/phantom/share', [$this, 'getPhantomKeyShare']);
+    $this->app->put('/api/servers/{serverId}/channels/{channelId}/phantom/shares', [$this, 'putPhantomKeyShares']);
+    $this->app->get('/api/servers/{serverId}/channels/{channelId}/phantom/status', [$this, 'getPhantomShareStatus']);
     $this->app->get('/api/servers/{serverId}/members', [$this, 'getServerMembers']);
+    $this->app->patch('/api/servers/{serverId}/members/me', [$this, 'updateMyMemberProfile']);
     $this->app->patch('/api/servers/{serverId}/privacy', [$this, 'updateServerPrivacy']);
     $this->app->post('/api/servers/{serverId}/invites', [$this, 'createServerInvite']);
     $this->app->get('/api/servers/{serverId}/invites', [$this, 'listServerInvites']);
@@ -171,8 +174,9 @@ class ServerController extends Routes {
         $categories = $categoryStmt->fetchAll(PDO::FETCH_ASSOC);
       }
 
+      $this->ensureEphemeralColumn($pdo);
       $channelStmt = $pdo->prepare(
-        "SELECT channel_id, category_id, channel_name, is_phantom
+        "SELECT channel_id, category_id, channel_name, is_phantom, ephemeral_ttl_seconds
          FROM channels
          WHERE category_id = ?
          ORDER BY channel_id ASC"
@@ -188,6 +192,7 @@ class ServerController extends Routes {
             'categoryId' => (int) $channel['category_id'],
             'channelName' => $channel['channel_name'],
             'isPhantom' => !empty($channel['is_phantom']),
+            'ephemeralTtlSeconds' => (int) ($channel['ephemeral_ttl_seconds'] ?? 0),
           ];
         }
 
@@ -248,11 +253,14 @@ class ServerController extends Routes {
       return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
     }
 
-    $phantomKey = $isPhantom ? base64_encode(random_bytes(32)) : null;
+    // True E2EE: never store channel AES keys server-side. Client distributes wrapped shares.
+    $ephemeralTtl = isset($body['ephemeralTtlSeconds']) ? max(0, (int) $body['ephemeralTtlSeconds']) : 0;
+    $this->ensureEphemeralColumn($pdo);
     $stmt = $pdo->prepare(
-      'INSERT INTO channels (category_id, channel_name, is_phantom, phantom_key) VALUES (?, ?, ?, ?)'
+      'INSERT INTO channels (category_id, channel_name, is_phantom, phantom_key, ephemeral_ttl_seconds)
+       VALUES (?, ?, ?, NULL, ?)'
     );
-    $stmt->execute([$categoryId, $channelName, $isPhantom ? 1 : 0, $phantomKey]);
+    $stmt->execute([$categoryId, $channelName, $isPhantom ? 1 : 0, $ephemeralTtl]);
     $channelId = (int) $pdo->lastInsertId();
 
     $response->getBody()->write(json_encode([
@@ -261,6 +269,7 @@ class ServerController extends Routes {
       'categoryId' => $categoryId,
       'channelName' => $channelName,
       'isPhantom' => $isPhantom,
+      'ephemeralTtlSeconds' => $ephemeralTtl,
     ]));
     return $response->withHeader('Content-Type', 'application/json')->withStatus(201);
   }
@@ -319,23 +328,40 @@ class ServerController extends Routes {
       }
     }
 
+    $this->ensureEphemeralColumn($pdo);
     $isPhantom = !empty($existing['is_phantom']);
-    $phantomKey = $existing['phantom_key'];
     if (array_key_exists('isPhantom', $body)) {
       $wantPhantom = !empty($body['isPhantom']);
       if ($wantPhantom && !$isPhantom) {
         $isPhantom = true;
-        $phantomKey = base64_encode(random_bytes(32));
       } elseif (!$wantPhantom && $isPhantom) {
         $isPhantom = false;
-        $phantomKey = null;
+        $this->ensureKeyShareTable($pdo);
+        $pdo->prepare('DELETE FROM channel_key_shares WHERE channel_id = ?')->execute([$channelId]);
       }
     }
 
-    $update = $pdo->prepare(
-      'UPDATE channels SET category_id = ?, channel_name = ?, is_phantom = ?, phantom_key = ? WHERE channel_id = ?'
-    );
-    $update->execute([$categoryId, $channelName, $isPhantom ? 1 : 0, $phantomKey, $channelId]);
+    $ephemeralTtl = null;
+    if (array_key_exists('ephemeralTtlSeconds', $body)) {
+      $ephemeralTtl = max(0, (int) $body['ephemeralTtlSeconds']);
+    }
+
+    if ($ephemeralTtl === null) {
+      $update = $pdo->prepare(
+        'UPDATE channels SET category_id = ?, channel_name = ?, is_phantom = ?, phantom_key = NULL WHERE channel_id = ?'
+      );
+      $update->execute([$categoryId, $channelName, $isPhantom ? 1 : 0, $channelId]);
+    } else {
+      $update = $pdo->prepare(
+        'UPDATE channels SET category_id = ?, channel_name = ?, is_phantom = ?, phantom_key = NULL, ephemeral_ttl_seconds = ?
+         WHERE channel_id = ?'
+      );
+      $update->execute([$categoryId, $channelName, $isPhantom ? 1 : 0, $ephemeralTtl, $channelId]);
+    }
+
+    $ttlStmt = $pdo->prepare('SELECT ephemeral_ttl_seconds FROM channels WHERE channel_id = ?');
+    $ttlStmt->execute([$channelId]);
+    $ttl = (int) $ttlStmt->fetchColumn();
 
     $response->getBody()->write(json_encode([
       'status' => 'success',
@@ -343,6 +369,7 @@ class ServerController extends Routes {
       'categoryId' => $categoryId,
       'channelName' => $channelName,
       'isPhantom' => $isPhantom,
+      'ephemeralTtlSeconds' => $ttl,
     ]));
     return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
   }
@@ -359,6 +386,7 @@ class ServerController extends Routes {
     $channelId = (int) $args['channelId'];
     $pdo = $this->dbService->getConnection();
     $this->ensurePhantomChannelColumns($pdo);
+    $this->ensureKeyShareTable($pdo);
 
     if (!$this->userCanManageServer($pdo, $serverId, $userId)) {
       $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Only server owners/admins can enable Phantom mode']));
@@ -370,17 +398,16 @@ class ServerController extends Routes {
       return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
     }
 
-    // Persist a channel key so members can encrypt/decrypt without a shared passphrase.
-    $phantomKey = base64_encode(random_bytes(32));
-
+    // True E2EE: flag only. Channel AES key is generated client-side and uploaded as wrapped shares.
     $stmt = $pdo->prepare(
-      'UPDATE channels SET is_phantom = 1, phantom_key = ? WHERE channel_id = ?'
+      'UPDATE channels SET is_phantom = 1, phantom_key = NULL WHERE channel_id = ?'
     );
-    $stmt->execute([$phantomKey, $channelId]);
+    $stmt->execute([$channelId]);
+    $pdo->prepare('DELETE FROM channel_key_shares WHERE channel_id = ?')->execute([$channelId]);
 
     $response->getBody()->write(json_encode([
       'status' => 'success',
-      'message' => 'Phantom mode enabled. This channel is now anonymous and encrypted for all members.',
+      'message' => 'Phantom mode enabled. Distribute E2EE key shares from the client.',
       'channelId' => $channelId,
       'isPhantom' => true,
     ]));
@@ -399,6 +426,7 @@ class ServerController extends Routes {
     $channelId = (int) $args['channelId'];
     $pdo = $this->dbService->getConnection();
     $this->ensurePhantomChannelColumns($pdo);
+    $this->ensureKeyShareTable($pdo);
 
     if (!$this->userCanManageServer($pdo, $serverId, $userId)) {
       $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Only server owners/admins can disable Phantom mode']));
@@ -414,6 +442,7 @@ class ServerController extends Routes {
       'UPDATE channels SET is_phantom = 0, phantom_key = NULL WHERE channel_id = ?'
     );
     $stmt->execute([$channelId]);
+    $pdo->prepare('DELETE FROM channel_key_shares WHERE channel_id = ?')->execute([$channelId]);
 
     $response->getBody()->write(json_encode([
       'status' => 'success',
@@ -424,7 +453,7 @@ class ServerController extends Routes {
     return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
   }
 
-  public function getPhantomChannelKey(Request $request, Response $response, $args): Response
+  public function getPhantomKeyShare(Request $request, Response $response, $args): Response
   {
     $userId = AuthService::getUserId();
     if (!$userId) {
@@ -436,31 +465,137 @@ class ServerController extends Routes {
     $channelId = (int) $args['channelId'];
     $pdo = $this->dbService->getConnection();
     $this->ensurePhantomChannelColumns($pdo);
+    $this->ensureKeyShareTable($pdo);
 
-    if (!$this->channelBelongsToServer($pdo, $serverId, $channelId)) {
-      $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Channel not found']));
-      return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
-    }
-
-    if (!$this->userIsServerMember($pdo, $serverId, $userId)) {
-      $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Not a member of this server']));
+    if (!$this->channelBelongsToServer($pdo, $serverId, $channelId) || !$this->userIsServerMember($pdo, $serverId, $userId)) {
+      $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Forbidden']));
       return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
     }
 
-    $stmt = $pdo->prepare(
-      'SELECT is_phantom, phantom_key FROM channels WHERE channel_id = ? LIMIT 1'
-    );
-    $stmt->execute([$channelId]);
-    $row = $stmt->fetch(PDO::FETCH_ASSOC);
-    if (!$row || empty($row['is_phantom']) || empty($row['phantom_key'])) {
+    $chan = $pdo->prepare('SELECT is_phantom FROM channels WHERE channel_id = ? LIMIT 1');
+    $chan->execute([$channelId]);
+    if (empty($chan->fetchColumn())) {
       $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Channel is not in Phantom mode']));
       return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+    }
+
+    $stmt = $pdo->prepare(
+      'SELECT wrapped_key FROM channel_key_shares WHERE channel_id = ? AND user_id = ? LIMIT 1'
+    );
+    $stmt->execute([$channelId, $userId]);
+    $wrapped = $stmt->fetchColumn();
+    if (!$wrapped) {
+      $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'No key share for this member yet']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
     }
 
     $response->getBody()->write(json_encode([
       'status' => 'success',
       'channelId' => $channelId,
-      'phantomKey' => $row['phantom_key'],
+      'wrappedKey' => $wrapped,
+    ]));
+    return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+  }
+
+  public function putPhantomKeyShares(Request $request, Response $response, $args): Response
+  {
+    $userId = AuthService::getUserId();
+    if (!$userId) {
+      $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Not authenticated']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(401);
+    }
+
+    $serverId = (int) $args['serverId'];
+    $channelId = (int) $args['channelId'];
+    $body = $request->getParsedBody() ?? [];
+    $shares = $body['shares'] ?? [];
+    if (!is_array($shares) || count($shares) === 0) {
+      $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'shares required']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+    }
+
+    $pdo = $this->dbService->getConnection();
+    $this->ensureKeyShareTable($pdo);
+
+    if (!$this->channelBelongsToServer($pdo, $serverId, $channelId) || !$this->userIsServerMember($pdo, $serverId, $userId)) {
+      $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Forbidden']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
+    }
+
+    $upsert = $pdo->prepare(
+      'INSERT INTO channel_key_shares (channel_id, user_id, wrapped_key, created_by_user_id)
+       VALUES (?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE wrapped_key = VALUES(wrapped_key), created_by_user_id = VALUES(created_by_user_id)'
+    );
+
+    $saved = 0;
+    foreach ($shares as $share) {
+      $targetUserId = (int) ($share['userId'] ?? 0);
+      $wrappedKey = trim((string) ($share['wrappedKey'] ?? ''));
+      if ($targetUserId <= 0 || $wrappedKey === '' || !str_starts_with($wrappedKey, 'WRAP1:')) {
+        continue;
+      }
+      if (!$this->userIsServerMember($pdo, $serverId, $targetUserId)) {
+        continue;
+      }
+      $upsert->execute([$channelId, $targetUserId, $wrappedKey, $userId]);
+      $saved++;
+    }
+
+    $response->getBody()->write(json_encode([
+      'status' => 'success',
+      'channelId' => $channelId,
+      'saved' => $saved,
+    ]));
+    return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+  }
+
+  public function getPhantomShareStatus(Request $request, Response $response, $args): Response
+  {
+    $userId = AuthService::getUserId();
+    if (!$userId) {
+      $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Not authenticated']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(401);
+    }
+
+    $serverId = (int) $args['serverId'];
+    $channelId = (int) $args['channelId'];
+    $pdo = $this->dbService->getConnection();
+    $this->ensureKeyShareTable($pdo);
+    $this->ensureUserCryptoColumns($pdo);
+
+    if (!$this->channelBelongsToServer($pdo, $serverId, $channelId) || !$this->userIsServerMember($pdo, $serverId, $userId)) {
+      $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Forbidden']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
+    }
+
+    $holdersStmt = $pdo->prepare('SELECT user_id FROM channel_key_shares WHERE channel_id = ?');
+    $holdersStmt->execute([$channelId]);
+    $holders = array_map('intval', $holdersStmt->fetchAll(PDO::FETCH_COLUMN));
+
+    $membersStmt = $pdo->prepare(
+      'SELECT m.user_id, u.public_key
+       FROM members m
+       INNER JOIN users u ON u.user_id = m.user_id
+       WHERE m.server_id = ?'
+    );
+    $membersStmt->execute([$serverId]);
+    $members = [];
+    foreach ($membersStmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+      if (empty($row['public_key'])) {
+        continue;
+      }
+      $members[] = [
+        'userId' => (int) $row['user_id'],
+        'publicKey' => $row['public_key'],
+      ];
+    }
+
+    $response->getBody()->write(json_encode([
+      'status' => 'success',
+      'channelId' => $channelId,
+      'holders' => $holders,
+      'members' => $members,
     ]));
     return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
   }
@@ -512,8 +647,10 @@ class ServerController extends Routes {
         )->execute([$username, $userId, $serverId]);
       }
 
+      $this->ensureMemberAliasColumns($pdo);
       $stmt = $pdo->prepare(
         "SELECT m.member_id, m.member_name, m.user_id, m.status, m.joined_at,
+                m.alias_name, m.alias_pic,
                 u.user_name, u.user_pic
          FROM members m
          INNER JOIN users u ON u.user_id = m.user_id
@@ -521,7 +658,7 @@ class ServerController extends Routes {
          ORDER BY
            CASE WHEN m.user_id = ? THEN 0 ELSE 1 END,
            CASE WHEN COALESCE(m.status, 'offline') = 'offline' THEN 1 ELSE 0 END,
-           COALESCE(m.member_name, u.user_name) ASC"
+           COALESCE(NULLIF(m.alias_name, ''), m.member_name, u.user_name) ASC"
       );
       $stmt->execute([$serverId, $ownerId]);
       $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -530,7 +667,12 @@ class ServerController extends Routes {
       foreach ($rows as $row) {
         $memberUserId = (int) $row['user_id'];
         $isOwner = $memberUserId === $ownerId;
-        $displayName = $row['member_name'] ?: $row['user_name'];
+        $aliasName = trim((string) ($row['alias_name'] ?? ''));
+        $displayName = $aliasName !== '' ? $aliasName : ($row['member_name'] ?: $row['user_name']);
+        $avatar = trim((string) ($row['alias_pic'] ?? ''));
+        if ($avatar === '') {
+          $avatar = $row['user_pic'] ?? '';
+        }
         $status = strtolower((string) ($row['status'] ?: 'offline'));
         if (!in_array($status, ['online', 'idle', 'dnd', 'offline'], true)) {
           $status = 'offline';
@@ -541,9 +683,11 @@ class ServerController extends Routes {
         $members[] = [
           'memberId' => (string) $row['member_id'],
           'memberName' => $displayName,
+          'aliasName' => $aliasName !== '' ? $aliasName : null,
           'userId' => $memberUserId,
           'username' => $row['user_name'],
-          'userPic' => $row['user_pic'] ?? '',
+          'userPic' => $avatar,
+          'aliasPic' => trim((string) ($row['alias_pic'] ?? '')) ?: null,
           'status' => $status,
           'roles' => $roles,
           'joinedAt' => $row['joined_at'],
@@ -562,6 +706,53 @@ class ServerController extends Routes {
       $response->getBody()->write(json_encode(['error' => 'Failed to fetch server members']));
       return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
     }
+  }
+
+  public function updateMyMemberProfile(Request $request, Response $response, $args): Response
+  {
+    $userId = AuthService::getUserId();
+    if (!$userId) {
+      $response->getBody()->write(json_encode(['error' => 'Not authenticated']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(401);
+    }
+
+    $serverId = (int) $args['serverId'];
+    $body = $request->getParsedBody() ?? [];
+    $aliasName = trim((string) ($body['aliasName'] ?? ''));
+    $aliasPic = trim((string) ($body['aliasPic'] ?? ''));
+
+    if (strlen($aliasName) > 64) {
+      $response->getBody()->write(json_encode(['error' => 'Alias must be 64 characters or less']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+    }
+    if ($aliasPic !== '' && !filter_var($aliasPic, FILTER_VALIDATE_URL)) {
+      $response->getBody()->write(json_encode(['error' => 'Alias avatar must be a valid URL']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+    }
+
+    $pdo = $this->dbService->getConnection();
+    $this->ensureMemberAliasColumns($pdo);
+
+    if (!$this->userIsServerMember($pdo, $serverId, $userId)) {
+      $response->getBody()->write(json_encode(['error' => 'Not a member of this server']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
+    }
+
+    $pdo->prepare(
+      'UPDATE members SET alias_name = ?, alias_pic = ? WHERE server_id = ? AND user_id = ?'
+    )->execute([
+      $aliasName !== '' ? $aliasName : null,
+      $aliasPic !== '' ? $aliasPic : null,
+      $serverId,
+      $userId,
+    ]);
+
+    $response->getBody()->write(json_encode([
+      'status' => 'success',
+      'aliasName' => $aliasName !== '' ? $aliasName : null,
+      'aliasPic' => $aliasPic !== '' ? $aliasPic : null,
+    ]));
+    return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
   }
 
   public function joinServer(Request $request, Response $response, $args) {
@@ -989,6 +1180,63 @@ class ServerController extends Routes {
       $stmt->execute(['channels', $name]);
       if ((int) $stmt->fetchColumn() === 0) {
         $pdo->exec('ALTER TABLE channels ADD COLUMN `' . $name . '` ' . $definition);
+      }
+    }
+  }
+
+  private function ensureEphemeralColumn(PDO $pdo): void
+  {
+    $stmt = $pdo->prepare(
+      'SELECT COUNT(*) FROM information_schema.COLUMNS
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?'
+    );
+    $stmt->execute(['channels', 'ephemeral_ttl_seconds']);
+    if ((int) $stmt->fetchColumn() === 0) {
+      $pdo->exec('ALTER TABLE channels ADD COLUMN `ephemeral_ttl_seconds` INT NOT NULL DEFAULT 0');
+    }
+  }
+
+  private function ensureKeyShareTable(PDO $pdo): void
+  {
+    $pdo->exec(
+      'CREATE TABLE IF NOT EXISTS channel_key_shares (
+        share_id BIGINT(64) AUTO_INCREMENT PRIMARY KEY,
+        channel_id BIGINT(64) NOT NULL,
+        user_id BIGINT(64) NOT NULL,
+        wrapped_key TEXT NOT NULL,
+        created_by_user_id BIGINT(64) NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY uniq_channel_user_share (channel_id, user_id),
+        KEY idx_cks_channel (channel_id)
+      )'
+    );
+  }
+
+  private function ensureUserCryptoColumns(PDO $pdo): void
+  {
+    $stmt = $pdo->prepare(
+      'SELECT COUNT(*) FROM information_schema.COLUMNS
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?'
+    );
+    $stmt->execute(['users', 'public_key']);
+    if ((int) $stmt->fetchColumn() === 0) {
+      $pdo->exec('ALTER TABLE users ADD COLUMN `public_key` TEXT NULL');
+    }
+  }
+
+  private function ensureMemberAliasColumns(PDO $pdo): void
+  {
+    foreach ([
+      'alias_name' => 'VARCHAR(64) NULL',
+      'alias_pic' => 'VARCHAR(512) NULL',
+    ] as $name => $definition) {
+      $stmt = $pdo->prepare(
+        'SELECT COUNT(*) FROM information_schema.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?'
+      );
+      $stmt->execute(['members', $name]);
+      if ((int) $stmt->fetchColumn() === 0) {
+        $pdo->exec('ALTER TABLE members ADD COLUMN `' . $name . '` ' . $definition);
       }
     }
   }

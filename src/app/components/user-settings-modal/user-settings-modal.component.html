@@ -37,6 +37,14 @@
       >
         Appearance
       </button>
+      <button
+        type="button"
+        class="settings-tab"
+        [class.settings-tab--active]="activeTab() === 'privacy'"
+        (click)="setTab('privacy')"
+      >
+        Privacy
+      </button>
     </div>
 
     @if (activeTab() === 'profile') {
@@ -531,6 +539,93 @@
             Done
           </button>
         </div>
+      </div>
+    }
+
+    @if (activeTab() === 'privacy') {
+      <div class="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+        <div class="rounded-lg border border-discord-border bg-discord-medium/40 p-4 space-y-3">
+          <h4 class="text-sm font-semibold text-discord-text-lighter">End-to-end encryption</h4>
+          <p class="text-sm text-discord-text-muted">
+            Your ECDH identity key stays on this device. Phantom channels use client-held AES keys wrapped for each member — the server never receives plaintext channel keys.
+          </p>
+        </div>
+
+        <div class="space-y-3">
+          <h4 class="text-sm font-semibold text-discord-text-muted uppercase tracking-wider">Direct message privacy</h4>
+          <div class="space-y-2">
+            @for (option of dmPolicyOptions; track option.id) {
+              <label class="flex items-start gap-3 p-3 rounded-md bg-discord-medium cursor-pointer hover:bg-discord-hover">
+                <input
+                  type="radio"
+                  class="mt-1"
+                  name="dmPolicy"
+                  [value]="option.id"
+                  [checked]="dmPolicy() === option.id"
+                  (change)="dmPolicy.set(option.id)"
+                />
+                <span>
+                  <span class="block text-discord-text-light font-medium">{{ option.label }}</span>
+                  <span class="block text-xs text-discord-text-muted">{{ option.help }}</span>
+                </span>
+              </label>
+            }
+          </div>
+          <button
+            type="button"
+            class="px-4 py-2 rounded-md bg-discord-blue hover:bg-discord-blue-dark text-white text-sm font-medium disabled:opacity-50"
+            [disabled]="dmBusy()"
+            (click)="saveDmPolicy()"
+          >
+            {{ dmBusy() ? 'Saving…' : 'Save DM policy' }}
+          </button>
+        </div>
+
+        @if (dmPolicy() === 'allowlist') {
+          <div class="space-y-3">
+            <h4 class="text-sm font-semibold text-discord-text-muted uppercase tracking-wider">DM allowlist</h4>
+            <div class="flex gap-2">
+              <input
+                type="text"
+                class="flex-1 px-3 py-2 rounded-md bg-discord-dark border border-discord-border text-discord-text-light"
+                placeholder="Username"
+                [ngModel]="dmAllowUsername()"
+                (ngModelChange)="dmAllowUsername.set($event)"
+                (keydown.enter)="addAllowlistUser()"
+              />
+              <button
+                type="button"
+                class="px-3 py-2 rounded-md bg-discord-medium hover:bg-discord-hover text-discord-text-light text-sm"
+                (click)="addAllowlistUser()"
+              >
+                Add
+              </button>
+            </div>
+            <div class="space-y-2">
+              @for (entry of dmAllowlist(); track entry.id) {
+                <div class="flex items-center justify-between p-2 rounded-md bg-discord-medium">
+                  <span class="text-discord-text-light">&#64;{{ entry.username }}</span>
+                  <button
+                    type="button"
+                    class="text-xs text-red-400 hover:text-red-300"
+                    (click)="removeAllowlistUser(entry.id)"
+                  >
+                    Remove
+                  </button>
+                </div>
+              } @empty {
+                <p class="text-sm text-discord-text-muted">No one on your allowlist yet.</p>
+              }
+            </div>
+          </div>
+        }
+
+        @if (error()) {
+          <p class="text-sm text-red-400">{{ error() }}</p>
+        }
+        @if (success()) {
+          <p class="text-sm text-emerald-400">{{ success() }}</p>
+        }
       </div>
     }
   </div>

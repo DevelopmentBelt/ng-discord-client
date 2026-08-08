@@ -21,6 +21,11 @@ class UserController extends Routes
     $this->app->post('/api/users/reset-password', [$this, 'resetPassword']);
     $this->app->get('/api/users/me', [$this, 'me']);
     $this->app->put('/api/users/me', [$this, 'updateProfile']);
+    $this->app->put('/api/users/me/public-key', [$this, 'publishPublicKey']);
+    $this->app->put('/api/users/me/dm-privacy', [$this, 'updateDmPrivacy']);
+    $this->app->get('/api/users/me/dm-allowlist', [$this, 'listDmAllowlist']);
+    $this->app->post('/api/users/me/dm-allowlist', [$this, 'addDmAllowlist']);
+    $this->app->delete('/api/users/me/dm-allowlist/{targetUserId}', [$this, 'removeDmAllowlist']);
     $this->app->get('/api/users/search', [$this, 'search']);
   }
 
@@ -369,6 +374,129 @@ class UserController extends Routes
     ]);
   }
 
+  public function publishPublicKey(Request $request, Response $response, $args): Response
+  {
+    $userId = AuthService::getUserId();
+    if (!$userId) {
+      return $this->json($response, ['status' => 'error', 'message' => 'Not authenticated'], 401);
+    }
+
+    $body = $request->getParsedBody() ?? [];
+    $publicKey = trim((string) ($body['publicKey'] ?? ''));
+    if ($publicKey === '' || strlen($publicKey) < 80 || strlen($publicKey) > 2048) {
+      return $this->json($response, ['status' => 'error', 'message' => 'Invalid public key'], 400);
+    }
+
+    $pdo = $this->dbService->getConnection();
+    $this->ensureCryptoAndDmColumns($pdo);
+    $pdo->prepare('UPDATE users SET public_key = ? WHERE user_id = ?')->execute([$publicKey, $userId]);
+
+    $user = AuthService::loadUser($pdo, $userId);
+    return $this->json($response, [
+      'status' => 'success',
+      'user' => $user ? AuthService::userToArray($user) : null,
+    ]);
+  }
+
+  public function updateDmPrivacy(Request $request, Response $response, $args): Response
+  {
+    $userId = AuthService::getUserId();
+    if (!$userId) {
+      return $this->json($response, ['status' => 'error', 'message' => 'Not authenticated'], 401);
+    }
+
+    $body = $request->getParsedBody() ?? [];
+    $policy = trim((string) ($body['dmPolicy'] ?? 'allowlist'));
+    $allowed = ['everyone', 'mutual_server', 'allowlist', 'nobody'];
+    if (!in_array($policy, $allowed, true)) {
+      return $this->json($response, ['status' => 'error', 'message' => 'Invalid DM policy'], 400);
+    }
+
+    $pdo = $this->dbService->getConnection();
+    $this->ensureCryptoAndDmColumns($pdo);
+    $pdo->prepare('UPDATE users SET dm_policy = ? WHERE user_id = ?')->execute([$policy, $userId]);
+
+    $user = AuthService::loadUser($pdo, $userId);
+    return $this->json($response, [
+      'status' => 'success',
+      'message' => 'DM privacy updated',
+      'user' => $user ? AuthService::userToArray($user) : null,
+    ]);
+  }
+
+  public function listDmAllowlist(Request $request, Response $response, $args): Response
+  {
+    $userId = AuthService::getUserId();
+    if (!$userId) {
+      return $this->json($response, ['status' => 'error', 'message' => 'Not authenticated'], 401);
+    }
+
+    $pdo = $this->dbService->getConnection();
+    $this->ensureDmAllowlistTable($pdo);
+    $stmt = $pdo->prepare(
+      'SELECT a.allowed_user_id, u.user_name, u.user_pic
+       FROM dm_allowlist a
+       INNER JOIN users u ON u.user_id = a.allowed_user_id
+       WHERE a.user_id = ?
+       ORDER BY u.user_name ASC'
+    );
+    $stmt->execute([$userId]);
+    $rows = [];
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+      $rows[] = [
+        'id' => (int) $row['allowed_user_id'],
+        'username' => $row['user_name'],
+        'userPic' => $row['user_pic'] ?? '',
+      ];
+    }
+    return $this->json($response, ['status' => 'success', 'allowlist' => $rows]);
+  }
+
+  public function addDmAllowlist(Request $request, Response $response, $args): Response
+  {
+    $userId = AuthService::getUserId();
+    if (!$userId) {
+      return $this->json($response, ['status' => 'error', 'message' => 'Not authenticated'], 401);
+    }
+
+    $body = $request->getParsedBody() ?? [];
+    $targetUserId = isset($body['userId']) ? (int) $body['userId'] : 0;
+    $username = trim((string) ($body['username'] ?? ''));
+    $pdo = $this->dbService->getConnection();
+    $this->ensureDmAllowlistTable($pdo);
+
+    if ($targetUserId <= 0 && $username !== '') {
+      $lookup = $pdo->prepare('SELECT user_id FROM users WHERE user_name = ? LIMIT 1');
+      $lookup->execute([$username]);
+      $targetUserId = (int) $lookup->fetchColumn();
+    }
+    if ($targetUserId <= 0 || $targetUserId === $userId) {
+      return $this->json($response, ['status' => 'error', 'message' => 'Valid user required'], 400);
+    }
+
+    $pdo->prepare(
+      'INSERT IGNORE INTO dm_allowlist (user_id, allowed_user_id) VALUES (?, ?)'
+    )->execute([$userId, $targetUserId]);
+
+    return $this->json($response, ['status' => 'success']);
+  }
+
+  public function removeDmAllowlist(Request $request, Response $response, $args): Response
+  {
+    $userId = AuthService::getUserId();
+    if (!$userId) {
+      return $this->json($response, ['status' => 'error', 'message' => 'Not authenticated'], 401);
+    }
+
+    $targetUserId = (int) $args['targetUserId'];
+    $pdo = $this->dbService->getConnection();
+    $this->ensureDmAllowlistTable($pdo);
+    $pdo->prepare('DELETE FROM dm_allowlist WHERE user_id = ? AND allowed_user_id = ?')
+      ->execute([$userId, $targetUserId]);
+
+    return $this->json($response, ['status' => 'success']);
+  }
+
   public function search(Request $request, Response $response, $args): Response
   {
     $userId = AuthService::getUserId();
@@ -444,6 +572,36 @@ class UserController extends Routes
         $pdo->exec('ALTER TABLE users ADD COLUMN `' . $name . '` ' . $definition);
       }
     }
+    $this->ensureCryptoAndDmColumns($pdo);
+  }
+
+  private function ensureCryptoAndDmColumns(PDO $pdo): void
+  {
+    foreach ([
+      'public_key' => 'TEXT NULL',
+      'dm_policy' => "VARCHAR(32) NOT NULL DEFAULT 'allowlist'",
+    ] as $name => $definition) {
+      $stmt = $pdo->prepare(
+        'SELECT COUNT(*) FROM information_schema.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?'
+      );
+      $stmt->execute(['users', $name]);
+      if ((int) $stmt->fetchColumn() === 0) {
+        $pdo->exec('ALTER TABLE users ADD COLUMN `' . $name . '` ' . $definition);
+      }
+    }
+  }
+
+  private function ensureDmAllowlistTable(PDO $pdo): void
+  {
+    $pdo->exec(
+      'CREATE TABLE IF NOT EXISTS dm_allowlist (
+        user_id BIGINT(64) NOT NULL,
+        allowed_user_id BIGINT(64) NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (user_id, allowed_user_id)
+      )'
+    );
   }
 
   private function json(Response $response, array $payload, int $status = 200): Response

@@ -13,7 +13,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgClass } from '@angular/common';
-import { take } from 'rxjs';
+import { firstValueFrom, take } from 'rxjs';
 import { SidebarComponent } from '../../sidebar/sidebar.component';
 import { Category } from '../../../models/channel/category';
 import { Channel } from '../../../models/channel/channel';
@@ -90,7 +90,8 @@ export class ChannelSidebarComponent implements OnInit {
       categoryId: channel.categoryId,
       topic: channel.topic,
       nsfw: !!channel.nsfw,
-      isPhantom: !!channel.isPhantom
+      isPhantom: !!channel.isPhantom,
+      ephemeralTtlSeconds: channel.ephemeralTtlSeconds || 0
     };
   });
 
@@ -168,13 +169,16 @@ export class ChannelSidebarComponent implements OnInit {
       return;
     }
 
+    const wantPhantom = !!channelData.isPhantom;
     const payload: Partial<Channel> = {
       channelName: channelData.name,
       categoryId: Number(channelData.categoryId || channelData.parentId || this.defaultCategoryId() || 0),
       type: channelData.type || 'text',
       topic: channelData.topic,
       nsfw: !!channelData.nsfw,
-      isPhantom: !!channelData.isPhantom,
+      // Phantom key material is distributed client-side after create/update
+      isPhantom: false,
+      ephemeralTtlSeconds: Number((channelData as any).ephemeralTtlSeconds || 0),
       slowmode: channelData.slowmode,
       userLimit: channelData.userLimit,
       bitrate: channelData.bitrate
@@ -188,28 +192,45 @@ export class ChannelSidebarComponent implements OnInit {
     this.channelModalSaving.set(true);
     const editing = this.isEditingChannel();
     const target = this.channelModalTarget();
+    const wasPhantom = !!target?.isPhantom;
 
     const request$ = editing && target
       ? this.serverWebService.updateChannel(String(server.serverId), target.channelId, payload)
       : this.serverWebService.createChannel(String(server.serverId), payload);
 
     request$.pipe(take(1)).subscribe({
-      next: (resp) => {
-        if (target?.channelId) {
-          this.phantomKeys.clear(target.channelId);
+      next: async (resp) => {
+        const channelId = Number(resp?.channelId || target?.channelId || 0);
+        try {
+          if (channelId && wantPhantom && !wasPhantom) {
+            await this.phantomKeys.enableAndDistribute(server.serverId, channelId);
+          } else if (channelId && !wantPhantom && wasPhantom) {
+            await firstValueFrom(
+              this.serverWebService.disablePhantomChannel(String(server.serverId), channelId).pipe(take(1))
+            );
+            this.phantomKeys.clear(channelId);
+          } else if (channelId && wantPhantom && wasPhantom) {
+            await this.phantomKeys.syncShares(server.serverId, channelId);
+          }
+        } catch (err: any) {
+          this.channelModalSaving.set(false);
+          this.alertService.error(
+            'E2EE setup failed',
+            err?.error?.message || 'Channel saved, but encryption key distribution failed.'
+          );
+          this.reloadChannels(String(server.serverId), channelId);
+          return;
         }
-        if (resp?.channelId) {
-          this.phantomKeys.clear(resp.channelId);
-        }
+
         this.channelModalSaving.set(false);
         this.closeChannelModal();
         this.alertService.success(
           editing ? 'Channel updated' : 'Channel created',
-          editing
-            ? `#${payload.channelName} settings saved.`
-            : `#${payload.channelName} is ready.`
+          wantPhantom
+            ? `#${payload.channelName} is Phantom with true E2EE.`
+            : `#${payload.channelName} settings saved.`
         );
-        this.reloadChannels(String(server.serverId), resp?.channelId || target?.channelId);
+        this.reloadChannels(String(server.serverId), channelId);
       },
       error: (err) => {
         this.channelModalSaving.set(false);

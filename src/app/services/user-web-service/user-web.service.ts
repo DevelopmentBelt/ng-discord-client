@@ -67,4 +67,24 @@ export class UserWebService {
   }): Observable<AuthResponse> {
     return this.serverConnectivityService.sendPutReq(`${this.API_URL}/me`, profile, {});
   }
+
+  public publishPublicKey(publicKey: string): Observable<AuthResponse> {
+    return this.serverConnectivityService.sendPutReq(`${this.API_URL}/me/public-key`, { publicKey }, {});
+  }
+
+  public updateDmPrivacy(dmPolicy: string): Observable<AuthResponse> {
+    return this.serverConnectivityService.sendPutReq(`${this.API_URL}/me/dm-privacy`, { dmPolicy }, {});
+  }
+
+  public listDmAllowlist(): Observable<{ status: string; allowlist: Array<{ id: number; username: string; userPic: string }> }> {
+    return this.serverConnectivityService.sendGetRequest(`${this.API_URL}/me/dm-allowlist`, {});
+  }
+
+  public addDmAllowlist(username: string): Observable<{ status: string }> {
+    return this.serverConnectivityService.sendPostReq(`${this.API_URL}/me/dm-allowlist`, { username }, {});
+  }
+
+  public removeDmAllowlist(userId: number): Observable<{ status: string }> {
+    return this.serverConnectivityService.sendDeleteRequest(`${this.API_URL}/me/dm-allowlist/${userId}`, {});
+  }
 }

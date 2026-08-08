@@ -51,6 +51,8 @@ class AuthService
       'profileCard' => $user->getProfileCard(),
       'avatarEffect' => $user->getAvatarEffect(),
       'emailVerified' => $user->getEmailVerified(),
+      'publicKey' => $user->getPublicKey() ?? '',
+      'dmPolicy' => $user->getDmPolicy(),
     ];
   }
 

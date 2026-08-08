@@ -17,8 +17,9 @@ import {
   PresenceStatus,
   ThemeColorKey
 } from '../../models/user/app-theme';
+import { DmPolicy } from '../../models/user/user';
 
-type SettingsTab = 'profile' | 'appearance';
+type SettingsTab = 'profile' | 'appearance' | 'privacy';
 
 @Component({
   selector: 'app-user-settings-modal',
@@ -54,6 +55,17 @@ export class UserSettingsModalComponent implements OnInit {
   saving = signal(false);
   error = signal('');
   success = signal('');
+  dmPolicy = signal<DmPolicy>('allowlist');
+  dmAllowlist = signal<Array<{ id: number; username: string; userPic: string }>>([]);
+  dmAllowUsername = signal('');
+  dmBusy = signal(false);
+
+  readonly dmPolicyOptions: Array<{ id: DmPolicy; label: string; help: string }> = [
+    { id: 'allowlist', label: 'Allowlist only', help: 'Only people you approve can DM you (default).' },
+    { id: 'mutual_server', label: 'Mutual communities', help: 'People who share a community with you.' },
+    { id: 'everyone', label: 'Everyone', help: 'Anyone with your username can DM you.' },
+    { id: 'nobody', label: 'Nobody', help: 'Block all new DM requests.' }
+  ];
 
   readonly cardClass = computed(() => `profile-card--${this.profileCard()}`);
   readonly effectClass = computed(() => `avatar-effect--${this.avatarEffect()}`);
@@ -89,12 +101,66 @@ export class UserSettingsModalComponent implements OnInit {
     this.presenceStatus.set((user?.presenceStatus as PresenceStatus) || 'online');
     this.profileCard.set((user?.profileCard as ProfileCardId) || 'classic');
     this.avatarEffect.set((user?.avatarEffect as AvatarEffectId) || 'none');
+    this.dmPolicy.set((user?.dmPolicy as DmPolicy) || 'allowlist');
   }
 
   setTab(tab: SettingsTab): void {
     this.activeTab.set(tab);
     this.error.set('');
     this.success.set('');
+    if (tab === 'privacy') {
+      this.loadDmAllowlist();
+    }
+  }
+
+  loadDmAllowlist(): void {
+    this.userWebService.listDmAllowlist().pipe(take(1)).subscribe({
+      next: (resp) => this.dmAllowlist.set(resp?.allowlist || []),
+      error: () => this.dmAllowlist.set([])
+    });
+  }
+
+  saveDmPolicy(): void {
+    this.dmBusy.set(true);
+    this.userWebService.updateDmPrivacy(this.dmPolicy()).pipe(take(1)).subscribe({
+      next: (resp) => {
+        this.dmBusy.set(false);
+        if (resp?.user) {
+          this.authService.setUser(resp.user);
+        }
+        this.success.set('DM privacy updated');
+      },
+      error: (err) => {
+        this.dmBusy.set(false);
+        this.error.set(err?.error?.message || 'Could not update DM privacy');
+      }
+    });
+  }
+
+  addAllowlistUser(): void {
+    const username = this.dmAllowUsername().trim();
+    if (!username) {
+      return;
+    }
+    this.dmBusy.set(true);
+    this.userWebService.addDmAllowlist(username).pipe(take(1)).subscribe({
+      next: () => {
+        this.dmBusy.set(false);
+        this.dmAllowUsername.set('');
+        this.loadDmAllowlist();
+        this.success.set(`Added @${username} to your DM allowlist`);
+      },
+      error: (err) => {
+        this.dmBusy.set(false);
+        this.error.set(err?.error?.message || 'Could not add user');
+      }
+    });
+  }
+
+  removeAllowlistUser(userId: number): void {
+    this.userWebService.removeDmAllowlist(userId).pipe(take(1)).subscribe({
+      next: () => this.loadDmAllowlist()
+    });
   }
 
   selectCard(id: ProfileCardId): void {

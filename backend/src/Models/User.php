@@ -20,6 +20,8 @@ class User
   private string $avatar_effect = 'none';
   private ?string $email;
   private bool $email_verified;
+  private ?string $public_key = null;
+  private string $dm_policy = 'allowlist';
 
   private PDO $pdo;
 
@@ -49,6 +51,8 @@ class User
         $this->avatar_effect = $row['avatar_effect'] ?? 'none';
         $this->email = $row['email'] ?? null;
         $this->email_verified = (bool)($row['email_verified'] ?? false);
+        $this->public_key = $row['public_key'] ?? null;
+        $this->dm_policy = $row['dm_policy'] ?? 'allowlist';
       }
     }
   }
@@ -120,5 +124,13 @@ class User
 
   public function getEmailVerified(): bool {
     return $this->email_verified;
+  }
+
+  public function getPublicKey(): ?string {
+    return $this->public_key;
+  }
+
+  public function getDmPolicy(): string {
+    return $this->dm_policy ?: 'allowlist';
   }
 }

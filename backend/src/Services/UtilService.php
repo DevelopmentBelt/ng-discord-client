@@ -35,6 +35,7 @@ class UtilService
       'channelId' => $channel_id,
       'isAnonymous' => $isAnonymous,
       'isEncrypted' => $isEncrypted,
+      'expiresAt' => $msg['expires_at'] ?? null,
       'author' => $author,
     ];
   }
