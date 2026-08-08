@@ -18,12 +18,19 @@ export class MessageWebService {
     return this.http.get<Message[]>(`${this.baseUrl}/api/messages/${serverId}/${channelId}`, this.creds);
   }
 
-  postMessage(user: User, channelId: string, message: Message): Observable<any> {
+  postMessage(
+    user: User,
+    channelId: string,
+    message: Message,
+    options: { anonymous?: boolean; encrypted?: boolean } = {}
+  ): Observable<any> {
     return this.http.post(`${this.baseUrl}/api/messages/${channelId}`, {
       postedByMemberId: user.id,
       message: message.rawText,
       attachments: [],
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      anonymous: !!options.anonymous || !!message.isAnonymous,
+      encrypted: !!options.encrypted || !!message.isEncrypted
     }, this.creds);
   }
 

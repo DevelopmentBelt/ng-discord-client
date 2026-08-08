@@ -13,6 +13,10 @@ export interface Message {
   channelId?: number | string;
   conversationId?: number | string;
   hidden?: boolean;
+  isAnonymous?: boolean;
+  isEncrypted?: boolean;
+  /** True when ciphertext could not be decrypted locally */
+  decryptFailed?: boolean;
 }
 
 export interface Attachment {

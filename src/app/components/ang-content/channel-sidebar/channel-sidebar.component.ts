@@ -51,6 +51,9 @@ export class ChannelSidebarComponent implements OnInit {
 
   showServerOverview: WritableSignal<boolean> = signal(false);
   showServerSettings: WritableSignal<boolean> = signal(false);
+  showPhantomPassphrase: WritableSignal<boolean> = signal(false);
+  phantomPassphraseReveal = signal('');
+  phantomChannelName = signal('');
   dmUsername = signal('');
   dmError = signal('');
   dmLoading = signal(false);
@@ -87,6 +90,75 @@ export class ChannelSidebarComponent implements OnInit {
     this.selectedChannelChange.emit(chan);
     this.selectedConversation.set(null);
     this.selectedConversationChange.emit(null);
+  }
+
+  togglePhantom(chan: Channel): void {
+    const server = this.selectedServer();
+    if (!server?.serverId || server.serverId === 'home') {
+      return;
+    }
+
+    if (chan.isPhantom) {
+      this.serverWebService.disablePhantomChannel(String(server.serverId), chan.channelId).pipe(take(1)).subscribe({
+        next: () => {
+          this.patchChannel(chan.channelId, { isPhantom: false, phantomSalt: null });
+          this.alertService.success('Phantom disabled', `#${chan.channelName} is a normal channel again.`);
+        },
+        error: (err) => {
+          this.alertService.error('Could not disable Phantom', err?.error?.message || 'Only the server owner can change this.');
+        }
+      });
+      return;
+    }
+
+    this.serverWebService.enablePhantomChannel(String(server.serverId), chan.channelId).pipe(take(1)).subscribe({
+      next: (resp) => {
+        this.patchChannel(chan.channelId, {
+          isPhantom: true,
+          phantomSalt: resp.phantomSalt
+        });
+        this.phantomChannelName.set(chan.channelName);
+        this.phantomPassphraseReveal.set(resp.passphrase);
+        this.showPhantomPassphrase.set(true);
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.alertService.error('Could not enable Phantom', err?.error?.message || 'Only the server owner can enable Phantom mode.');
+      }
+    });
+  }
+
+  closePhantomPassphrase(): void {
+    this.showPhantomPassphrase.set(false);
+    this.phantomPassphraseReveal.set('');
+    this.phantomChannelName.set('');
+  }
+
+  copyPhantomPassphrase(): void {
+    const value = this.phantomPassphraseReveal();
+    if (!value || !navigator?.clipboard) {
+      return;
+    }
+    void navigator.clipboard.writeText(value);
+    this.alertService.success('Copied', 'Phantom passphrase copied to clipboard.');
+  }
+
+  private patchChannel(channelId: number, patch: Partial<Channel>): void {
+    const nextCategories = this.categories().map((category) => ({
+      ...category,
+      channels: (category.channels || []).map((channel) =>
+        channel.channelId === channelId ? { ...channel, ...patch } : channel
+      )
+    }));
+    this.categories.set(nextCategories);
+
+    const selected = this.selectedChannel();
+    if (selected?.channelId === channelId) {
+      const updated = { ...selected, ...patch };
+      this.selectedChannel.set(updated);
+      this.selectedChannelChange.emit(updated);
+    }
+    this.cdr.markForCheck();
   }
 
   handleConversationSelect(conversation: DmConversation) {

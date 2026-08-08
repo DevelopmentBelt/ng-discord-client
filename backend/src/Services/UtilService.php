@@ -1,26 +1,41 @@
 <?php
 
 namespace App\Services;
+
 class UtilService
 {
   public static function toMessageModel($dbService, $msg)
   {
     $msg_id = $msg['message_id'];
     $channel_id = $msg['channel_id'];
-    $posted_by_user_id = $msg['posted_by_user_id'];
     $raw_text = $msg['raw_text'];
     $timestamp_posted = $msg['timestamp_posted'];
+    $isAnonymous = !empty($msg['is_anonymous']) || empty($msg['posted_by_user_id']);
+    $isEncrypted = !empty($msg['is_encrypted']) || str_starts_with((string) $raw_text, 'PHANTOM1:');
+
+    if ($isAnonymous) {
+      $author = [
+        'userId' => 0,
+        'username' => 'Anonymous',
+        'profilePic' => '',
+      ];
+    } else {
+      $author = [
+        'userId' => (int) $msg['posted_by_user_id'],
+        'username' => $msg['user_name'] ?? 'Unknown',
+        'profilePic' => $msg['user_pic'] ?? '',
+      ];
+    }
+
     return [
       'id' => $msg_id,
       'text' => $raw_text,
       'rawText' => $raw_text,
       'postedTimestamp' => $timestamp_posted,
       'channelId' => $channel_id,
-      'author' => [
-        'userId' => $posted_by_user_id,
-        'username' => $msg['user_name'],
-        'profilePic' => $msg['user_pic']
-      ]
+      'isAnonymous' => $isAnonymous,
+      'isEncrypted' => $isEncrypted,
+      'author' => $author,
     ];
   }
 

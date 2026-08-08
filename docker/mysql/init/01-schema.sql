@@ -68,14 +68,19 @@ CREATE TABLE IF NOT EXISTS `categories` (
 CREATE TABLE IF NOT EXISTS `channels` (
   `channel_id` BIGINT(64) AUTO_INCREMENT PRIMARY KEY,
   `category_id` BIGINT(64),
-  `channel_name` VARCHAR(255)
+  `channel_name` VARCHAR(255),
+  `is_phantom` TINYINT(1) NOT NULL DEFAULT 0,
+  `phantom_salt` VARCHAR(64) NULL,
+  `phantom_verifier` VARCHAR(128) NULL
 );
 
 CREATE TABLE IF NOT EXISTS `messages` (
   `message_id` BIGINT(64) AUTO_INCREMENT PRIMARY KEY,
   `channel_id` BIGINT(64),
-  `posted_by_user_id` BIGINT(64),
-  `raw_text` TEXT(1024),
+  `posted_by_user_id` BIGINT(64) NULL,
+  `raw_text` TEXT NOT NULL,
+  `is_anonymous` TINYINT(1) NOT NULL DEFAULT 0,
+  `is_encrypted` TINYINT(1) NOT NULL DEFAULT 0,
   `timestamp_posted` DATETIME
 );
 

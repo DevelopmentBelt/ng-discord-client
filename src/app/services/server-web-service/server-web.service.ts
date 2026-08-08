@@ -139,6 +139,39 @@ export class ServerWebService {
     return this.serverService.sendPatchReq(`servers/${serverId}/channels/${channelId}`, updates, {});
   }
 
+  enablePhantomChannel(serverId: string, channelId: number): Observable<{
+    status: string;
+    message?: string;
+    channelId: number;
+    isPhantom: boolean;
+    phantomSalt: string;
+    passphrase: string;
+  }> {
+    return this.serverService.sendPostReq(`servers/${serverId}/channels/${channelId}/phantom/enable`, {}, {});
+  }
+
+  disablePhantomChannel(serverId: string, channelId: number): Observable<{
+    status: string;
+    message?: string;
+    channelId: number;
+    isPhantom: boolean;
+  }> {
+    return this.serverService.sendPostReq(`servers/${serverId}/channels/${channelId}/phantom/disable`, {}, {});
+  }
+
+  verifyPhantomChannel(serverId: string, channelId: number, passphrase: string): Observable<{
+    status: string;
+    message?: string;
+    channelId: number;
+    phantomSalt: string;
+  }> {
+    return this.serverService.sendPostReq(
+      `servers/${serverId}/channels/${channelId}/phantom/verify`,
+      { passphrase },
+      {}
+    );
+  }
+
   /**
    * Delete a channel
    */

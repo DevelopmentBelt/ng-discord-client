@@ -15,6 +15,9 @@ class ServerController extends Routes {
     $this->app->get('/api/servers/', [$this, 'getServersForUser']);
     $this->app->get('/api/servers/public/', [$this, 'getPublicServers']);
     $this->app->get('/api/servers/{serverId}/channels', [$this, 'getServerChannels']);
+    $this->app->post('/api/servers/{serverId}/channels/{channelId}/phantom/enable', [$this, 'enablePhantomChannel']);
+    $this->app->post('/api/servers/{serverId}/channels/{channelId}/phantom/disable', [$this, 'disablePhantomChannel']);
+    $this->app->post('/api/servers/{serverId}/channels/{channelId}/phantom/verify', [$this, 'verifyPhantomChannel']);
     $this->app->get('/api/servers/{serverId}/members', [$this, 'getServerMembers']);
     $this->app->post('/api/servers/', [$this, 'createServer']);
     $this->app->post('/api/servers/{serverId}/join', [$this, 'joinServer']);
@@ -128,6 +131,7 @@ class ServerController extends Routes {
     try {
       $serverId = (int) $args['serverId'];
       $pdo = $this->dbService->getConnection();
+      $this->ensurePhantomChannelColumns($pdo);
 
       $categoryStmt = $pdo->prepare(
         "SELECT category_id, server_id, category_name, category_icon
@@ -150,7 +154,7 @@ class ServerController extends Routes {
       }
 
       $channelStmt = $pdo->prepare(
-        "SELECT channel_id, category_id, channel_name
+        "SELECT channel_id, category_id, channel_name, is_phantom, phantom_salt
          FROM channels
          WHERE category_id = ?
          ORDER BY channel_id ASC"
@@ -165,6 +169,8 @@ class ServerController extends Routes {
             'channelId' => (int) $channel['channel_id'],
             'categoryId' => (int) $channel['category_id'],
             'channelName' => $channel['channel_name'],
+            'isPhantom' => !empty($channel['is_phantom']),
+            'phantomSalt' => $channel['phantom_salt'] ?? null,
           ];
         }
 
@@ -184,6 +190,133 @@ class ServerController extends Routes {
       $response->getBody()->write(json_encode(['error' => 'Failed to fetch server channels']));
       return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
     }
+  }
+
+  public function enablePhantomChannel(Request $request, Response $response, $args): Response
+  {
+    $userId = AuthService::getUserId();
+    if (!$userId) {
+      $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Not authenticated']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(401);
+    }
+
+    $serverId = (int) $args['serverId'];
+    $channelId = (int) $args['channelId'];
+    $pdo = $this->dbService->getConnection();
+    $this->ensurePhantomChannelColumns($pdo);
+
+    if (!$this->userCanManageServer($pdo, $serverId, $userId)) {
+      $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Only server owners/admins can enable Phantom mode']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
+    }
+
+    if (!$this->channelBelongsToServer($pdo, $serverId, $channelId)) {
+      $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Channel not found']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
+    }
+
+    $passphrase = rtrim(strtr(base64_encode(random_bytes(18)), '+/', '-_'), '=');
+    $salt = bin2hex(random_bytes(16));
+    $verifier = hash('sha256', 'verify:' . $passphrase . ':' . $salt);
+
+    $stmt = $pdo->prepare(
+      'UPDATE channels SET is_phantom = 1, phantom_salt = ?, phantom_verifier = ? WHERE channel_id = ?'
+    );
+    $stmt->execute([$salt, $verifier, $channelId]);
+
+    $response->getBody()->write(json_encode([
+      'status' => 'success',
+      'message' => 'Phantom mode enabled. Share the passphrase with members — it is shown only once.',
+      'channelId' => $channelId,
+      'isPhantom' => true,
+      'phantomSalt' => $salt,
+      'passphrase' => $passphrase,
+    ]));
+    return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+  }
+
+  public function disablePhantomChannel(Request $request, Response $response, $args): Response
+  {
+    $userId = AuthService::getUserId();
+    if (!$userId) {
+      $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Not authenticated']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(401);
+    }
+
+    $serverId = (int) $args['serverId'];
+    $channelId = (int) $args['channelId'];
+    $pdo = $this->dbService->getConnection();
+    $this->ensurePhantomChannelColumns($pdo);
+
+    if (!$this->userCanManageServer($pdo, $serverId, $userId)) {
+      $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Only server owners/admins can disable Phantom mode']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
+    }
+
+    if (!$this->channelBelongsToServer($pdo, $serverId, $channelId)) {
+      $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Channel not found']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
+    }
+
+    $stmt = $pdo->prepare(
+      'UPDATE channels SET is_phantom = 0, phantom_salt = NULL, phantom_verifier = NULL WHERE channel_id = ?'
+    );
+    $stmt->execute([$channelId]);
+
+    $response->getBody()->write(json_encode([
+      'status' => 'success',
+      'message' => 'Phantom mode disabled',
+      'channelId' => $channelId,
+      'isPhantom' => false,
+    ]));
+    return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+  }
+
+  public function verifyPhantomChannel(Request $request, Response $response, $args): Response
+  {
+    $userId = AuthService::getUserId();
+    if (!$userId) {
+      $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Not authenticated']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(401);
+    }
+
+    $serverId = (int) $args['serverId'];
+    $channelId = (int) $args['channelId'];
+    $body = $request->getParsedBody() ?? [];
+    $passphrase = trim((string) ($body['passphrase'] ?? ''));
+
+    $pdo = $this->dbService->getConnection();
+    $this->ensurePhantomChannelColumns($pdo);
+
+    if (!$this->channelBelongsToServer($pdo, $serverId, $channelId)) {
+      $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Channel not found']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
+    }
+
+    $stmt = $pdo->prepare(
+      'SELECT is_phantom, phantom_salt, phantom_verifier FROM channels WHERE channel_id = ? LIMIT 1'
+    );
+    $stmt->execute([$channelId]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$row || empty($row['is_phantom'])) {
+      $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Channel is not in Phantom mode']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+    }
+
+    $expected = (string) $row['phantom_verifier'];
+    $actual = hash('sha256', 'verify:' . $passphrase . ':' . $row['phantom_salt']);
+    if (!hash_equals($expected, $actual)) {
+      $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Incorrect Phantom passphrase']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
+    }
+
+    $response->getBody()->write(json_encode([
+      'status' => 'success',
+      'message' => 'Phantom passphrase accepted',
+      'channelId' => $channelId,
+      'phantomSalt' => $row['phantom_salt'],
+    ]));
+    return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
   }
 
   public function getServerMembers(Request $request, Response $response, $args) {
@@ -417,5 +550,43 @@ class ServerController extends Routes {
     // TODO: Implement server archiving functionality
     $response->getBody()->write(json_encode(['message' => 'Archive server functionality not yet implemented']));
     return $response->withHeader('Content-Type', 'application/json')->withStatus(501);
+  }
+
+  private function userCanManageServer(PDO $pdo, int $serverId, int $userId): bool
+  {
+    $stmt = $pdo->prepare('SELECT owner_id FROM servers WHERE server_id = ? LIMIT 1');
+    $stmt->execute([$serverId]);
+    $ownerId = (int) $stmt->fetchColumn();
+    return $ownerId > 0 && $ownerId === $userId;
+  }
+
+  private function channelBelongsToServer(PDO $pdo, int $serverId, int $channelId): bool
+  {
+    $stmt = $pdo->prepare(
+      'SELECT COUNT(*) FROM channels ch
+       JOIN categories cat ON ch.category_id = cat.category_id
+       WHERE ch.channel_id = ? AND cat.server_id = ?'
+    );
+    $stmt->execute([$channelId, $serverId]);
+    return (int) $stmt->fetchColumn() > 0;
+  }
+
+  private function ensurePhantomChannelColumns(PDO $pdo): void
+  {
+    $columns = [
+      'is_phantom' => 'TINYINT(1) NOT NULL DEFAULT 0',
+      'phantom_salt' => 'VARCHAR(64) NULL',
+      'phantom_verifier' => 'VARCHAR(128) NULL',
+    ];
+    foreach ($columns as $name => $definition) {
+      $stmt = $pdo->prepare(
+        'SELECT COUNT(*) FROM information_schema.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?'
+      );
+      $stmt->execute(['channels', $name]);
+      if ((int) $stmt->fetchColumn() === 0) {
+        $pdo->exec('ALTER TABLE channels ADD COLUMN `' . $name . '` ' . $definition);
+      }
+    }
   }
 }

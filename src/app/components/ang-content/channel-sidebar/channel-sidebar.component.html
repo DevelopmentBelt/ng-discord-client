@@ -110,24 +110,34 @@
           </div>
           @for (chan of category.channels; track chan.channelId) {
             <div
-              class="px-2 py-1.5 mx-2 rounded cursor-pointer text-sm text-discord-text hover:bg-discord-hover hover:text-discord-text-light transition-colors duration-100 flex items-center min-w-0 group"
+              class="px-2 py-1.5 mx-2 rounded cursor-pointer text-sm text-discord-text hover:bg-discord-hover hover:text-discord-text-light transition-colors duration-100 flex items-center min-w-0 gap-1 group"
               [ngClass]="{'bg-discord-blue-dark text-discord-text-lighter hover:bg-discord-blue': selectedChannel()?.channelId === chan.channelId}"
               (click)="handleChannelSelect(chan)"
             >
-              <span class="flex-shrink-0 mr-2 font-bold text-base text-discord-text-muted group-hover:text-discord-text-light">#</span>
+              <span
+                class="flex-shrink-0 font-bold text-base"
+                [class.text-violet-300]="chan.isPhantom"
+                [class.text-discord-text-muted]="!chan.isPhantom"
+              >{{ chan.isPhantom ? '∅' : '#' }}</span>
               <span class="flex-1 min-w-0 whitespace-nowrap overflow-hidden text-ellipsis block">{{ chan.channelName }}</span>
-              <div class="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-                <button class="p-1 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-light/50 rounded transition-colors duration-150">
-                  <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
-                  </svg>
-                </button>
-                <button class="p-1 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-light/50 rounded transition-colors duration-150">
-                  <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-                  </svg>
-                </button>
-              </div>
+              @if (chan.isPhantom) {
+                <span class="flex-shrink-0 text-[9px] uppercase tracking-wider text-violet-300 font-semibold">Phantom</span>
+              }
+              <button
+                type="button"
+                class="flex-shrink-0 px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide transition-colors duration-150"
+                [class.bg-violet-600]="!chan.isPhantom"
+                [class.text-white]="!chan.isPhantom"
+                [class.hover:bg-violet-500]="!chan.isPhantom"
+                [class.bg-violet-500/20]="!!chan.isPhantom"
+                [class.text-violet-200]="!!chan.isPhantom"
+                [class.hover:bg-red-500/80]="!!chan.isPhantom"
+                [class.hover:text-white]="!!chan.isPhantom"
+                [title]="chan.isPhantom ? 'Disable Phantom mode' : 'Enable Phantom (anonymous + encrypted)'"
+                (click)="togglePhantom(chan); $event.stopPropagation()"
+              >
+                {{ chan.isPhantom ? 'Off' : 'Phantom' }}
+              </button>
             </div>
           }
         </div>
@@ -142,6 +152,37 @@
     [server]="selectedServer()"
     (closeModal)="closeServerOverview()"
   ></app-server-overview-modal>
+}
+
+@if (showPhantomPassphrase()) {
+  <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" (click)="closePhantomPassphrase()">
+    <div class="bg-discord-lighter border border-violet-500/40 rounded-lg shadow-xl w-full max-w-md p-5" (click)="$event.stopPropagation()">
+      <h3 class="text-lg font-semibold text-discord-text-lighter mb-1">Phantom mode enabled</h3>
+      <p class="text-sm text-discord-text-muted mb-4">
+        <span class="text-violet-300 font-medium">#{{ phantomChannelName() }}</span> is now anonymous &amp; encrypted.
+        Share this passphrase with members — it is shown only once.
+      </p>
+      <div class="flex items-center gap-2 mb-4">
+        <code class="flex-1 px-3 py-2 rounded-md bg-discord-dark text-violet-200 text-sm break-all border border-discord-border">
+          {{ phantomPassphraseReveal() }}
+        </code>
+        <button
+          type="button"
+          class="px-3 py-2 rounded-md bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium"
+          (click)="copyPhantomPassphrase()"
+        >
+          Copy
+        </button>
+      </div>
+      <button
+        type="button"
+        class="w-full px-4 py-2 rounded-md bg-discord-medium hover:bg-discord-hover text-discord-text-light"
+        (click)="closePhantomPassphrase()"
+      >
+        I’ve saved the passphrase
+      </button>
+    </div>
+  </div>
 }
 
 <!-- Server Settings Modal -->

@@ -18,10 +18,12 @@ class MessageController extends Routes {
     $serverId = $args['serverId'];
     $channelId = $args['channelId'];
     $conn = $this->dbService->getConnection();
+    $this->ensurePhantomColumns($conn);
+
     $stmt = $conn->prepare(
       "SELECT m.*, u.user_name, u.user_pic
        FROM messages m
-       JOIN users u ON m.posted_by_user_id = u.user_id
+       LEFT JOIN users u ON m.posted_by_user_id = u.user_id
        JOIN channels ch ON m.channel_id = ch.channel_id
        JOIN categories cat ON ch.category_id = cat.category_id
        WHERE m.channel_id = ? AND cat.server_id = ?
@@ -37,9 +39,8 @@ class MessageController extends Routes {
       }
       $response->getBody()->write(json_encode($msgs, JSON_PRETTY_PRINT));
       return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
-    } else {
-      return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
     }
+    return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
   }
 
   public function postMessage(Request $request, Response $response, $args): Response {
@@ -50,18 +51,17 @@ class MessageController extends Routes {
     }
 
     $body = $request->getParsedBody() ?? [];
-    $rawText = $body['message'] ?? '';
-    $attachments = $body['attachments'] ?? [];
-    // TODO We need to parse the mentioned members from the rawText
+    $rawText = (string) ($body['message'] ?? '');
     $timestampPosted = $body['timestamp'] ?? null;
-    $channelId = $args['channelId'];
+    $channelId = (int) $args['channelId'];
+    $forceAnonymous = !empty($body['anonymous']);
+    $forceEncrypted = !empty($body['encrypted']);
 
-    if (trim((string) $rawText) === '') {
+    if (trim($rawText) === '') {
       $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Message cannot be empty']));
       return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
     }
 
-    // MySQL DATETIME rejects ISO-8601 with T/Z; normalize to Y-m-d H:i:s
     try {
       $timestampPosted = (new \DateTimeImmutable($timestampPosted ?: 'now'))
         ->setTimezone(new \DateTimeZone('UTC'))
@@ -71,24 +71,106 @@ class MessageController extends Routes {
     }
 
     $conn = $this->dbService->getConnection();
+    $this->ensurePhantomColumns($conn);
+
+    $channelStmt = $conn->prepare('SELECT is_phantom FROM channels WHERE channel_id = ? LIMIT 1');
+    $channelStmt->execute([$channelId]);
+    $channel = $channelStmt->fetch(PDO::FETCH_ASSOC);
+    if (!$channel) {
+      $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Channel not found']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
+    }
+
+    $isPhantom = !empty($channel['is_phantom']);
+    $isAnonymous = $isPhantom || $forceAnonymous;
+    $isEncrypted = $isPhantom || $forceEncrypted || str_starts_with($rawText, 'PHANTOM1:');
+
+    if ($isPhantom && !str_starts_with($rawText, 'PHANTOM1:')) {
+      $response->getBody()->write(json_encode([
+        'status' => 'error',
+        'message' => 'Phantom channels only accept encrypted anonymous messages',
+      ]));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+    }
+
+    // Phantom: authenticate to post, but never persist who wrote it.
+    $storedAuthorId = $isAnonymous ? null : $authorId;
+
     $conn->beginTransaction();
-    $stmt = $conn->prepare("INSERT INTO `messages` (channel_id, posted_by_user_id, raw_text, timestamp_posted) VALUES (?, ?, ?, ?)");
-    $success = $stmt->execute([$channelId, $authorId, $rawText, $timestampPosted]);
-    // TODO We need to handle the mentions in the message...
+    $stmt = $conn->prepare(
+      'INSERT INTO messages (channel_id, posted_by_user_id, raw_text, is_anonymous, is_encrypted, timestamp_posted)
+       VALUES (?, ?, ?, ?, ?, ?)'
+    );
+    $success = $stmt->execute([
+      $channelId,
+      $storedAuthorId,
+      $rawText,
+      $isAnonymous ? 1 : 0,
+      $isEncrypted ? 1 : 0,
+      $timestampPosted,
+    ]);
 
     if ($success) {
+      $messageId = (int) $conn->lastInsertId();
       $conn->commit();
-      $response->getBody()->write(json_encode([]));
+      $payload = [
+        'status' => 'success',
+        'message' => [
+          'id' => $messageId,
+          'text' => $rawText,
+          'rawText' => $rawText,
+          'postedTimestamp' => $timestampPosted,
+          'channelId' => $channelId,
+          'isAnonymous' => $isAnonymous,
+          'isEncrypted' => $isEncrypted,
+          'author' => $isAnonymous
+            ? ['userId' => 0, 'username' => 'Anonymous', 'profilePic' => '']
+            : null,
+        ],
+      ];
+      $response->getBody()->write(json_encode($payload));
       return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
-    } else {
-      $conn->rollback();
-      $response->getBody()->write(json_encode([]));
-      return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
     }
+
+    $conn->rollback();
+    $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Failed to send message']));
+    return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
   }
 
   public function deleteMessage(Request $request, Response $response, $args): Response {
-    // TODO We need to delete the message and attachments
     return $response;
+  }
+
+  private function ensurePhantomColumns(PDO $pdo): void
+  {
+    $this->ensureColumn($pdo, 'channels', 'is_phantom', 'TINYINT(1) NOT NULL DEFAULT 0');
+    $this->ensureColumn($pdo, 'channels', 'phantom_salt', 'VARCHAR(64) NULL');
+    $this->ensureColumn($pdo, 'channels', 'phantom_verifier', 'VARCHAR(128) NULL');
+    $this->ensureColumn($pdo, 'messages', 'is_anonymous', 'TINYINT(1) NOT NULL DEFAULT 0');
+    $this->ensureColumn($pdo, 'messages', 'is_encrypted', 'TINYINT(1) NOT NULL DEFAULT 0');
+
+    // Allow anonymous phantom posts without an author id
+    try {
+      $pdo->exec('ALTER TABLE messages MODIFY COLUMN posted_by_user_id BIGINT(64) NULL');
+    } catch (\Throwable $e) {
+      // already nullable or insufficient privileges
+    }
+    try {
+      $pdo->exec('ALTER TABLE messages MODIFY COLUMN raw_text TEXT NOT NULL');
+    } catch (\Throwable $e) {
+      // ignore
+    }
+  }
+
+  private function ensureColumn(PDO $pdo, string $table, string $column, string $definition): void
+  {
+    $stmt = $pdo->prepare(
+      'SELECT COUNT(*) FROM information_schema.COLUMNS
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?'
+    );
+    $stmt->execute([$table, $column]);
+    if ((int) $stmt->fetchColumn() === 0) {
+      $pdo->exec('ALTER TABLE `' . $table . '` ADD COLUMN `' . $column . '` ' . $definition);
+    }
   }
 }
