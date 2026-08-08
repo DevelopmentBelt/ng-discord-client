@@ -18,6 +18,7 @@ import {
   ThemeColorKey
 } from '../../models/user/app-theme';
 import { DmPolicy } from '../../models/user/user';
+import { KeyVaultService } from '../../services/crypto/key-vault.service';
 
 type SettingsTab = 'profile' | 'appearance' | 'privacy';
 
@@ -59,6 +60,12 @@ export class UserSettingsModalComponent implements OnInit {
   dmAllowlist = signal<Array<{ id: number; username: string; userPic: string }>>([]);
   dmAllowUsername = signal('');
   dmBusy = signal(false);
+  vaultPassphrase = signal('');
+  vaultPassphraseConfirm = signal('');
+  vaultBusy = signal(false);
+  vaultStatus = signal('');
+  vaultStatusKind = signal<'ok' | 'err' | ''>('');
+  readonly vaultBackupAt = this.keyVault.serverBackupAt;
 
   readonly dmPolicyOptions: Array<{ id: DmPolicy; label: string; help: string }> = [
     { id: 'allowlist', label: 'Allowlist only', help: 'Only people you approve can DM you (default).' },
@@ -85,7 +92,8 @@ export class UserSettingsModalComponent implements OnInit {
   constructor(
     private authService: AuthService,
     private userWebService: UserWebService,
-    private themePreferences: ThemePreferencesService
+    private themePreferences: ThemePreferencesService,
+    private keyVault: KeyVaultService
   ) {}
 
   ngOnInit(): void {
@@ -108,8 +116,11 @@ export class UserSettingsModalComponent implements OnInit {
     this.activeTab.set(tab);
     this.error.set('');
     this.success.set('');
+    this.vaultStatus.set('');
+    this.vaultStatusKind.set('');
     if (tab === 'privacy') {
       this.loadDmAllowlist();
+      void this.keyVault.refreshServerStatus();
     }
   }
 
@@ -161,6 +172,129 @@ export class UserSettingsModalComponent implements OnInit {
     this.userWebService.removeDmAllowlist(userId).pipe(take(1)).subscribe({
       next: () => this.loadDmAllowlist()
     });
+  }
+
+  private requirePassphrase(options: { confirm?: boolean } = {}): string | null {
+    const passphrase = this.vaultPassphrase().trim();
+    if (!passphrase || passphrase.length < 8) {
+      this.setVaultStatus('Vault passphrase must be at least 8 characters', 'err');
+      return null;
+    }
+    if (options.confirm && passphrase !== this.vaultPassphraseConfirm()) {
+      this.setVaultStatus('Passphrase confirmation does not match', 'err');
+      return null;
+    }
+    return passphrase;
+  }
+
+  private setVaultStatus(message: string, kind: 'ok' | 'err' | '' = ''): void {
+    this.vaultStatus.set(message);
+    this.vaultStatusKind.set(kind);
+    if (kind === 'err') {
+      this.error.set(message);
+      this.success.set('');
+    } else if (kind === 'ok') {
+      this.success.set(message);
+      this.error.set('');
+    }
+  }
+
+  private vaultErrorMessage(err: unknown, fallback: string): string {
+    const anyErr = err as { error?: { message?: string }; message?: string };
+    return anyErr?.error?.message || anyErr?.message || fallback;
+  }
+
+  async uploadVaultBackup(): Promise<void> {
+    const passphrase = this.requirePassphrase({ confirm: true });
+    if (!passphrase) {
+      return;
+    }
+    this.vaultBusy.set(true);
+    this.setVaultStatus('Encrypting and uploading vault…', '');
+    try {
+      await this.keyVault.uploadBackup(passphrase);
+      this.setVaultStatus('Encrypted vault uploaded. Only your passphrase can unlock it.', 'ok');
+      this.vaultPassphrase.set('');
+      this.vaultPassphraseConfirm.set('');
+    } catch (err: unknown) {
+      this.setVaultStatus(this.vaultErrorMessage(err, 'Could not upload vault backup'), 'err');
+    } finally {
+      this.vaultBusy.set(false);
+    }
+  }
+
+  async restoreVaultFromServer(): Promise<void> {
+    const passphrase = this.requirePassphrase();
+    if (!passphrase) {
+      return;
+    }
+    this.vaultBusy.set(true);
+    this.setVaultStatus('Downloading and decrypting vault…', '');
+    try {
+      await this.keyVault.downloadAndRestore(passphrase);
+      this.setVaultStatus('Vault restored on this device. Phantom keys are available again.', 'ok');
+      this.vaultPassphrase.set('');
+      this.vaultPassphraseConfirm.set('');
+    } catch (err: unknown) {
+      this.setVaultStatus(this.vaultErrorMessage(err, 'Could not restore vault'), 'err');
+    } finally {
+      this.vaultBusy.set(false);
+    }
+  }
+
+  async downloadVaultFile(): Promise<void> {
+    const passphrase = this.requirePassphrase();
+    if (!passphrase) {
+      return;
+    }
+    this.vaultBusy.set(true);
+    this.setVaultStatus('Encrypting vault file…', '');
+    try {
+      await this.keyVault.exportBackupFile(passphrase);
+      this.setVaultStatus('Vault file download started. Check your downloads folder.', 'ok');
+    } catch (err: unknown) {
+      this.setVaultStatus(this.vaultErrorMessage(err, 'Could not export vault file'), 'err');
+    } finally {
+      this.vaultBusy.set(false);
+    }
+  }
+
+  async onVaultFileSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) {
+      return;
+    }
+    const passphrase = this.requirePassphrase();
+    if (!passphrase) {
+      return;
+    }
+    this.vaultBusy.set(true);
+    this.setVaultStatus('Importing vault file…', '');
+    try {
+      await this.keyVault.importBackupFile(file, passphrase);
+      this.setVaultStatus('Vault file imported. Identity and channel keys restored.', 'ok');
+      this.vaultPassphrase.set('');
+      this.vaultPassphraseConfirm.set('');
+    } catch (err: unknown) {
+      this.setVaultStatus(this.vaultErrorMessage(err, 'Could not import vault file'), 'err');
+    } finally {
+      this.vaultBusy.set(false);
+    }
+  }
+
+  async deleteServerVault(): Promise<void> {
+    this.vaultBusy.set(true);
+    this.setVaultStatus('Deleting server backup…', '');
+    try {
+      await this.keyVault.deleteServerBackup();
+      this.setVaultStatus('Server vault backup deleted', 'ok');
+    } catch (err: unknown) {
+      this.setVaultStatus(this.vaultErrorMessage(err, 'Could not delete vault backup'), 'err');
+    } finally {
+      this.vaultBusy.set(false);
+    }
   }
 
   selectCard(id: ProfileCardId): void {

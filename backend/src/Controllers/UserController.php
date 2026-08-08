@@ -26,6 +26,9 @@ class UserController extends Routes
     $this->app->get('/api/users/me/dm-allowlist', [$this, 'listDmAllowlist']);
     $this->app->post('/api/users/me/dm-allowlist', [$this, 'addDmAllowlist']);
     $this->app->delete('/api/users/me/dm-allowlist/{targetUserId}', [$this, 'removeDmAllowlist']);
+    $this->app->get('/api/users/me/key-vault', [$this, 'getKeyVault']);
+    $this->app->put('/api/users/me/key-vault', [$this, 'putKeyVault']);
+    $this->app->delete('/api/users/me/key-vault', [$this, 'deleteKeyVault']);
     $this->app->get('/api/users/search', [$this, 'search']);
   }
 
@@ -497,6 +500,74 @@ class UserController extends Routes
     return $this->json($response, ['status' => 'success']);
   }
 
+  public function getKeyVault(Request $request, Response $response, $args): Response
+  {
+    $userId = AuthService::getUserId();
+    if (!$userId) {
+      return $this->json($response, ['status' => 'error', 'message' => 'Not authenticated'], 401);
+    }
+
+    $pdo = $this->dbService->getConnection();
+    $this->ensureKeyVaultTable($pdo);
+    $stmt = $pdo->prepare(
+      'SELECT vault_blob, updated_at FROM user_key_vaults WHERE user_id = ? LIMIT 1'
+    );
+    $stmt->execute([$userId]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    return $this->json($response, [
+      'status' => 'success',
+      'vaultBlob' => $row['vault_blob'] ?? null,
+      'updatedAt' => $row['updated_at'] ?? null,
+    ]);
+  }
+
+  public function putKeyVault(Request $request, Response $response, $args): Response
+  {
+    $userId = AuthService::getUserId();
+    if (!$userId) {
+      return $this->json($response, ['status' => 'error', 'message' => 'Not authenticated'], 401);
+    }
+
+    $body = $request->getParsedBody() ?? [];
+    $vaultBlob = trim((string) ($body['vaultBlob'] ?? ''));
+    if ($vaultBlob === '' || !str_starts_with($vaultBlob, 'ANGVAULT1:')) {
+      return $this->json($response, ['status' => 'error', 'message' => 'Invalid vault blob'], 400);
+    }
+    if (strlen($vaultBlob) > 2_000_000) {
+      return $this->json($response, ['status' => 'error', 'message' => 'Vault backup too large'], 400);
+    }
+
+    $pdo = $this->dbService->getConnection();
+    $this->ensureKeyVaultTable($pdo);
+    $updatedAt = gmdate('Y-m-d H:i:s');
+    $pdo->prepare(
+      'INSERT INTO user_key_vaults (user_id, vault_blob, updated_at)
+       VALUES (?, ?, ?)
+       ON DUPLICATE KEY UPDATE vault_blob = VALUES(vault_blob), updated_at = VALUES(updated_at)'
+    )->execute([$userId, $vaultBlob, $updatedAt]);
+
+    return $this->json($response, [
+      'status' => 'success',
+      'message' => 'Encrypted vault backup stored. Server cannot read its contents.',
+      'updatedAt' => $updatedAt,
+    ]);
+  }
+
+  public function deleteKeyVault(Request $request, Response $response, $args): Response
+  {
+    $userId = AuthService::getUserId();
+    if (!$userId) {
+      return $this->json($response, ['status' => 'error', 'message' => 'Not authenticated'], 401);
+    }
+
+    $pdo = $this->dbService->getConnection();
+    $this->ensureKeyVaultTable($pdo);
+    $pdo->prepare('DELETE FROM user_key_vaults WHERE user_id = ?')->execute([$userId]);
+
+    return $this->json($response, ['status' => 'success', 'message' => 'Vault backup deleted']);
+  }
+
   public function search(Request $request, Response $response, $args): Response
   {
     $userId = AuthService::getUserId();
@@ -600,6 +671,18 @@ class UserController extends Routes
         allowed_user_id BIGINT(64) NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (user_id, allowed_user_id)
+      )'
+    );
+  }
+
+  private function ensureKeyVaultTable(PDO $pdo): void
+  {
+    $pdo->exec(
+      'CREATE TABLE IF NOT EXISTS user_key_vaults (
+        user_id BIGINT(64) PRIMARY KEY,
+        vault_blob MEDIUMTEXT NOT NULL,
+        updated_at DATETIME NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )'
     );
   }

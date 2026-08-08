@@ -19,6 +19,7 @@ import { AlertService } from '../../../services/alert-service/alert-service';
 import { AuthService } from '../../../services/auth-service/auth.service';
 import { PhantomCryptoService } from '../../../services/crypto/phantom-crypto.service';
 import { PhantomKeyService } from '../../../services/crypto/phantom-key.service';
+import { LocalMessageVaultService } from '../../../services/crypto/local-message-vault.service';
 import { Message, Author, Mention } from '../../../models/message/message';
 import { Server } from '../../../models/server/server';
 import { Channel } from '../../../models/channel/channel';
@@ -64,7 +65,8 @@ export class AngcordContentComponent implements OnInit, OnDestroy {
     private alertService: AlertService,
     private authService: AuthService,
     private phantomCrypto: PhantomCryptoService,
-    private phantomKeys: PhantomKeyService
+    private phantomKeys: PhantomKeyService,
+    private localVault: LocalMessageVaultService
   ) {
     effect(() => {
       this.subs.unsubscribe();
@@ -89,10 +91,29 @@ export class AngcordContentComponent implements OnInit, OnDestroy {
           this.socketService.setUserId(currentUser.id);
         }
 
-        void this.preparePhantomChannel(server, channel).then(() => {
+        void this.preparePhantomChannel(server, channel).then(async () => {
           if (`${this.server()?.serverId}:${this.channel()?.channelId}` !== requestKey) {
             return;
           }
+
+          // Local-first: paint cached decrypted history immediately
+          try {
+            const cached = await this.localVault.listMessages(Number(channel.channelId));
+            if (
+              cached.length &&
+              `${this.server()?.serverId}:${this.channel()?.channelId}` === requestKey
+            ) {
+              this.messageList = cached.map((m) => ({
+                ...m,
+                postedTimestamp: moment(m.postedTimestamp),
+                editTimestamp: moment(m.editTimestamp || m.postedTimestamp)
+              }));
+              cdr.detectChanges();
+            }
+          } catch {
+            // ignore vault read errors
+          }
+
           this.subs.add(
             this.webService.getLatestMessages(serverId, channelId).subscribe(async (resp) => {
               if (`${this.server()?.serverId}:${this.channel()?.channelId}` !== requestKey) {
@@ -102,6 +123,7 @@ export class AngcordContentComponent implements OnInit, OnDestroy {
                 (resp || []).map((m) => this.normalizeIncomingMessage(m, channel))
               );
               this.messageList = normalized;
+              void this.localVault.putMessages(Number(channel.channelId), normalized);
               cdr.detectChanges();
             })
           );
@@ -113,6 +135,7 @@ export class AngcordContentComponent implements OnInit, OnDestroy {
               }
               const normalized = await this.normalizeIncomingMessage(message, channel);
               this.messageList = [...this.messageList, normalized];
+              void this.localVault.putMessages(Number(channel.channelId), [normalized]);
               cdr.detectChanges();
             })
           );
@@ -140,8 +163,8 @@ export class AngcordContentComponent implements OnInit, OnDestroy {
       }
       const ttl = channel.ephemeralTtlSeconds || 0;
       return ttl > 0
-        ? `Phantom E2EE — anonymous, client-held keys, messages expire after ${ttl}s.`
-        : 'Phantom E2EE — anonymous & encrypted with client-held keys. Authors are never stored.';
+        ? `Phantom E2EE — local vault + client-held keys; messages expire after ${ttl}s.`
+        : 'Phantom E2EE — local vault archive; anonymous with client-held keys.';
     }
 
     if (channel.channelName?.toLowerCase().includes('general')) {

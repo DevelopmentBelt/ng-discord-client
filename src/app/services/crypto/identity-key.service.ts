@@ -78,6 +78,31 @@ export class IdentityKeyService {
     return this.publicKeySpkiB64;
   }
 
+  exportMaterial(): { privateKeyPkcs8: string; publicKeySpki: string } | null {
+    const user = this.authService.currentUser();
+    if (!user?.id) {
+      return null;
+    }
+    return this.loadLocal(user.id);
+  }
+
+  async importMaterial(material: { privateKeyPkcs8: string; publicKeySpki: string }): Promise<void> {
+    const user = this.authService.currentUser();
+    if (!user?.id || !material?.privateKeyPkcs8 || !material?.publicKeySpki) {
+      throw new Error('Cannot import identity without a signed-in user');
+    }
+    this.privateKey = await crypto.subtle.importKey(
+      'pkcs8',
+      this.base64ToBytes(material.privateKeyPkcs8),
+      { name: 'ECDH', namedCurve: 'P-256' },
+      true,
+      ['deriveBits']
+    );
+    this.publicKeySpkiB64 = material.publicKeySpki;
+    this.readyUserId = user.id;
+    this.saveLocal(user.id, material);
+  }
+
   clearSession(): void {
     this.privateKey = null;
     this.publicKeySpkiB64 = null;

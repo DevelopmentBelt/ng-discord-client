@@ -87,4 +87,16 @@ export class UserWebService {
   public removeDmAllowlist(userId: number): Observable<{ status: string }> {
     return this.serverConnectivityService.sendDeleteRequest(`${this.API_URL}/me/dm-allowlist/${userId}`, {});
   }
+
+  public getKeyVault(): Observable<{ status: string; vaultBlob: string | null; updatedAt: string | null }> {
+    return this.serverConnectivityService.sendGetRequest(`${this.API_URL}/me/key-vault`, {});
+  }
+
+  public putKeyVault(vaultBlob: string): Observable<{ status: string; updatedAt: string }> {
+    return this.serverConnectivityService.sendPutReq(`${this.API_URL}/me/key-vault`, { vaultBlob }, {});
+  }
+
+  public deleteKeyVault(): Observable<{ status: string }> {
+    return this.serverConnectivityService.sendDeleteRequest(`${this.API_URL}/me/key-vault`, {});
+  }
 }

@@ -106,6 +106,50 @@ export class PhantomKeyService {
     });
   }
 
+  /** Export all locally held channel AES keys for the current user (base64 raw). */
+  exportAllRawKeys(): Record<string, string> {
+    const userId = this.authService.currentUser()?.id;
+    if (!userId) {
+      return {};
+    }
+    try {
+      const all = JSON.parse(localStorage.getItem(LOCAL_CHANNEL_KEYS) || '{}');
+      return { ...(all?.[String(userId)] || {}) };
+    } catch {
+      return {};
+    }
+  }
+
+  async importRawKeys(channelKeys: Record<string, string>): Promise<void> {
+    const userId = this.authService.currentUser()?.id;
+    if (!userId || !channelKeys) {
+      return;
+    }
+    try {
+      const all = JSON.parse(localStorage.getItem(LOCAL_CHANNEL_KEYS) || '{}');
+      all[String(userId)] = {
+        ...(all[String(userId)] || {}),
+        ...channelKeys
+      };
+      localStorage.setItem(LOCAL_CHANNEL_KEYS, JSON.stringify(all));
+    } catch {
+      // ignore quota
+    }
+
+    for (const [channelIdStr, b64] of Object.entries(channelKeys)) {
+      const channelId = Number(channelIdStr);
+      if (!channelId || !b64) {
+        continue;
+      }
+      try {
+        const raw = this.cryptoService.base64ToBytes(b64);
+        await this.cacheRaw(channelId, raw);
+      } catch {
+        // skip bad entries
+      }
+    }
+  }
+
   private async distributeToMembers(
     serverId: string | number,
     channelId: number,
