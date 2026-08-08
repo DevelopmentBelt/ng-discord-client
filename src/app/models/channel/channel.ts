@@ -14,7 +14,6 @@ export interface Channel {
   memberCount: number;
   createdAt: Date;
   lastActivity?: Date;
-  /** Anonymous + client-encrypted messaging mode */
+  /** Anonymous + encrypted messaging mode (declared & saved on the channel) */
   isPhantom?: boolean;
-  phantomSalt?: string | null;
 }

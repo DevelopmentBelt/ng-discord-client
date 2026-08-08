@@ -1,5 +1,5 @@
 <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" (keydown)="onKeydown($event)">
-  <div class="bg-discord-lighter border border-discord-border rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+  <div class="bg-discord-lighter border border-discord-border rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col" (click)="$event.stopPropagation()">
     <!-- Modal Header -->
     <div class="px-6 py-4 border-b border-discord-border flex items-center justify-between">
       <div class="flex items-center space-x-3">
@@ -10,14 +10,15 @@
         </div>
         <div>
           <h3 class="text-lg font-semibold text-discord-text-lighter">
-            {{ isEditing ? 'Edit Channel' : 'Create Channel' }}
+            {{ isEditing() ? 'Edit Channel' : 'Create Channel' }}
           </h3>
           <p class="text-sm text-discord-text-muted">
-            {{ isEditing ? 'Modify channel settings' : 'Create a new channel for your server' }}
+            {{ isEditing() ? 'Modify channel settings' : 'Create a new channel for your server' }}
           </p>
         </div>
       </div>
-      <button 
+      <button
+        type="button"
         (click)="close()"
         class="p-2 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150"
         title="Close"
@@ -30,38 +31,38 @@
 
     <!-- Modal Content -->
     <div class="flex-1 overflow-y-auto px-6 py-4 space-y-6">
-      <!-- Basic Information -->
       <div>
         <h4 class="text-sm font-semibold text-discord-text-muted uppercase tracking-wider mb-3">Basic Information</h4>
         <div class="space-y-4">
-          <!-- Channel Type -->
-          <div>
-            <label class="block text-sm font-medium text-discord-text-muted mb-2">Channel Type</label>
-            <div class="space-y-2">
-              @for (type of channelTypes; track type.value) {
-                <label class="flex items-start space-x-3 cursor-pointer">
-                  <input 
-                    type="radio" 
-                    [value]="type.value"
-                    [(ngModel)]="channelType"
-                    (change)="onChannelTypeChange()"
-                    class="w-4 h-4 text-discord-blue focus:ring-discord-blue border-discord-border"
-                  />
-                  <div class="flex-1">
-                    <span class="text-discord-text-light font-medium">{{ type.label }}</span>
-                    <p class="text-sm text-discord-text-muted">{{ type.description }}</p>
-                  </div>
-                </label>
-              }
+          @if (!isEditing()) {
+            <div>
+              <label class="block text-sm font-medium text-discord-text-muted mb-2">Channel Type</label>
+              <div class="space-y-2">
+                @for (type of channelTypes; track type.value) {
+                  <label class="flex items-start space-x-3 cursor-pointer">
+                    <input
+                      type="radio"
+                      [value]="type.value"
+                      [checked]="channelType() === type.value"
+                      (change)="onChannelTypeChange(type.value)"
+                      class="w-4 h-4 text-discord-blue focus:ring-discord-blue border-discord-border mt-1"
+                    />
+                    <div class="flex-1">
+                      <span class="text-discord-text-light font-medium">{{ type.label }}</span>
+                      <p class="text-sm text-discord-text-muted">{{ type.description }}</p>
+                    </div>
+                  </label>
+                }
+              </div>
             </div>
-          </div>
+          }
 
-          <!-- Channel Name -->
           <div>
             <label class="block text-sm font-medium text-discord-text-light mb-2">Channel Name</label>
-            <input 
-              type="text" 
-              [(ngModel)]="channelName"
+            <input
+              type="text"
+              [ngModel]="channelName()"
+              (ngModelChange)="onChannelNameInput($event)"
               placeholder="e.g. general"
               class="w-full px-3 py-2 bg-discord-medium border border-discord-border rounded-md text-discord-text-light placeholder-discord-text-muted focus:outline-none focus:ring-2 focus:ring-discord-blue focus:border-transparent"
               [class.border-red-500]="getValidationError() && channelName().trim().length > 0"
@@ -69,54 +70,70 @@
             @if (getValidationError() && channelName().trim().length > 0) {
               <p class="text-red-400 text-sm mt-1">{{ getValidationError() }}</p>
             }
-            <p class="text-xs text-discord-text-muted mt-1">Channel names can only contain lowercase letters, numbers, and hyphens.</p>
+            <p class="text-xs text-discord-text-muted mt-1">Lowercase letters, numbers, hyphens, and underscores only.</p>
           </div>
 
-          <!-- Category Selection -->
           @if (supportsCategorySelection()) {
             <div>
               <label class="block text-sm font-medium text-discord-text-muted mb-2">Category</label>
-              <select 
-                [(ngModel)]="selectedCategory"
+              <select
+                [ngModel]="selectedCategory()"
+                (ngModelChange)="selectedCategory.set($event)"
                 class="w-full bg-discord-light text-discord-text-light border border-discord-border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-discord-blue/50"
               >
-                <option value="">No Category</option>
+                <option value="">Select a category</option>
                 @for (category of getAvailableCategories(); track category.id) {
                   <option [value]="category.id">{{ category.name }}</option>
                 }
               </select>
-              <p class="text-xs text-discord-text-muted mt-1">Choose a category to organize this channel</p>
             </div>
           }
         </div>
       </div>
 
-      <!-- Channel Settings -->
       @if (channelType() !== 'category') {
         <div>
           <h4 class="text-sm font-semibold text-discord-text-muted uppercase tracking-wider mb-3">Channel Settings</h4>
           <div class="space-y-4">
-            <!-- Topic (Text channels only) -->
             @if (supportsTopic()) {
               <div>
                 <label class="block text-sm font-medium text-discord-text-muted mb-2">Topic</label>
-                <textarea 
-                  [(ngModel)]="channelTopic"
+                <textarea
+                  [ngModel]="channelTopic()"
+                  (ngModelChange)="channelTopic.set($event)"
                   rows="3"
                   class="w-full bg-discord-light text-discord-text-light border border-discord-border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-discord-blue/50 transition-all duration-200"
                   placeholder="What is this channel about?"
                   maxlength="1024"
                 ></textarea>
-                <p class="text-xs text-discord-text-muted mt-1">Let people know what this channel is for</p>
               </div>
             }
 
-            <!-- NSFW Toggle -->
+            @if (supportsPhantom()) {
+              <div class="rounded-md border border-violet-500/30 bg-violet-500/10 p-3">
+                <label class="flex items-start space-x-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    [ngModel]="isPhantom()"
+                    (ngModelChange)="isPhantom.set(!!$event)"
+                    class="w-4 h-4 mt-1 text-violet-500 focus:ring-violet-500 border-discord-border rounded"
+                  />
+                  <div>
+                    <span class="text-violet-200 font-medium">Phantom mode</span>
+                    <p class="text-sm text-discord-text-muted">
+                      Anonymous, encrypted messaging. Authors are never stored, and members decrypt with the saved channel key.
+                    </p>
+                  </div>
+                </label>
+              </div>
+            }
+
             <div>
               <label class="flex items-center space-x-3 cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  [(ngModel)]="isNsfw"
+                <input
+                  type="checkbox"
+                  [ngModel]="isNsfw()"
+                  (ngModelChange)="isNsfw.set(!!$event)"
                   class="w-4 h-4 text-discord-blue focus:ring-discord-blue border-discord-border rounded"
                 />
                 <div>
@@ -126,51 +143,48 @@
               </label>
             </div>
 
-            <!-- Slowmode (Text channels only) -->
             @if (supportsSlowmode()) {
               <div>
                 <label class="block text-sm font-medium text-discord-text-muted mb-2">Slowmode</label>
-                <select 
-                  [(ngModel)]="slowmode"
+                <select
+                  [ngModel]="slowmode()"
+                  (ngModelChange)="slowmode.set(+$event)"
                   class="w-full bg-discord-light text-discord-text-light border border-discord-border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-discord-blue/50"
                 >
                   @for (option of slowmodeOptions; track option.value) {
                     <option [value]="option.value">{{ option.label }}</option>
                   }
                 </select>
-                <p class="text-xs text-discord-text-muted mt-1">Set a delay between messages sent by each user</p>
               </div>
             }
 
-            <!-- User Limit (Voice channels only) -->
             @if (supportsUserLimit()) {
               <div>
                 <label class="block text-sm font-medium text-discord-text-muted mb-2">User Limit</label>
-                <input 
-                  type="number" 
-                  [(ngModel)]="userLimit"
+                <input
+                  type="number"
+                  [ngModel]="userLimit()"
+                  (ngModelChange)="userLimit.set(+$event || 0)"
                   min="0"
                   max="99"
                   class="w-full bg-discord-light text-discord-text-light border border-discord-border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-discord-blue/50 transition-all duration-200"
                   placeholder="0 (no limit)"
                 />
-                <p class="text-xs text-discord-text-muted mt-1">Maximum number of users that can join this voice channel (0 = no limit)</p>
               </div>
             }
 
-            <!-- Bitrate (Voice channels only) -->
             @if (supportsBitrate()) {
               <div>
                 <label class="block text-sm font-medium text-discord-text-muted mb-2">Bitrate</label>
-                <select 
-                  [(ngModel)]="bitrate"
+                <select
+                  [ngModel]="bitrate()"
+                  (ngModelChange)="bitrate.set(+$event)"
                   class="w-full bg-discord-light text-discord-text-light border border-discord-border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-discord-blue/50"
                 >
                   @for (option of bitrateOptions; track option.value) {
                     <option [value]="option.value">{{ option.label }}</option>
                   }
                 </select>
-                <p class="text-xs text-discord-text-muted mt-1">Audio quality for this voice channel</p>
               </div>
             }
           </div>
@@ -180,17 +194,19 @@
 
     <!-- Modal Footer -->
     <div class="px-6 py-4 border-t border-discord-border flex items-center justify-end space-x-3">
-      <button 
+      <button
+        type="button"
         (click)="close()"
         class="px-4 py-2 bg-discord-medium hover:bg-discord-hover text-discord-text-light font-medium rounded-md transition-colors duration-150"
       >
         Cancel
       </button>
-      <button 
+      <button
+        type="button"
         (click)="save()"
         class="px-4 py-2 bg-discord-blue hover:bg-discord-blue-dark text-white font-medium rounded-md transition-colors duration-150"
       >
-        {{ isEditing ? 'Save Changes' : 'Create Channel' }}
+        {{ isEditing() ? 'Save Changes' : 'Create Channel' }}
       </button>
     </div>
   </div>

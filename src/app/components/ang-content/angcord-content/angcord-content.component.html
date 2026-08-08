@@ -26,23 +26,6 @@
       </div>
     </div>
     <div class="flex items-center space-x-2">
-      @if (channel()?.channelId) {
-        <button
-          type="button"
-          class="px-2.5 py-1.5 rounded-md text-xs font-semibold uppercase tracking-wide transition-colors duration-150"
-          [class.bg-violet-600]="!isPhantomChannel()"
-          [class.hover:bg-violet-500]="!isPhantomChannel()"
-          [class.text-white]="!isPhantomChannel()"
-          [class.bg-violet-500/20]="isPhantomChannel()"
-          [class.text-violet-200]="isPhantomChannel()"
-          [class.hover:bg-red-500/80]="isPhantomChannel()"
-          [class.hover:text-white]="isPhantomChannel()"
-          [title]="isPhantomChannel() ? 'Disable Phantom mode' : 'Enable Phantom: anonymous + encrypted chat'"
-          (click)="togglePhantomFromHeader()"
-        >
-          {{ isPhantomChannel() ? 'Disable Phantom' : 'Enable Phantom' }}
-        </button>
-      }
       <button
         class="p-2 text-discord-text-muted hover:text-discord-text-light hover:bg-discord-hover rounded transition-colors duration-150 group relative"
         [class.bg-discord-hover]="showSearch"
@@ -56,38 +39,6 @@
       </button>
     </div>
   </div>
-
-  @if (isPhantomChannel() && !phantomUnlocked()) {
-    <div class="px-4 py-3 border-b border-violet-500/30 bg-violet-500/10 flex-shrink-0">
-      <div class="flex flex-col md:flex-row md:items-end gap-3">
-        <div class="flex-1">
-          <div class="text-sm font-semibold text-violet-200 mb-1">Unlock Phantom channel</div>
-          <p class="text-xs text-discord-text-muted mb-2">
-            Messages here are encrypted and authors are never stored — even server admins can’t see who wrote what.
-          </p>
-          <input
-            type="password"
-            class="w-full px-3 py-2 rounded-md bg-discord-dark border border-discord-border text-discord-text-light focus:outline-none focus:border-violet-400 text-sm"
-            placeholder="Enter Phantom passphrase"
-            [ngModel]="phantomPassphrase()"
-            (ngModelChange)="phantomPassphrase.set($event)"
-            (keydown.enter)="unlockPhantom()"
-          />
-          @if (phantomUnlockError()) {
-            <p class="text-xs text-red-400 mt-1">{{ phantomUnlockError() }}</p>
-          }
-        </div>
-        <button
-          type="button"
-          class="px-4 py-2 rounded-md bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium disabled:opacity-50"
-          [disabled]="phantomUnlocking()"
-          (click)="unlockPhantom()"
-        >
-          {{ phantomUnlocking() ? 'Unlocking…' : 'Unlock' }}
-        </button>
-      </div>
-    </div>
-  }
 
   <!-- Messages Area -->
   <div class="flex-1 overflow-y-auto pb-2.5 px-4">
@@ -145,7 +96,7 @@
         id="chatbox"
         (keydown)="handleKeyDownEvent($event);"
         [placeholder]="getMessagePlaceholder()"
-        [disabled]="isPhantomChannel() && !phantomUnlocked()"
+        [disabled]="isPhantomChannel() && (!phantomReady() || phantomLoading())"
         class="w-full bg-discord-light text-discord-text-light border-0 rounded-lg px-4 py-3 text-sm focus:bg-discord-light focus:outline-none focus:ring-2 focus:ring-discord-blue/50 transition-all duration-200 disabled:opacity-60"
       />
       <div class="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
@@ -211,34 +162,4 @@
     (gifSelected)="onGifSelected($event)"
     (closed)="onCloseGifPicker()"
   ></app-gif-picker>
-
-  @if (showPassphraseModal()) {
-    <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" (click)="closePassphraseModal()">
-      <div class="bg-discord-lighter border border-violet-500/40 rounded-lg shadow-xl w-full max-w-md p-5" (click)="$event.stopPropagation()">
-        <h3 class="text-lg font-semibold text-discord-text-lighter mb-1">Phantom mode enabled</h3>
-        <p class="text-sm text-discord-text-muted mb-4">
-          Share this passphrase with members — it is shown only once.
-        </p>
-        <div class="flex items-center gap-2 mb-4">
-          <code class="flex-1 px-3 py-2 rounded-md bg-discord-dark text-violet-200 text-sm break-all border border-discord-border">
-            {{ revealedPassphrase() }}
-          </code>
-          <button
-            type="button"
-            class="px-3 py-2 rounded-md bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium"
-            (click)="copyRevealedPassphrase()"
-          >
-            Copy
-          </button>
-        </div>
-        <button
-          type="button"
-          class="w-full px-4 py-2 rounded-md bg-discord-medium hover:bg-discord-hover text-discord-text-light"
-          (click)="closePassphraseModal()"
-        >
-          I’ve saved the passphrase
-        </button>
-      </div>
-    </div>
-  }
 </div>

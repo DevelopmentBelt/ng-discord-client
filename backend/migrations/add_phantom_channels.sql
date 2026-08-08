@@ -1,8 +1,7 @@
 -- Run once against an existing database for Phantom channels.
 ALTER TABLE `channels`
   ADD COLUMN `is_phantom` TINYINT(1) NOT NULL DEFAULT 0,
-  ADD COLUMN `phantom_salt` VARCHAR(64) NULL,
-  ADD COLUMN `phantom_verifier` VARCHAR(128) NULL;
+  ADD COLUMN `phantom_key` VARCHAR(128) NULL;
 
 ALTER TABLE `messages`
   ADD COLUMN `is_anonymous` TINYINT(1) NOT NULL DEFAULT 0,

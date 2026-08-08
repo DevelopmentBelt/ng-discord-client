@@ -28,11 +28,13 @@ export interface ServerChannel {
   type: 'text' | 'voice' | 'category';
   position: number;
   parentId?: string;
+  categoryId?: number | string;
   topic?: string;
   nsfw: boolean;
   slowmode?: number;
   userLimit?: number;
   bitrate?: number;
+  isPhantom?: boolean;
 }
 
 export interface Permission {
@@ -537,8 +539,10 @@ export class ServerSettingsModalComponent implements OnInit {
         type: channelData.type || 'text',
         position: this.serverChannels().length,
         parentId: channelData.parentId,
+        categoryId: channelData.categoryId,
         topic: channelData.topic,
         nsfw: channelData.nsfw || false,
+        isPhantom: !!channelData.isPhantom,
         slowmode: channelData.slowmode,
         userLimit: channelData.userLimit,
         bitrate: channelData.bitrate

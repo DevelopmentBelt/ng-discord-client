@@ -144,8 +144,7 @@ class MessageController extends Routes {
   private function ensurePhantomColumns(PDO $pdo): void
   {
     $this->ensureColumn($pdo, 'channels', 'is_phantom', 'TINYINT(1) NOT NULL DEFAULT 0');
-    $this->ensureColumn($pdo, 'channels', 'phantom_salt', 'VARCHAR(64) NULL');
-    $this->ensureColumn($pdo, 'channels', 'phantom_verifier', 'VARCHAR(128) NULL');
+    $this->ensureColumn($pdo, 'channels', 'phantom_key', 'VARCHAR(128) NULL');
     $this->ensureColumn($pdo, 'messages', 'is_anonymous', 'TINYINT(1) NOT NULL DEFAULT 0');
     $this->ensureColumn($pdo, 'messages', 'is_encrypted', 'TINYINT(1) NOT NULL DEFAULT 0');
 

@@ -3,6 +3,7 @@ import {
   ChangeDetectorRef,
   Component,
   OnInit,
+  computed,
   input,
   InputSignal,
   output,
@@ -19,10 +20,12 @@ import { Channel } from '../../../models/channel/channel';
 import { Server } from '../../../models/server/server';
 import { AlertService } from '../../../services/alert-service/alert-service';
 import { ServerOverviewModalComponent } from '../../server-overview-modal/server-overview-modal.component';
-import { ServerSettingsModalComponent } from '../../server-settings-modal/server-settings-modal.component';
+import { ServerSettingsModalComponent, ServerChannel } from '../../server-settings-modal/server-settings-modal.component';
+import { ChannelManagementModalComponent } from '../../channel-management-modal/channel-management-modal.component';
 import { ServerWebService } from '../../../services/server-web-service/server-web.service';
 import { DmWebService } from '../../../services/dm-web-service/dm-web.service';
 import { InboxService } from '../../../services/inbox-service/inbox.service';
+import { PhantomKeyService } from '../../../services/crypto/phantom-key.service';
 import { DmConversation } from '../../../models/dm/dm-conversation';
 
 @Component({
@@ -34,7 +37,8 @@ import { DmConversation } from '../../../models/dm/dm-conversation';
     NgClass,
     FormsModule,
     ServerOverviewModalComponent,
-    ServerSettingsModalComponent
+    ServerSettingsModalComponent,
+    ChannelManagementModalComponent
   ],
   standalone: true
 })
@@ -51,14 +55,44 @@ export class ChannelSidebarComponent implements OnInit {
 
   showServerOverview: WritableSignal<boolean> = signal(false);
   showServerSettings: WritableSignal<boolean> = signal(false);
-  showPhantomPassphrase: WritableSignal<boolean> = signal(false);
-  phantomPassphraseReveal = signal('');
-  phantomChannelName = signal('');
+  showChannelModal = signal(false);
+  isEditingChannel = signal(false);
+  channelModalTarget = signal<Channel | null>(null);
+  defaultCategoryId = signal<number | null>(null);
+  channelModalSaving = signal(false);
   dmUsername = signal('');
   dmError = signal('');
   dmLoading = signal(false);
   private pendingConversationId: string | null = null;
   private pendingChannelId: string | null = null;
+
+  readonly categoryOptions = computed<ServerChannel[]>(() =>
+    this.categories().map((category) => ({
+      id: category.categoryId,
+      name: category.categoryName,
+      type: 'category' as const,
+      position: 0,
+      nsfw: false
+    }))
+  );
+
+  readonly channelModalModel = computed<ServerChannel | null>(() => {
+    const channel = this.channelModalTarget();
+    if (!channel) {
+      return null;
+    }
+    return {
+      id: channel.channelId,
+      name: channel.channelName,
+      type: channel.type || 'text',
+      position: channel.position || 0,
+      parentId: String(channel.categoryId),
+      categoryId: channel.categoryId,
+      topic: channel.topic,
+      nsfw: !!channel.nsfw,
+      isPhantom: !!channel.isPhantom
+    };
+  });
 
   servers: InputSignal<Server[]> = input([]);
 
@@ -67,6 +101,7 @@ export class ChannelSidebarComponent implements OnInit {
     private serverWebService: ServerWebService,
     private dmWebService: DmWebService,
     private inboxService: InboxService,
+    private phantomKeys: PhantomKeyService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -92,73 +127,129 @@ export class ChannelSidebarComponent implements OnInit {
     this.selectedConversationChange.emit(null);
   }
 
-  togglePhantom(chan: Channel): void {
+  openCreateChannel(category: Category, event?: Event): void {
+    event?.stopPropagation();
     const server = this.selectedServer();
     if (!server?.serverId || server.serverId === 'home') {
       return;
     }
+    this.channelModalTarget.set(null);
+    this.isEditingChannel.set(false);
+    this.defaultCategoryId.set(category.categoryId);
+    this.showChannelModal.set(true);
+    this.cdr.markForCheck();
+  }
 
-    if (chan.isPhantom) {
-      this.serverWebService.disablePhantomChannel(String(server.serverId), chan.channelId).pipe(take(1)).subscribe({
-        next: () => {
-          this.patchChannel(chan.channelId, { isPhantom: false, phantomSalt: null });
-          this.alertService.success('Phantom disabled', `#${chan.channelName} is a normal channel again.`);
-        },
-        error: (err) => {
-          this.alertService.error('Could not disable Phantom', err?.error?.message || 'Only the server owner can change this.');
-        }
-      });
+  openChannelSettings(chan: Channel, event?: Event): void {
+    event?.stopPropagation();
+    const server = this.selectedServer();
+    if (!server?.serverId || server.serverId === 'home') {
+      return;
+    }
+    this.channelModalTarget.set(chan);
+    this.isEditingChannel.set(true);
+    this.defaultCategoryId.set(chan.categoryId);
+    this.showChannelModal.set(true);
+    this.cdr.markForCheck();
+  }
+
+  closeChannelModal(): void {
+    this.showChannelModal.set(false);
+    this.channelModalTarget.set(null);
+    this.isEditingChannel.set(false);
+    this.defaultCategoryId.set(null);
+    this.channelModalSaving.set(false);
+    this.cdr.markForCheck();
+  }
+
+  saveChannelFromModal(channelData: Partial<ServerChannel>): void {
+    const server = this.selectedServer();
+    if (!server?.serverId || server.serverId === 'home' || this.channelModalSaving()) {
       return;
     }
 
-    this.serverWebService.enablePhantomChannel(String(server.serverId), chan.channelId).pipe(take(1)).subscribe({
+    const payload: Partial<Channel> = {
+      channelName: channelData.name,
+      categoryId: Number(channelData.categoryId || channelData.parentId || this.defaultCategoryId() || 0),
+      type: channelData.type || 'text',
+      topic: channelData.topic,
+      nsfw: !!channelData.nsfw,
+      isPhantom: !!channelData.isPhantom,
+      slowmode: channelData.slowmode,
+      userLimit: channelData.userLimit,
+      bitrate: channelData.bitrate
+    };
+
+    if (!payload.categoryId) {
+      this.alertService.error('Missing category', 'Choose a category for this channel.');
+      return;
+    }
+
+    this.channelModalSaving.set(true);
+    const editing = this.isEditingChannel();
+    const target = this.channelModalTarget();
+
+    const request$ = editing && target
+      ? this.serverWebService.updateChannel(String(server.serverId), target.channelId, payload)
+      : this.serverWebService.createChannel(String(server.serverId), payload);
+
+    request$.pipe(take(1)).subscribe({
       next: (resp) => {
-        this.patchChannel(chan.channelId, {
-          isPhantom: true,
-          phantomSalt: resp.phantomSalt
-        });
-        this.phantomChannelName.set(chan.channelName);
-        this.phantomPassphraseReveal.set(resp.passphrase);
-        this.showPhantomPassphrase.set(true);
-        this.cdr.markForCheck();
+        if (target?.channelId) {
+          this.phantomKeys.clear(target.channelId);
+        }
+        if (resp?.channelId) {
+          this.phantomKeys.clear(resp.channelId);
+        }
+        this.channelModalSaving.set(false);
+        this.closeChannelModal();
+        this.alertService.success(
+          editing ? 'Channel updated' : 'Channel created',
+          editing
+            ? `#${payload.channelName} settings saved.`
+            : `#${payload.channelName} is ready.`
+        );
+        this.reloadChannels(String(server.serverId), resp?.channelId || target?.channelId);
       },
       error: (err) => {
-        this.alertService.error('Could not enable Phantom', err?.error?.message || 'Only the server owner can enable Phantom mode.');
+        this.channelModalSaving.set(false);
+        this.alertService.error(
+          editing ? 'Could not update channel' : 'Could not create channel',
+          err?.error?.message || 'Only the server owner can manage channels.'
+        );
+        this.cdr.markForCheck();
       }
     });
   }
 
-  closePhantomPassphrase(): void {
-    this.showPhantomPassphrase.set(false);
-    this.phantomPassphraseReveal.set('');
-    this.phantomChannelName.set('');
-  }
-
-  copyPhantomPassphrase(): void {
-    const value = this.phantomPassphraseReveal();
-    if (!value || !navigator?.clipboard) {
-      return;
-    }
-    void navigator.clipboard.writeText(value);
-    this.alertService.success('Copied', 'Phantom passphrase copied to clipboard.');
-  }
-
-  private patchChannel(channelId: number, patch: Partial<Channel>): void {
-    const nextCategories = this.categories().map((category) => ({
-      ...category,
-      channels: (category.channels || []).map((channel) =>
-        channel.channelId === channelId ? { ...channel, ...patch } : channel
-      )
-    }));
-    this.categories.set(nextCategories);
-
-    const selected = this.selectedChannel();
-    if (selected?.channelId === channelId) {
-      const updated = { ...selected, ...patch };
-      this.selectedChannel.set(updated);
-      this.selectedChannelChange.emit(updated);
-    }
-    this.cdr.markForCheck();
+  private reloadChannels(serverId: string, preferChannelId?: number): void {
+    this.serverWebService.getServerChannels(serverId).pipe(take(1)).subscribe({
+      next: (categories) => {
+        this.categories.set(categories || []);
+        if (preferChannelId) {
+          for (const category of categories || []) {
+            const match = category.channels?.find((c) => c.channelId === preferChannelId);
+            if (match) {
+              this.handleChannelSelect(match);
+              this.cdr.markForCheck();
+              return;
+            }
+          }
+        }
+        const selected = this.selectedChannel();
+        if (selected) {
+          for (const category of categories || []) {
+            const match = category.channels?.find((c) => c.channelId === selected.channelId);
+            if (match) {
+              this.handleChannelSelect(match);
+              break;
+            }
+          }
+        }
+        this.cdr.markForCheck();
+      },
+      error: () => this.cdr.markForCheck()
+    });
   }
 
   handleConversationSelect(conversation: DmConversation) {

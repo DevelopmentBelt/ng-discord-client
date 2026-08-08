@@ -10,28 +10,9 @@ export class PhantomCryptoService {
     return typeof value === 'string' && value.startsWith(PREFIX);
   }
 
-  async deriveKey(passphrase: string, saltHex: string): Promise<CryptoKey> {
-    const enc = new TextEncoder();
-    const baseKey = await crypto.subtle.importKey(
-      'raw',
-      enc.encode(passphrase),
-      'PBKDF2',
-      false,
-      ['deriveKey']
-    );
-
-    return crypto.subtle.deriveKey(
-      {
-        name: 'PBKDF2',
-        salt: this.hexToBytes(saltHex),
-        iterations: 120000,
-        hash: 'SHA-256'
-      },
-      baseKey,
-      { name: 'AES-GCM', length: 256 },
-      false,
-      ['encrypt', 'decrypt']
-    );
+  async importRawKey(base64Key: string): Promise<CryptoKey> {
+    const raw = this.base64ToBytes(base64Key);
+    return crypto.subtle.importKey('raw', raw, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
   }
 
   async encrypt(plaintext: string, key: CryptoKey): Promise<string> {
@@ -54,15 +35,6 @@ export class PhantomCryptoService {
     const cipher = this.base64ToBytes(cipherB64);
     const plainBuf = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, cipher);
     return new TextDecoder().decode(plainBuf);
-  }
-
-  private hexToBytes(hex: string): Uint8Array {
-    const clean = hex.trim();
-    const out = new Uint8Array(clean.length / 2);
-    for (let i = 0; i < out.length; i++) {
-      out[i] = parseInt(clean.slice(i * 2, i * 2 + 2), 16);
-    }
-    return out;
   }
 
   private bytesToBase64(bytes: Uint8Array): string {

@@ -15,9 +15,11 @@ class ServerController extends Routes {
     $this->app->get('/api/servers/', [$this, 'getServersForUser']);
     $this->app->get('/api/servers/public/', [$this, 'getPublicServers']);
     $this->app->get('/api/servers/{serverId}/channels', [$this, 'getServerChannels']);
+    $this->app->post('/api/servers/{serverId}/channels', [$this, 'createChannel']);
+    $this->app->patch('/api/servers/{serverId}/channels/{channelId}', [$this, 'updateChannel']);
     $this->app->post('/api/servers/{serverId}/channels/{channelId}/phantom/enable', [$this, 'enablePhantomChannel']);
     $this->app->post('/api/servers/{serverId}/channels/{channelId}/phantom/disable', [$this, 'disablePhantomChannel']);
-    $this->app->post('/api/servers/{serverId}/channels/{channelId}/phantom/verify', [$this, 'verifyPhantomChannel']);
+    $this->app->get('/api/servers/{serverId}/channels/{channelId}/phantom/key', [$this, 'getPhantomChannelKey']);
     $this->app->get('/api/servers/{serverId}/members', [$this, 'getServerMembers']);
     $this->app->post('/api/servers/', [$this, 'createServer']);
     $this->app->post('/api/servers/{serverId}/join', [$this, 'joinServer']);
@@ -154,7 +156,7 @@ class ServerController extends Routes {
       }
 
       $channelStmt = $pdo->prepare(
-        "SELECT channel_id, category_id, channel_name, is_phantom, phantom_salt
+        "SELECT channel_id, category_id, channel_name, is_phantom
          FROM channels
          WHERE category_id = ?
          ORDER BY channel_id ASC"
@@ -170,7 +172,6 @@ class ServerController extends Routes {
             'categoryId' => (int) $channel['category_id'],
             'channelName' => $channel['channel_name'],
             'isPhantom' => !empty($channel['is_phantom']),
-            'phantomSalt' => $channel['phantom_salt'] ?? null,
           ];
         }
 
@@ -190,6 +191,144 @@ class ServerController extends Routes {
       $response->getBody()->write(json_encode(['error' => 'Failed to fetch server channels']));
       return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
     }
+  }
+
+  public function createChannel(Request $request, Response $response, $args): Response
+  {
+    $userId = AuthService::getUserId();
+    if (!$userId) {
+      $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Not authenticated']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(401);
+    }
+
+    $serverId = (int) $args['serverId'];
+    $body = $request->getParsedBody() ?? [];
+    $channelName = trim((string) ($body['channelName'] ?? $body['name'] ?? ''));
+    $categoryId = (int) ($body['categoryId'] ?? $body['parentId'] ?? 0);
+    $isPhantom = !empty($body['isPhantom']);
+
+    if ($channelName === '') {
+      $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Channel name is required']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+    }
+
+    $channelName = strtolower(preg_replace('/\s+/', '-', $channelName) ?? $channelName);
+    $channelName = preg_replace('/[^a-z0-9\-_]/', '', $channelName) ?? $channelName;
+    if ($channelName === '') {
+      $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Channel name is invalid']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+    }
+
+    $pdo = $this->dbService->getConnection();
+    $this->ensurePhantomChannelColumns($pdo);
+
+    if (!$this->userCanManageServer($pdo, $serverId, $userId)) {
+      $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Only server owners can create channels']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
+    }
+
+    if ($categoryId <= 0 || !$this->categoryBelongsToServer($pdo, $serverId, $categoryId)) {
+      $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Category not found']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
+    }
+
+    $phantomKey = $isPhantom ? base64_encode(random_bytes(32)) : null;
+    $stmt = $pdo->prepare(
+      'INSERT INTO channels (category_id, channel_name, is_phantom, phantom_key) VALUES (?, ?, ?, ?)'
+    );
+    $stmt->execute([$categoryId, $channelName, $isPhantom ? 1 : 0, $phantomKey]);
+    $channelId = (int) $pdo->lastInsertId();
+
+    $response->getBody()->write(json_encode([
+      'status' => 'success',
+      'channelId' => $channelId,
+      'categoryId' => $categoryId,
+      'channelName' => $channelName,
+      'isPhantom' => $isPhantom,
+    ]));
+    return $response->withHeader('Content-Type', 'application/json')->withStatus(201);
+  }
+
+  public function updateChannel(Request $request, Response $response, $args): Response
+  {
+    $userId = AuthService::getUserId();
+    if (!$userId) {
+      $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Not authenticated']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(401);
+    }
+
+    $serverId = (int) $args['serverId'];
+    $channelId = (int) $args['channelId'];
+    $body = $request->getParsedBody() ?? [];
+    $pdo = $this->dbService->getConnection();
+    $this->ensurePhantomChannelColumns($pdo);
+
+    if (!$this->userCanManageServer($pdo, $serverId, $userId)) {
+      $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Only server owners can update channels']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
+    }
+
+    if (!$this->channelBelongsToServer($pdo, $serverId, $channelId)) {
+      $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Channel not found']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
+    }
+
+    $stmt = $pdo->prepare(
+      'SELECT channel_id, category_id, channel_name, is_phantom, phantom_key FROM channels WHERE channel_id = ? LIMIT 1'
+    );
+    $stmt->execute([$channelId]);
+    $existing = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$existing) {
+      $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Channel not found']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
+    }
+
+    $channelName = $existing['channel_name'];
+    if (array_key_exists('channelName', $body) || array_key_exists('name', $body)) {
+      $channelName = trim((string) ($body['channelName'] ?? $body['name'] ?? ''));
+      $channelName = strtolower(preg_replace('/\s+/', '-', $channelName) ?? $channelName);
+      $channelName = preg_replace('/[^a-z0-9\-_]/', '', $channelName) ?? $channelName;
+      if ($channelName === '') {
+        $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Channel name is invalid']));
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+      }
+    }
+
+    $categoryId = (int) $existing['category_id'];
+    if (array_key_exists('categoryId', $body) || array_key_exists('parentId', $body)) {
+      $categoryId = (int) ($body['categoryId'] ?? $body['parentId'] ?? 0);
+      if ($categoryId <= 0 || !$this->categoryBelongsToServer($pdo, $serverId, $categoryId)) {
+        $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Category not found']));
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
+      }
+    }
+
+    $isPhantom = !empty($existing['is_phantom']);
+    $phantomKey = $existing['phantom_key'];
+    if (array_key_exists('isPhantom', $body)) {
+      $wantPhantom = !empty($body['isPhantom']);
+      if ($wantPhantom && !$isPhantom) {
+        $isPhantom = true;
+        $phantomKey = base64_encode(random_bytes(32));
+      } elseif (!$wantPhantom && $isPhantom) {
+        $isPhantom = false;
+        $phantomKey = null;
+      }
+    }
+
+    $update = $pdo->prepare(
+      'UPDATE channels SET category_id = ?, channel_name = ?, is_phantom = ?, phantom_key = ? WHERE channel_id = ?'
+    );
+    $update->execute([$categoryId, $channelName, $isPhantom ? 1 : 0, $phantomKey, $channelId]);
+
+    $response->getBody()->write(json_encode([
+      'status' => 'success',
+      'channelId' => $channelId,
+      'categoryId' => $categoryId,
+      'channelName' => $channelName,
+      'isPhantom' => $isPhantom,
+    ]));
+    return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
   }
 
   public function enablePhantomChannel(Request $request, Response $response, $args): Response
@@ -215,22 +354,19 @@ class ServerController extends Routes {
       return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
     }
 
-    $passphrase = rtrim(strtr(base64_encode(random_bytes(18)), '+/', '-_'), '=');
-    $salt = bin2hex(random_bytes(16));
-    $verifier = hash('sha256', 'verify:' . $passphrase . ':' . $salt);
+    // Persist a channel key so members can encrypt/decrypt without a shared passphrase.
+    $phantomKey = base64_encode(random_bytes(32));
 
     $stmt = $pdo->prepare(
-      'UPDATE channels SET is_phantom = 1, phantom_salt = ?, phantom_verifier = ? WHERE channel_id = ?'
+      'UPDATE channels SET is_phantom = 1, phantom_key = ? WHERE channel_id = ?'
     );
-    $stmt->execute([$salt, $verifier, $channelId]);
+    $stmt->execute([$phantomKey, $channelId]);
 
     $response->getBody()->write(json_encode([
       'status' => 'success',
-      'message' => 'Phantom mode enabled. Share the passphrase with members — it is shown only once.',
+      'message' => 'Phantom mode enabled. This channel is now anonymous and encrypted for all members.',
       'channelId' => $channelId,
       'isPhantom' => true,
-      'phantomSalt' => $salt,
-      'passphrase' => $passphrase,
     ]));
     return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
   }
@@ -259,7 +395,7 @@ class ServerController extends Routes {
     }
 
     $stmt = $pdo->prepare(
-      'UPDATE channels SET is_phantom = 0, phantom_salt = NULL, phantom_verifier = NULL WHERE channel_id = ?'
+      'UPDATE channels SET is_phantom = 0, phantom_key = NULL WHERE channel_id = ?'
     );
     $stmt->execute([$channelId]);
 
@@ -272,7 +408,7 @@ class ServerController extends Routes {
     return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
   }
 
-  public function verifyPhantomChannel(Request $request, Response $response, $args): Response
+  public function getPhantomChannelKey(Request $request, Response $response, $args): Response
   {
     $userId = AuthService::getUserId();
     if (!$userId) {
@@ -282,9 +418,6 @@ class ServerController extends Routes {
 
     $serverId = (int) $args['serverId'];
     $channelId = (int) $args['channelId'];
-    $body = $request->getParsedBody() ?? [];
-    $passphrase = trim((string) ($body['passphrase'] ?? ''));
-
     $pdo = $this->dbService->getConnection();
     $this->ensurePhantomChannelColumns($pdo);
 
@@ -293,28 +426,25 @@ class ServerController extends Routes {
       return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
     }
 
+    if (!$this->userIsServerMember($pdo, $serverId, $userId)) {
+      $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Not a member of this server']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
+    }
+
     $stmt = $pdo->prepare(
-      'SELECT is_phantom, phantom_salt, phantom_verifier FROM channels WHERE channel_id = ? LIMIT 1'
+      'SELECT is_phantom, phantom_key FROM channels WHERE channel_id = ? LIMIT 1'
     );
     $stmt->execute([$channelId]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
-    if (!$row || empty($row['is_phantom'])) {
+    if (!$row || empty($row['is_phantom']) || empty($row['phantom_key'])) {
       $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Channel is not in Phantom mode']));
       return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
     }
 
-    $expected = (string) $row['phantom_verifier'];
-    $actual = hash('sha256', 'verify:' . $passphrase . ':' . $row['phantom_salt']);
-    if (!hash_equals($expected, $actual)) {
-      $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Incorrect Phantom passphrase']));
-      return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
-    }
-
     $response->getBody()->write(json_encode([
       'status' => 'success',
-      'message' => 'Phantom passphrase accepted',
       'channelId' => $channelId,
-      'phantomSalt' => $row['phantom_salt'],
+      'phantomKey' => $row['phantom_key'],
     ]));
     return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
   }
@@ -560,6 +690,16 @@ class ServerController extends Routes {
     return $ownerId > 0 && $ownerId === $userId;
   }
 
+  private function userIsServerMember(PDO $pdo, int $serverId, int $userId): bool
+  {
+    if ($this->userCanManageServer($pdo, $serverId, $userId)) {
+      return true;
+    }
+    $stmt = $pdo->prepare('SELECT COUNT(*) FROM members WHERE server_id = ? AND user_id = ?');
+    $stmt->execute([$serverId, $userId]);
+    return (int) $stmt->fetchColumn() > 0;
+  }
+
   private function channelBelongsToServer(PDO $pdo, int $serverId, int $channelId): bool
   {
     $stmt = $pdo->prepare(
@@ -571,12 +711,20 @@ class ServerController extends Routes {
     return (int) $stmt->fetchColumn() > 0;
   }
 
+  private function categoryBelongsToServer(PDO $pdo, int $serverId, int $categoryId): bool
+  {
+    $stmt = $pdo->prepare(
+      'SELECT COUNT(*) FROM categories WHERE category_id = ? AND server_id = ?'
+    );
+    $stmt->execute([$categoryId, $serverId]);
+    return (int) $stmt->fetchColumn() > 0;
+  }
+
   private function ensurePhantomChannelColumns(PDO $pdo): void
   {
     $columns = [
       'is_phantom' => 'TINYINT(1) NOT NULL DEFAULT 0',
-      'phantom_salt' => 'VARCHAR(64) NULL',
-      'phantom_verifier' => 'VARCHAR(128) NULL',
+      'phantom_key' => 'VARCHAR(128) NULL',
     ];
     foreach ($columns as $name => $definition) {
       $stmt = $pdo->prepare(

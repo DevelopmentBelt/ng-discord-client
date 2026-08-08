@@ -144,8 +144,6 @@ export class ServerWebService {
     message?: string;
     channelId: number;
     isPhantom: boolean;
-    phantomSalt: string;
-    passphrase: string;
   }> {
     return this.serverService.sendPostReq(`servers/${serverId}/channels/${channelId}/phantom/enable`, {}, {});
   }
@@ -159,15 +157,13 @@ export class ServerWebService {
     return this.serverService.sendPostReq(`servers/${serverId}/channels/${channelId}/phantom/disable`, {}, {});
   }
 
-  verifyPhantomChannel(serverId: string, channelId: number, passphrase: string): Observable<{
+  getPhantomChannelKey(serverId: string, channelId: number): Observable<{
     status: string;
-    message?: string;
     channelId: number;
-    phantomSalt: string;
+    phantomKey: string;
   }> {
-    return this.serverService.sendPostReq(
-      `servers/${serverId}/channels/${channelId}/phantom/verify`,
-      { passphrase },
+    return this.serverService.sendGetRequest(
+      `servers/${serverId}/channels/${channelId}/phantom/key`,
       {}
     );
   }

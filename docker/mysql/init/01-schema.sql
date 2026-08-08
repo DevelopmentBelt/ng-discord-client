@@ -70,8 +70,7 @@ CREATE TABLE IF NOT EXISTS `channels` (
   `category_id` BIGINT(64),
   `channel_name` VARCHAR(255),
   `is_phantom` TINYINT(1) NOT NULL DEFAULT 0,
-  `phantom_salt` VARCHAR(64) NULL,
-  `phantom_verifier` VARCHAR(128) NULL
+  `phantom_key` VARCHAR(128) NULL
 );
 
 CREATE TABLE IF NOT EXISTS `messages` (

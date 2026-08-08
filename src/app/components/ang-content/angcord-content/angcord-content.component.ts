@@ -7,13 +7,11 @@ import {
   OnInit,
   ViewChild,
   effect,
-  output,
   signal,
   WritableSignal,
   input,
   computed
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { Subscription, take } from 'rxjs';
 import { MessageWebService } from '../../../services/message-web-service/message-web.service';
 import { ChannelSocketService } from '../../../services/socket-service/channel-socket.service';
@@ -21,7 +19,6 @@ import { AlertService } from '../../../services/alert-service/alert-service';
 import { AuthService } from '../../../services/auth-service/auth.service';
 import { PhantomCryptoService } from '../../../services/crypto/phantom-crypto.service';
 import { PhantomKeyService } from '../../../services/crypto/phantom-key.service';
-import { ServerWebService } from '../../../services/server-web-service/server-web.service';
 import { Message, Author, Mention } from '../../../models/message/message';
 import { Server } from '../../../models/server/server';
 import { Channel } from '../../../models/channel/channel';
@@ -39,15 +36,13 @@ import * as moment from 'moment';
     DatetimeFormatterPipe,
     SearchComponent,
     EmojiPickerComponent,
-    GifPickerComponent,
-    FormsModule
+    GifPickerComponent
   ],
   standalone: true
 })
 export class AngcordContentComponent implements OnInit, OnDestroy {
   server = input<Server>();
   channel = input<Channel>();
-  channelUpdated = output<Channel>();
 
   @ViewChild('messageBox') private messageBox!: ElementRef;
   public messageList: Message[] = [] as Message[];
@@ -55,13 +50,8 @@ export class AngcordContentComponent implements OnInit, OnDestroy {
   showSearch = false;
   isEmojiPickerOpen: WritableSignal<boolean> = signal(false);
   isGifPickerOpen: WritableSignal<boolean> = signal(false);
-
-  phantomPassphrase = signal('');
-  phantomUnlockError = signal('');
-  phantomUnlocking = signal(false);
-  phantomUnlocked = signal(false);
-  showPassphraseModal = signal(false);
-  revealedPassphrase = signal('');
+  phantomReady = signal(false);
+  phantomLoading = signal(false);
 
   readonly isPhantomChannel = computed(() => !!this.channel()?.isPhantom);
 
@@ -74,8 +64,7 @@ export class AngcordContentComponent implements OnInit, OnDestroy {
     private alertService: AlertService,
     private authService: AuthService,
     private phantomCrypto: PhantomCryptoService,
-    private phantomKeys: PhantomKeyService,
-    private serverWebService: ServerWebService
+    private phantomKeys: PhantomKeyService
   ) {
     effect(() => {
       this.subs.unsubscribe();
@@ -84,8 +73,8 @@ export class AngcordContentComponent implements OnInit, OnDestroy {
       const channel = this.channel();
       const currentUser = this.authService.currentUser();
       this.messageList = [];
-      this.phantomPassphrase.set('');
-      this.phantomUnlockError.set('');
+      this.phantomReady.set(false);
+      this.phantomLoading.set(false);
       if (this.messageBox?.nativeElement) {
         this.messageBox.nativeElement.value = '';
       }
@@ -100,31 +89,34 @@ export class AngcordContentComponent implements OnInit, OnDestroy {
           this.socketService.setUserId(currentUser.id);
         }
 
-        void this.refreshPhantomUnlockState(channel);
-
-        this.subs.add(
-          this.webService.getLatestMessages(serverId, channelId).subscribe(async (resp) => {
-            if (`${this.server()?.serverId}:${this.channel()?.channelId}` !== requestKey) {
-              return;
-            }
-            const normalized = await Promise.all(
-              (resp || []).map((m) => this.normalizeIncomingMessage(m, channel))
-            );
-            this.messageList = normalized;
-            cdr.detectChanges();
-          })
-        );
-        this.subs.add(
-          this.socketService.onMessage().subscribe(async (msg) => {
-            const message = JSON.parse(msg.data) as Message;
-            if (message.channelId != null && message.channelId + '' !== channelId) {
-              return;
-            }
-            const normalized = await this.normalizeIncomingMessage(message, channel);
-            this.messageList = [...this.messageList, normalized];
-            cdr.detectChanges();
-          })
-        );
+        void this.preparePhantomChannel(server, channel).then(() => {
+          if (`${this.server()?.serverId}:${this.channel()?.channelId}` !== requestKey) {
+            return;
+          }
+          this.subs.add(
+            this.webService.getLatestMessages(serverId, channelId).subscribe(async (resp) => {
+              if (`${this.server()?.serverId}:${this.channel()?.channelId}` !== requestKey) {
+                return;
+              }
+              const normalized = await Promise.all(
+                (resp || []).map((m) => this.normalizeIncomingMessage(m, channel))
+              );
+              this.messageList = normalized;
+              cdr.detectChanges();
+            })
+          );
+          this.subs.add(
+            this.socketService.onMessage().subscribe(async (msg) => {
+              const message = JSON.parse(msg.data) as Message;
+              if (message.channelId != null && message.channelId + '' !== channelId) {
+                return;
+              }
+              const normalized = await this.normalizeIncomingMessage(message, channel);
+              this.messageList = [...this.messageList, normalized];
+              cdr.detectChanges();
+            })
+          );
+        });
       }
     }, { allowSignalWrites: true });
   }
@@ -140,9 +132,13 @@ export class AngcordContentComponent implements OnInit, OnDestroy {
     if (!channel) return 'Select a channel';
 
     if (channel.isPhantom) {
-      return this.phantomUnlocked()
-        ? 'Phantom channel — anonymous & encrypted. Authors are never stored.'
-        : 'Phantom channel locked — enter the passphrase to read and send.';
+      if (this.phantomLoading()) {
+        return 'Phantom channel — loading encryption key…';
+      }
+      if (!this.phantomReady()) {
+        return 'Phantom channel — could not load encryption key.';
+      }
+      return 'Phantom channel — anonymous & encrypted. Authors are never stored.';
     }
 
     if (channel.channelName?.toLowerCase().includes('general')) {
@@ -160,8 +156,11 @@ export class AngcordContentComponent implements OnInit, OnDestroy {
     if (!channel?.channelName) {
       return 'Select a channel to send a message';
     }
-    if (channel.isPhantom && !this.phantomUnlocked()) {
-      return 'Unlock Phantom mode to send anonymously…';
+    if (channel.isPhantom && this.phantomLoading()) {
+      return 'Loading Phantom key…';
+    }
+    if (channel.isPhantom && !this.phantomReady()) {
+      return 'Phantom key unavailable…';
     }
     if (channel.isPhantom) {
       return `Send anonymously in #${channel.channelName}`;
@@ -241,118 +240,10 @@ export class AngcordContentComponent implements OnInit, OnDestroy {
     }
   }
 
-  togglePhantomFromHeader(): void {
-    const server = this.server();
-    const channel = this.channel();
-    if (!server?.serverId || !channel?.channelId) {
-      return;
-    }
-
-    if (channel.isPhantom) {
-      this.serverWebService.disablePhantomChannel(String(server.serverId), channel.channelId).pipe(take(1)).subscribe({
-        next: () => {
-          const updated = { ...channel, isPhantom: false, phantomSalt: null };
-          this.channelUpdated.emit(updated);
-          this.phantomUnlocked.set(true);
-          this.alertService.success('Phantom disabled', `#${channel.channelName} is a normal channel again.`);
-          this.cdr.detectChanges();
-        },
-        error: (err) => {
-          this.alertService.error(
-            'Could not disable Phantom',
-            err?.error?.message || 'Only the server owner can change this.'
-          );
-        }
-      });
-      return;
-    }
-
-    this.serverWebService.enablePhantomChannel(String(server.serverId), channel.channelId).pipe(take(1)).subscribe({
-      next: (resp) => {
-        const updated = {
-          ...channel,
-          isPhantom: true,
-          phantomSalt: resp.phantomSalt
-        };
-        this.channelUpdated.emit(updated);
-        this.revealedPassphrase.set(resp.passphrase);
-        this.showPassphraseModal.set(true);
-        this.phantomUnlocked.set(false);
-        this.alertService.success('Phantom enabled', 'Save the passphrase — it is shown only once.');
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        this.alertService.error(
-          'Could not enable Phantom',
-          err?.error?.message || 'Only the server owner can enable Phantom mode.'
-        );
-      }
-    });
-  }
-
-  closePassphraseModal(): void {
-    this.showPassphraseModal.set(false);
-    this.revealedPassphrase.set('');
-  }
-
-  copyRevealedPassphrase(): void {
-    const value = this.revealedPassphrase();
-    if (!value || !navigator?.clipboard) {
-      return;
-    }
-    void navigator.clipboard.writeText(value);
-    this.alertService.success('Copied', 'Phantom passphrase copied to clipboard.');
-  }
-
-  unlockPhantom(): void {
-    const server = this.server();
-    const channel = this.channel();
-    const passphrase = this.phantomPassphrase().trim();
-    if (!server?.serverId || !channel?.channelId || !passphrase) {
-      this.phantomUnlockError.set('Enter the Phantom passphrase');
-      return;
-    }
-
-    this.phantomUnlocking.set(true);
-    this.phantomUnlockError.set('');
-
-    this.serverWebService
-      .verifyPhantomChannel(String(server.serverId), channel.channelId, passphrase)
-      .pipe(take(1))
-      .subscribe({
-        next: async (resp) => {
-          try {
-            const salt = resp.phantomSalt || channel.phantomSalt;
-            if (!salt) {
-              throw new Error('Missing phantom salt');
-            }
-            await this.phantomKeys.unlock(channel.channelId, passphrase, salt);
-            this.phantomUnlocked.set(true);
-            this.phantomPassphrase.set('');
-            // Re-decrypt history now that we have the key
-            const refreshed = await Promise.all(
-              this.messageList.map((m) => this.normalizeIncomingMessage(m, channel))
-            );
-            this.messageList = refreshed;
-            this.alertService.success('Phantom unlocked', 'You can now read and send anonymous encrypted messages.');
-          } catch {
-            this.phantomUnlockError.set('Could not derive decryption key');
-          } finally {
-            this.phantomUnlocking.set(false);
-            this.cdr.detectChanges();
-          }
-        },
-        error: (err) => {
-          this.phantomUnlocking.set(false);
-          this.phantomUnlockError.set(err?.error?.message || 'Incorrect Phantom passphrase');
-          this.cdr.detectChanges();
-        }
-      });
-  }
-
   public async postMessage(textRaw: string) {
     const currentUser = this.authService.currentUser();
     const channel = this.channel();
+    const server = this.server();
     if (!currentUser || !channel?.channelId) {
       this.alertService.warning('Not signed in', 'Please log in to send messages.');
       return;
@@ -364,61 +255,87 @@ export class AngcordContentComponent implements OnInit, OnDestroy {
     }
 
     const isPhantom = !!channel.isPhantom;
-    if (isPhantom && !this.phantomUnlocked()) {
-      this.alertService.warning('Phantom locked', 'Unlock this channel with the passphrase first.');
+    if (isPhantom) {
+      let key = await this.phantomKeys.getKey(channel.channelId);
+      if (!key && server?.serverId) {
+        key = await this.phantomKeys.ensureKey(server.serverId, channel.channelId);
+      }
+      if (!key) {
+        this.alertService.warning('Phantom unavailable', 'Could not load this channel encryption key.');
+        this.phantomReady.set(false);
+        return;
+      }
+
+      const outboundText = await this.phantomCrypto.encrypt(plain, key);
+      const author: Author = { userId: 0, username: 'Anonymous', profilePic: '' };
+      const msg: Message = {
+        id: 'pending',
+        text: plain,
+        rawText: outboundText,
+        mentions: {} as Mention[],
+        postedTimestamp: moment(),
+        edited: false,
+        editTimestamp: moment(),
+        attachments: [],
+        channelId: channel.channelId,
+        isAnonymous: true,
+        isEncrypted: true,
+        author
+      };
+
+      const socketPayload: Message = {
+        ...msg,
+        text: outboundText,
+        rawText: outboundText,
+        author
+      };
+
+      this.webService
+        .postMessage(currentUser, channel.channelId + '', msg, {
+          anonymous: true,
+          encrypted: true
+        })
+        .pipe(take(1))
+        .subscribe({
+          next: () => this.socketService.sendMessage(socketPayload),
+          error: (err) =>
+            this.alertService.warning(
+              'Send failed',
+              err?.error?.message || 'Could not send your message.'
+            )
+        });
       return;
     }
 
-    let outboundText = plain;
-    if (isPhantom) {
-      const key = await this.phantomKeys.getKey(channel.channelId);
-      if (!key) {
-        this.alertService.warning('Phantom locked', 'Unlock this channel with the passphrase first.');
-        this.phantomUnlocked.set(false);
-        return;
-      }
-      outboundText = await this.phantomCrypto.encrypt(plain, key);
-    }
-
-    const author: Author = isPhantom
-      ? { userId: 0, username: 'Anonymous', profilePic: '' }
-      : {
-          userId: currentUser.id,
-          username: currentUser.username,
-          profilePic: currentUser.userPic || ''
-        };
+    const author: Author = {
+      userId: currentUser.id,
+      username: currentUser.username,
+      profilePic: currentUser.userPic || ''
+    };
 
     const msg: Message = {
       id: 'pending',
       text: plain,
-      rawText: outboundText,
+      rawText: plain,
       mentions: {} as Mention[],
       postedTimestamp: moment(),
       edited: false,
       editTimestamp: moment(),
       attachments: [],
       channelId: channel.channelId,
-      isAnonymous: isPhantom,
-      isEncrypted: isPhantom,
-      author
-    };
-
-    // WS payload must not leak real identity or plaintext for phantom channels
-    const socketPayload: Message = {
-      ...msg,
-      text: isPhantom ? outboundText : plain,
-      rawText: outboundText,
+      isAnonymous: false,
+      isEncrypted: false,
       author
     };
 
     this.webService
       .postMessage(currentUser, channel.channelId + '', msg, {
-        anonymous: isPhantom,
-        encrypted: isPhantom
+        anonymous: false,
+        encrypted: false
       })
       .pipe(take(1))
       .subscribe({
-        next: () => this.socketService.sendMessage(socketPayload),
+        next: () => this.socketService.sendMessage(msg),
         error: (err) =>
           this.alertService.warning(
             'Send failed',
@@ -427,13 +344,21 @@ export class AngcordContentComponent implements OnInit, OnDestroy {
       });
   }
 
-  private async refreshPhantomUnlockState(channel: Channel): Promise<void> {
+  private async preparePhantomChannel(server: Server, channel: Channel): Promise<void> {
     if (!channel.isPhantom) {
-      this.phantomUnlocked.set(true);
+      this.phantomReady.set(true);
+      this.phantomLoading.set(false);
+      this.cdr.detectChanges();
       return;
     }
-    const key = await this.phantomKeys.getKey(channel.channelId);
-    this.phantomUnlocked.set(!!key);
+
+    this.phantomLoading.set(true);
+    this.phantomReady.set(false);
+    this.cdr.detectChanges();
+
+    const key = await this.phantomKeys.ensureKey(server.serverId, channel.channelId);
+    this.phantomReady.set(!!key);
+    this.phantomLoading.set(false);
     this.cdr.detectChanges();
   }
 
@@ -464,7 +389,7 @@ export class AngcordContentComponent implements OnInit, OnDestroy {
           copy.decryptFailed = true;
         }
       } else {
-        copy.text = '🔒 Encrypted phantom message — unlock to read';
+        copy.text = '🔒 Encrypted phantom message';
         copy.decryptFailed = true;
       }
     } else {

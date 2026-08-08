@@ -272,7 +272,10 @@ export class ServerOverviewModalComponent implements OnInit {
       type: channel.type,
       topic: channel.topic,
       categoryId: channel.categoryId,
-      position: channel.position
+      parentId: String(channel.categoryId),
+      position: channel.position,
+      nsfw: !!channel.nsfw,
+      isPhantom: !!channel.isPhantom
     };
   }
 
@@ -491,14 +494,25 @@ export class ServerOverviewModalComponent implements OnInit {
   /**
    * Save channel
    */
-  saveChannel(channelData: Partial<Channel>): void {
+  saveChannel(channelData: Partial<Channel> | Record<string, unknown>): void {
     if (!this.server()) return;
+
+    const data = channelData as Record<string, unknown>;
+    const payload: Partial<Channel> = {
+      channelName: (data['name'] as string) || (data['channelName'] as string),
+      categoryId: Number(data['categoryId'] || data['parentId'] || 0),
+      type: (data['type'] as Channel['type']) || 'text',
+      topic: data['topic'] as string | undefined,
+      nsfw: !!data['nsfw'],
+      isPhantom: !!data['isPhantom'],
+      slowmode: data['slowmode'] as number | undefined,
+      userLimit: data['userLimit'] as number | undefined,
+      bitrate: data['bitrate'] as number | undefined
+    };
     
     if (this.isEditingChannel()) {
-      // Update existing channel
-      this.serverWebService.updateChannel(this.server()!.serverId, this.selectedChannel()!.channelId, channelData).subscribe({
+      this.serverWebService.updateChannel(this.server()!.serverId, this.selectedChannel()!.channelId, payload).subscribe({
         next: () => {
-          console.log('Channel updated successfully');
           this.loadServerChannels();
           this.closeChannelModal();
         },
@@ -507,10 +521,8 @@ export class ServerOverviewModalComponent implements OnInit {
         }
       });
     } else {
-      // Create new channel
-      this.serverWebService.createChannel(this.server()!.serverId, channelData).subscribe({
+      this.serverWebService.createChannel(this.server()!.serverId, payload).subscribe({
         next: () => {
-          console.log('Channel created successfully');
           this.loadServerChannels();
           this.updateServerStatsAfterChannelChange(1);
           this.closeChannelModal();

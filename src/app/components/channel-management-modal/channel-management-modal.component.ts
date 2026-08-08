@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, signal, WritableSignal, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, effect, input, output, signal, WritableSignal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ServerChannel } from '../server-settings-modal/server-settings-modal.component';
@@ -12,33 +12,30 @@ import { ServerChannel } from '../server-settings-modal/server-settings-modal.co
   imports: [CommonModule, FormsModule]
 })
 export class ChannelManagementModalComponent implements OnInit {
-  // Input Signals
   channel = input<ServerChannel | null>(null);
   isEditing = input<boolean>(false);
   categories = input<ServerChannel[]>([]);
-  
-  // Output Signals
+  defaultCategoryId = input<string | number | null>(null);
+
   closeModal = output<void>();
   saveChannel = output<Partial<ServerChannel>>();
 
-  // Form data
   channelName: WritableSignal<string> = signal('');
   channelType: WritableSignal<'text' | 'voice' | 'category'> = signal('text');
   channelTopic: WritableSignal<string> = signal('');
   selectedCategory: WritableSignal<string> = signal('');
   isNsfw: WritableSignal<boolean> = signal(false);
+  isPhantom: WritableSignal<boolean> = signal(false);
   slowmode: WritableSignal<number> = signal(0);
   userLimit: WritableSignal<number> = signal(0);
   bitrate: WritableSignal<number> = signal(64000);
 
-  // Available channel types
   channelTypes = [
-    { value: 'text', label: 'Text Channel', description: 'Send messages, images, GIFs, stickers, opinions, and puns' },
-    { value: 'voice', label: 'Voice Channel', description: 'Hang out together with voice, video, and screen share' },
-    { value: 'category', label: 'Category', description: 'Organize your channels with categories' }
+    { value: 'text' as const, label: 'Text Channel', description: 'Send messages, images, GIFs, stickers, opinions, and puns' },
+    { value: 'voice' as const, label: 'Voice Channel', description: 'Hang out together with voice, video, and screen share' },
+    { value: 'category' as const, label: 'Category', description: 'Organize your channels with categories' }
   ];
 
-  // Slowmode options
   slowmodeOptions = [
     { value: 0, label: 'Off' },
     { value: 5, label: '5 seconds' },
@@ -54,7 +51,6 @@ export class ChannelManagementModalComponent implements OnInit {
     { value: 21600, label: '6 hours' }
   ];
 
-  // Bitrate options for voice channels
   bitrateOptions = [
     { value: 64000, label: '64 kbps' },
     { value: 96000, label: '96 kbps' },
@@ -63,80 +59,75 @@ export class ChannelManagementModalComponent implements OnInit {
     { value: 384000, label: '384 kbps' }
   ];
 
-  constructor() {}
+  constructor() {
+    effect(() => {
+      // Re-init when inputs change while the modal is open
+      this.channel();
+      this.isEditing();
+      this.defaultCategoryId();
+      this.initializeForm();
+    }, { allowSignalWrites: true });
+  }
 
   ngOnInit(): void {
     this.initializeForm();
   }
 
-  /**
-   * Initialize form with existing channel data or defaults
-   */
   private initializeForm(): void {
     if (this.channel() && this.isEditing()) {
-      this.channelName.set(this.channel()!.name);
-      this.channelType.set(this.channel()!.type);
-      this.channelTopic.set(this.channel()!.topic || '');
-      this.selectedCategory.set(this.channel()!.parentId || '');
-      this.isNsfw.set(this.channel()!.nsfw);
-      this.slowmode.set(this.channel()!.slowmode || 0);
-      this.userLimit.set(this.channel()!.userLimit || 0);
-      this.bitrate.set(this.channel()!.bitrate || 64000);
-    } else {
-      this.channelName.set('');
-      this.channelType.set('text');
+      const channel = this.channel()!;
+      this.channelName.set(channel.name);
+      this.channelType.set(channel.type || 'text');
+      this.channelTopic.set(channel.topic || '');
+      this.selectedCategory.set(String(channel.parentId || channel.categoryId || ''));
+      this.isNsfw.set(!!channel.nsfw);
+      this.isPhantom.set(!!channel.isPhantom);
+      this.slowmode.set(channel.slowmode || 0);
+      this.userLimit.set(channel.userLimit || 0);
+      this.bitrate.set(channel.bitrate || 64000);
+      return;
+    }
+
+    this.channelName.set('');
+    this.channelType.set('text');
+    this.channelTopic.set('');
+    const defaultCategory = this.defaultCategoryId();
+    this.selectedCategory.set(defaultCategory != null && defaultCategory !== '' ? String(defaultCategory) : '');
+    this.isNsfw.set(false);
+    this.isPhantom.set(false);
+    this.slowmode.set(0);
+    this.userLimit.set(0);
+    this.bitrate.set(64000);
+  }
+
+  onChannelNameInput(value: string): void {
+    const normalized = (value || '').toLowerCase().replace(/\s+/g, '-');
+    this.channelName.set(normalized);
+  }
+
+  onChannelTypeChange(type: 'text' | 'voice' | 'category'): void {
+    this.channelType.set(type);
+    if (type === 'text') {
+      this.userLimit.set(0);
+      this.bitrate.set(64000);
+    } else if (type === 'voice') {
       this.channelTopic.set('');
-      this.selectedCategory.set('');
-      this.isNsfw.set(false);
+      this.slowmode.set(0);
+      this.isPhantom.set(false);
+    } else if (type === 'category') {
+      this.channelTopic.set('');
       this.slowmode.set(0);
       this.userLimit.set(0);
       this.bitrate.set(64000);
+      this.selectedCategory.set('');
+      this.isPhantom.set(false);
     }
   }
 
-  /**
-   * Handle channel type change
-   */
-  onChannelTypeChange(): void {
-    // Reset type-specific fields when changing channel type
-    if (this.channelType() === 'text') {
-      this.userLimit.set(0);
-      this.bitrate.set(64000);
-    } else if (this.channelType() === 'voice') {
-      this.channelTopic.set('');
-      this.slowmode.set(0);
-    } else if (this.channelType() === 'category') {
-      this.channelTopic.set('');
-      this.slowmode.set(0);
-      this.userLimit.set(0);
-      this.bitrate.set(64000);
-      this.selectedCategory.set('');
-    }
-  }
-
-  /**
-   * Validate channel name
-   */
   validateChannelName(): boolean {
-    const name = this.channelName().trim();
-    if (name.length === 0) {
-      // Show error in UI instead of alert
-      return false;
-    }
-    if (name.length > 100) {
-      // Show error in UI instead of alert
-      return false;
-    }
-    if (!/^[a-z0-9-]+$/.test(name)) {
-      // Show error in UI instead of alert
-      return false;
-    }
-    return true;
+    return this.getValidationError() === '';
   }
 
-  /**
-   * Get validation error message
-   */
   getValidationError(): string {
     const name = this.channelName().trim();
     if (name.length === 0) {
@@ -145,15 +136,15 @@ export class ChannelManagementModalComponent implements OnInit {
     if (name.length > 100) {
       return 'Channel name cannot exceed 100 characters';
     }
-    if (!/^[a-z0-9-]+$/.test(name)) {
-      return 'Channel name can only contain lowercase letters, numbers, and hyphens';
+    if (!/^[a-z0-9-_]+$/.test(name)) {
+      return 'Channel name can only contain lowercase letters, numbers, hyphens, and underscores';
+    }
+    if (this.supportsCategorySelection() && !this.selectedCategory()) {
+      return 'Select a category for this channel';
     }
     return '';
   }
 
-  /**
-   * Save channel
-   */
   save(): void {
     if (!this.validateChannelName()) {
       return;
@@ -164,7 +155,9 @@ export class ChannelManagementModalComponent implements OnInit {
       type: this.channelType(),
       topic: this.channelTopic().trim() || undefined,
       parentId: this.selectedCategory() || undefined,
+      categoryId: this.selectedCategory() ? Number(this.selectedCategory()) : undefined,
       nsfw: this.isNsfw(),
+      isPhantom: this.channelType() === 'text' ? this.isPhantom() : false,
       slowmode: this.slowmode() || undefined,
       userLimit: this.userLimit() || undefined,
       bitrate: this.bitrate() || undefined
@@ -173,60 +166,40 @@ export class ChannelManagementModalComponent implements OnInit {
     this.saveChannel.emit(channelData);
   }
 
-  /**
-   * Close modal
-   */
   close(): void {
     this.closeModal.emit();
   }
 
-  /**
-   * Handle escape key
-   */
   onKeydown(event: KeyboardEvent): void {
     if (event.key === 'Escape') {
       this.close();
     }
   }
 
-  /**
-   * Get available categories for selection
-   */
   getAvailableCategories(): ServerChannel[] {
-    return this.categories().filter(cat => cat.id !== this.channel()?.id);
+    return this.categories().filter((cat) => String(cat.id) !== String(this.channel()?.id));
   }
 
-  /**
-   * Check if channel type supports topic
-   */
   supportsTopic(): boolean {
     return this.channelType() === 'text';
   }
 
-  /**
-   * Check if channel type supports slowmode
-   */
   supportsSlowmode(): boolean {
     return this.channelType() === 'text';
   }
 
-  /**
-   * Check if channel type supports user limit
-   */
+  supportsPhantom(): boolean {
+    return this.channelType() === 'text';
+  }
+
   supportsUserLimit(): boolean {
     return this.channelType() === 'voice';
   }
 
-  /**
-   * Check if channel type supports bitrate
-   */
   supportsBitrate(): boolean {
     return this.channelType() === 'voice';
   }
 
-  /**
-   * Check if channel type supports category selection
-   */
   supportsCategorySelection(): boolean {
     return this.channelType() !== 'category';
   }
