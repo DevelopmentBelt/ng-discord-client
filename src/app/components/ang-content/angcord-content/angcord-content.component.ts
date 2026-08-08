@@ -270,7 +270,7 @@ export class AngcordContentComponent implements OnInit, OnDestroy {
       }
 
       const outboundText = await this.phantomCrypto.encrypt(plain, key);
-      const author: Author = { userId: 0, username: 'Anonymous', profilePic: '' };
+      const pendingAuthor: Author = { userId: 0, username: '…', profilePic: '' };
       const msg: Message = {
         id: 'pending',
         text: plain,
@@ -283,14 +283,7 @@ export class AngcordContentComponent implements OnInit, OnDestroy {
         channelId: channel.channelId,
         isAnonymous: true,
         isEncrypted: true,
-        author
-      };
-
-      const socketPayload: Message = {
-        ...msg,
-        text: outboundText,
-        rawText: outboundText,
-        author
+        author: pendingAuthor
       };
 
       this.webService
@@ -300,7 +293,21 @@ export class AngcordContentComponent implements OnInit, OnDestroy {
         })
         .pipe(take(1))
         .subscribe({
-          next: () => this.socketService.sendMessage(socketPayload),
+          next: (resp) => {
+            const author: Author = {
+              userId: Number(resp?.message?.author?.userId || 0),
+              username: resp?.message?.author?.username || 'Anonymous',
+              profilePic: ''
+            };
+            const socketPayload: Message = {
+              ...msg,
+              id: String(resp?.message?.id || 'pending'),
+              text: outboundText,
+              rawText: outboundText,
+              author
+            };
+            this.socketService.sendMessage(socketPayload);
+          },
           error: (err) =>
             this.alertService.warning(
               'Send failed',
@@ -380,7 +387,12 @@ export class AngcordContentComponent implements OnInit, OnDestroy {
     };
 
     if (copy.isAnonymous) {
-      copy.author = { userId: 0, username: 'Anonymous', profilePic: '' };
+      // Keep server-assigned channel persona (e.g. "Crimson Fox"); never leak real identity.
+      copy.author = {
+        userId: Number(copy.author?.userId || 0),
+        username: copy.author?.username || 'Anonymous',
+        profilePic: ''
+      };
     }
 
     const ciphertext = copy.rawText || copy.text || '';

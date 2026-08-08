@@ -14,9 +14,14 @@ class UtilService
     $isEncrypted = !empty($msg['is_encrypted']) || str_starts_with((string) $raw_text, 'PHANTOM1:');
 
     if ($isAnonymous) {
+      $personaId = (int) ($msg['phantom_persona_id'] ?? 0);
+      $phantomName = trim((string) ($msg['phantom_author'] ?? ''));
+      if ($phantomName === '') {
+        $phantomName = 'Anonymous';
+      }
       $author = [
-        'userId' => 0,
-        'username' => 'Anonymous',
+        'userId' => $personaId > 0 ? $personaId : 0,
+        'username' => $phantomName,
         'profilePic' => '',
       ];
     } else {

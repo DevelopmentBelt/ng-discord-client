@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Services\AuthService;
+use App\Services\PhantomPersonaService;
 use PDO;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -122,8 +123,16 @@ class MessageController extends Routes {
       return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
     }
 
-    // Phantom: authenticate to post, but never persist who wrote it.
+    // Phantom: never expose real identity to clients. Persist a channel-scoped persona instead.
     $storedAuthorId = $isAnonymous ? null : $authorId;
+    $personaId = null;
+    $phantomAuthor = null;
+    if ($isAnonymous) {
+      PhantomPersonaService::ensureSchema($conn);
+      $persona = PhantomPersonaService::getOrCreate($conn, $channelId, (int) $authorId);
+      $personaId = $persona['personaId'];
+      $phantomAuthor = $persona['displayName'];
+    }
 
     $this->ensureExpiresColumn($conn);
     $this->ensureEphemeralChannelColumn($conn);
@@ -139,8 +148,8 @@ class MessageController extends Routes {
 
     $conn->beginTransaction();
     $stmt = $conn->prepare(
-      'INSERT INTO messages (channel_id, posted_by_user_id, raw_text, is_anonymous, is_encrypted, timestamp_posted, expires_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?)'
+      'INSERT INTO messages (channel_id, posted_by_user_id, raw_text, is_anonymous, is_encrypted, timestamp_posted, expires_at, phantom_persona_id, phantom_author)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
     );
     $success = $stmt->execute([
       $channelId,
@@ -150,6 +159,8 @@ class MessageController extends Routes {
       $isEncrypted ? 1 : 0,
       $timestampPosted,
       $expiresAt,
+      $personaId,
+      $phantomAuthor,
     ]);
 
     if ($success) {
@@ -167,7 +178,11 @@ class MessageController extends Routes {
           'isEncrypted' => $isEncrypted,
           'expiresAt' => $expiresAt,
           'author' => $isAnonymous
-            ? ['userId' => 0, 'username' => 'Anonymous', 'profilePic' => '']
+            ? [
+              'userId' => (int) $personaId,
+              'username' => $phantomAuthor,
+              'profilePic' => '',
+            ]
             : null,
         ],
       ];
@@ -190,6 +205,7 @@ class MessageController extends Routes {
     $this->ensureColumn($pdo, 'channels', 'phantom_key', 'VARCHAR(128) NULL');
     $this->ensureColumn($pdo, 'messages', 'is_anonymous', 'TINYINT(1) NOT NULL DEFAULT 0');
     $this->ensureColumn($pdo, 'messages', 'is_encrypted', 'TINYINT(1) NOT NULL DEFAULT 0');
+    PhantomPersonaService::ensureSchema($pdo);
 
     // Allow anonymous phantom posts without an author id
     try {

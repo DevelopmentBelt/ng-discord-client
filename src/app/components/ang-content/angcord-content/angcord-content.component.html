@@ -46,13 +46,13 @@
       <div class="msg-row hover:bg-discord-light/30 rounded-lg transition-colors duration-150">
         <div class="flex px-2 py-3 items-start gap-4">
           <div class="flex-shrink-0 w-10 text-center">
-            @if (i == 0 || messageList[i-1]?.author?.userId != msg.author.userId || !!msg.isAnonymous) {
+            @if (i == 0 || messageList[i-1]?.author?.userId != msg.author.userId) {
               <div
                 class="w-10 h-10 rounded-full flex items-center justify-center text-discord-text-lighter font-semibold text-sm"
                 [class.bg-discord-blue]="!msg.isAnonymous"
                 [class.bg-violet-700]="!!msg.isAnonymous"
               >
-                {{ msg.isAnonymous ? '?' : (msg.author.username?.charAt(0) || 'U') }}
+                {{ msg.author.username?.charAt(0) || (msg.isAnonymous ? '?' : 'U') }}
               </div>
             } @else {
               <span class="text-xs text-discord-text-muted-light">{{ msg.postedTimestamp | datetimeFormatter: 'h:mm A' }}</span>
@@ -60,10 +60,10 @@
           </div>
           <div class="flex-1 min-w-0">
             <div class="mb-1">
-              @if (i == 0 || messageList[i-1]?.author?.userId != msg.author.userId || !!msg.isAnonymous) {
+              @if (i == 0 || messageList[i-1]?.author?.userId != msg.author.userId) {
                 <span class="text-discord-text-lighter font-medium text-base">{{ msg.author.username }}</span>
                 @if (msg.isAnonymous) {
-                  <span class="ml-2 text-[10px] uppercase tracking-wider text-violet-300">anon</span>
+                  <span class="ml-2 text-[10px] uppercase tracking-wider text-violet-300">phantom</span>
                 }
                 @if (msg.isEncrypted) {
                   <span class="ml-1 text-[10px] uppercase tracking-wider text-emerald-300">enc</span>
