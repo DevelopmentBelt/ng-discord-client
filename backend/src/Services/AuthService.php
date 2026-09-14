@@ -22,6 +22,7 @@ class AuthService
 
   public static function login(int $userId): void
   {
+    session_regenerate_id(true);
     $_SESSION['user_id'] = $userId;
   }
 

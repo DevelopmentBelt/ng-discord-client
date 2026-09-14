@@ -33,4 +33,16 @@ export class DmWebService {
   searchUsers(query: string): Observable<User[]> {
     return this.api.sendGetRequest(`users/search?q=${encodeURIComponent(query)}`, {});
   }
+
+  // M1: DM E2EE key management
+  getE2eeKey(conversationId: string): Observable<{ wrappedKey: string | null }> {
+    return this.api.sendGetRequest(`dms/${conversationId}/e2ee-key`, {});
+  }
+
+  putE2eeKeys(
+    conversationId: string,
+    keys: Array<{ userId: number; wrappedKey: string }>
+  ): Observable<{ status: string }> {
+    return this.api.sendPutReq(`dms/${conversationId}/e2ee-keys`, { keys }, {});
+  }
 }

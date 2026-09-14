@@ -99,4 +99,9 @@ export class UserWebService {
   public deleteKeyVault(): Observable<{ status: string }> {
     return this.serverConnectivityService.sendDeleteRequest(`${this.API_URL}/me/key-vault`, {});
   }
+
+  /** C3: request a single-use, 60-second WebSocket authentication ticket. */
+  public createWsTicket(): Observable<{ ticket: string; expiresAt: string }> {
+    return this.serverConnectivityService.sendPostReq('ws-ticket', {}, {});
+  }
 }

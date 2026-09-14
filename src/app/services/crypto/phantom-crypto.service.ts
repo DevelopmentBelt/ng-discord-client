@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 
 const PREFIX = 'PHANTOM1:';
-const WRAP_PREFIX = 'WRAP1:';
+const WRAP_PREFIX  = 'WRAP1:';  // legacy — raw ECDH shared secret used as AES key
+const WRAP2_PREFIX = 'WRAP2:';  // L1 — HKDF-SHA256 applied before use as AES key
 
 @Injectable({
   providedIn: 'root'
@@ -47,8 +48,8 @@ export class PhantomCryptoService {
   }
 
   /**
-   * Wrap a channel AES key for a recipient using ephemeral ECDH (true E2EE).
-   * Server only ever stores the WRAP1 blob — never the raw channel key.
+   * Wrap a channel AES key for a recipient using ephemeral ECDH + HKDF-SHA256 (L1 fix).
+   * New wraps are prefixed WRAP2: — old WRAP1: blobs remain readable.
    */
   async wrapKeyForRecipient(rawChannelKey: Uint8Array, recipientPublicKeySpkiB64: string): Promise<string> {
     const recipientKey = await crypto.subtle.importKey(
@@ -64,28 +65,75 @@ export class PhantomCryptoService {
       ephemeral.privateKey,
       256
     );
-    const wrapKey = await crypto.subtle.importKey('raw', sharedBits, { name: 'AES-GCM' }, false, ['encrypt']);
+
+    // L1: HKDF-SHA256 over the raw ECDH output before using it as AES key material
+    const hkdfKey = await crypto.subtle.importKey('raw', sharedBits, 'HKDF', false, ['deriveBits']);
+    const aesKeyBits = await crypto.subtle.deriveBits(
+      {
+        name: 'HKDF',
+        hash: 'SHA-256',
+        salt: new Uint8Array(32),  // zero salt; context string provides domain separation
+        info: new TextEncoder().encode('nimbus-channel-key-wrap-v2')
+      },
+      hkdfKey,
+      256
+    );
+    const wrapKey = await crypto.subtle.importKey('raw', aesKeyBits, { name: 'AES-GCM' }, false, ['encrypt']);
     const iv = crypto.getRandomValues(new Uint8Array(12));
     const cipherBuf = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, wrapKey, rawChannelKey);
     const ephSpki = new Uint8Array(await crypto.subtle.exportKey('spki', ephemeral.publicKey));
-    return `${WRAP_PREFIX}${this.bytesToBase64(ephSpki)}:${this.bytesToBase64(iv)}:${this.bytesToBase64(new Uint8Array(cipherBuf))}`;
+    return `${WRAP2_PREFIX}${this.bytesToBase64(ephSpki)}:${this.bytesToBase64(iv)}:${this.bytesToBase64(new Uint8Array(cipherBuf))}`;
   }
 
   async unwrapKeyFromSender(wrapped: string, privateKey: CryptoKey): Promise<Uint8Array> {
-    if (!wrapped.startsWith(WRAP_PREFIX)) {
-      throw new Error('Invalid wrapped key');
+    if (wrapped.startsWith(WRAP2_PREFIX)) {
+      return this.unwrapV2(wrapped, privateKey);
     }
+    if (wrapped.startsWith(WRAP_PREFIX)) {
+      return this.unwrapV1(wrapped, privateKey);
+    }
+    throw new Error('Invalid wrapped key: unknown version prefix');
+  }
+
+  /** L1: New WRAP2 format — ECDH + HKDF-SHA256. */
+  private async unwrapV2(wrapped: string, privateKey: CryptoKey): Promise<Uint8Array> {
+    const body = wrapped.slice(WRAP2_PREFIX.length);
+    const [ephB64, ivB64, cipherB64] = body.split(':');
+    if (!ephB64 || !ivB64 || !cipherB64) throw new Error('Invalid WRAP2 payload');
+
+    const ephPub = await crypto.subtle.importKey(
+      'spki', this.base64ToBytes(ephB64), { name: 'ECDH', namedCurve: 'P-256' }, false, []
+    );
+    const sharedBits = await crypto.subtle.deriveBits({ name: 'ECDH', public: ephPub }, privateKey, 256);
+
+    const hkdfKey = await crypto.subtle.importKey('raw', sharedBits, 'HKDF', false, ['deriveBits']);
+    const aesKeyBits = await crypto.subtle.deriveBits(
+      {
+        name: 'HKDF',
+        hash: 'SHA-256',
+        salt: new Uint8Array(32),
+        info: new TextEncoder().encode('nimbus-channel-key-wrap-v2')
+      },
+      hkdfKey,
+      256
+    );
+    const wrapKey = await crypto.subtle.importKey('raw', aesKeyBits, { name: 'AES-GCM' }, false, ['decrypt']);
+    const plain = await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv: this.base64ToBytes(ivB64) },
+      wrapKey,
+      this.base64ToBytes(cipherB64)
+    );
+    return new Uint8Array(plain);
+  }
+
+  /** Legacy WRAP1 format — raw ECDH shared secret used directly as AES key. Kept for backward compat. */
+  private async unwrapV1(wrapped: string, privateKey: CryptoKey): Promise<Uint8Array> {
     const body = wrapped.slice(WRAP_PREFIX.length);
     const [ephB64, ivB64, cipherB64] = body.split(':');
-    if (!ephB64 || !ivB64 || !cipherB64) {
-      throw new Error('Invalid wrapped key payload');
-    }
+    if (!ephB64 || !ivB64 || !cipherB64) throw new Error('Invalid WRAP1 payload');
+
     const ephPub = await crypto.subtle.importKey(
-      'spki',
-      this.base64ToBytes(ephB64),
-      { name: 'ECDH', namedCurve: 'P-256' },
-      false,
-      []
+      'spki', this.base64ToBytes(ephB64), { name: 'ECDH', namedCurve: 'P-256' }, false, []
     );
     const sharedBits = await crypto.subtle.deriveBits({ name: 'ECDH', public: ephPub }, privateKey, 256);
     const wrapKey = await crypto.subtle.importKey('raw', sharedBits, { name: 'AES-GCM' }, false, ['decrypt']);

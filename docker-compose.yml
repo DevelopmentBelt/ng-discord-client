@@ -4,17 +4,19 @@ services:
     container_name: nimbus-db
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      # M9: no insecure defaults — set MYSQL_ROOT_PASSWORD and DB_PASS in your .env file
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
       MYSQL_DATABASE: ${DB_NAME:-nimbus}
       MYSQL_USER: ${DB_USER:-nimbus}
-      MYSQL_PASSWORD: ${DB_PASS:-nimbus}
-    ports:
-      - "${DB_PORT:-3306}:3306"
+      MYSQL_PASSWORD: ${DB_PASS:?Set DB_PASS in .env}
+    # M9: DB port NOT published to the host — only reachable within the Docker network
+    # ports:
+    #   - "${DB_PORT:-3306}:3306"
     volumes:
       - db_data:/var/lib/mysql
       - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-root}"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
       interval: 5s
       timeout: 5s
       retries: 20
@@ -32,11 +34,17 @@ services:
       DB_HOST: db
       DB_NAME: ${DB_NAME:-nimbus}
       DB_USER: ${DB_USER:-nimbus}
-      DB_PASS: ${DB_PASS:-nimbus}
+      DB_PASS: ${DB_PASS:?Set DB_PASS in .env}
       DB_CHARSET: ${DB_CHARSET:-utf8mb4}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:4200}
       MAIL_DRIVER: ${MAIL_DRIVER:-log}
       MAIL_FROM: ${MAIL_FROM:-noreply@nimbus.local}
+      # H2: comma-separated list of allowed CORS origins
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:4200}
+      # H6: set to true when running behind HTTPS
+      SESSION_SECURE: ${SESSION_SECURE:-false}
+      # H7: set to true only in local development
+      APP_DEBUG: ${APP_DEBUG:-false}
     ports:
       - "${API_PORT:-80}:80"
     volumes:

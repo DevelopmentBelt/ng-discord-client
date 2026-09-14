@@ -58,18 +58,9 @@ export class EmojiPickerComponent implements OnInit, OnDestroy {
     return this.groupEmojisByCategory(filtered);
   });
 
-  constructor() {
-    // Debug effect to monitor isOpen changes
-    effect(() => {
-      const isOpenValue = this.isOpen();
-      console.log('🔍 EmojiPicker isOpen changed to:', isOpenValue);
-    });
-  }
+  constructor() {}
 
   ngOnInit(): void {
-    console.log('🎨 EmojiPickerComponent initialized');
-    console.log('Initial isOpen value:', this.isOpen());
-    console.log('Initial position value:', this.position());
     this.initializeEmojis();
     this.setupKeyboardListeners();
   }
@@ -79,7 +70,6 @@ export class EmojiPickerComponent implements OnInit, OnDestroy {
   }
 
   private initializeEmojis(): void {
-    console.log('📱 Initializing emojis...');
     const categories: EmojiCategory[] = [
       {
         id: 'smileys',
@@ -227,7 +217,6 @@ export class EmojiPickerComponent implements OnInit, OnDestroy {
     
     // Set initial filtered emojis
     this.filteredEmojis.set(categories[0].emojis);
-    console.log('📱 Emojis initialized:', allEmojis.length, 'total emojis');
   }
 
   private groupEmojisByCategory(emojis: Emoji[]): EmojiCategory[] {
@@ -264,7 +253,6 @@ export class EmojiPickerComponent implements OnInit, OnDestroy {
   }
 
   onEmojiSelect(emoji: Emoji): void {
-    console.log('🎯 Emoji selected in picker:', emoji);
     
     // Add visual feedback that emoji was selected
     this.showEmojiSelectionFeedback(emoji);
@@ -289,7 +277,6 @@ export class EmojiPickerComponent implements OnInit, OnDestroy {
   }
 
   onClose(): void {
-    console.log('🔒 Closing emoji picker');
     this.closed.emit();
   }
 

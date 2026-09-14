@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Services\AuthService;
 use App\Services\MailService;
+use App\Services\RateLimitService;
 use PDO;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -30,10 +31,17 @@ class UserController extends Routes
     $this->app->put('/api/users/me/key-vault', [$this, 'putKeyVault']);
     $this->app->delete('/api/users/me/key-vault', [$this, 'deleteKeyVault']);
     $this->app->get('/api/users/search', [$this, 'search']);
+    $this->app->post('/api/ws-ticket', [$this, 'createWsTicket']);
   }
 
   public function register(Request $request, Response $response, $args): Response
   {
+    $ip = $request->getServerParams()['REMOTE_ADDR'] ?? 'unknown';
+    $pdo0 = $this->dbService->getConnection();
+    if ($msg = (new RateLimitService($pdo0))->check('register', $ip)) {
+      return $this->json($response, ['status' => 'error', 'message' => $msg], 429);
+    }
+
     $body = $request->getParsedBody() ?? [];
     $email = trim((string) ($body['email'] ?? ''));
     $password = (string) ($body['password'] ?? '');
@@ -51,15 +59,22 @@ class UserController extends Routes
     if (!preg_match('/^[a-zA-Z0-9._-]+$/', $username)) {
       return $this->json($response, ['status' => 'error', 'message' => 'Username may only contain letters, numbers, dots, underscores, and hyphens'], 400);
     }
-    if (strlen($password) < 6) {
-      return $this->json($response, ['status' => 'error', 'message' => 'Password must be at least 6 characters'], 400);
+    if (strlen($password) < 10) {
+      return $this->json($response, ['status' => 'error', 'message' => 'Password must be at least 10 characters'], 400);
     }
 
     $pdo = $this->dbService->getConnection();
-    $stmt = $pdo->prepare('SELECT COUNT(*) FROM users WHERE email = :email OR user_name = :username');
-    $stmt->execute(['email' => $email, 'username' => $username]);
+    // Check username first — it's a public identifier, OK to confirm (M7)
+    $stmt = $pdo->prepare('SELECT COUNT(*) FROM users WHERE user_name = :username');
+    $stmt->execute(['username' => $username]);
     if ((int) $stmt->fetchColumn() > 0) {
-      return $this->json($response, ['status' => 'error', 'message' => 'Username or email already exists'], 409);
+      return $this->json($response, ['status' => 'error', 'message' => 'Username already taken'], 409);
+    }
+    // Check email without disclosing whether it is already registered (M7)
+    $stmt = $pdo->prepare('SELECT COUNT(*) FROM users WHERE email = :email');
+    $stmt->execute(['email' => $email]);
+    if ((int) $stmt->fetchColumn() > 0) {
+      return $this->json($response, ['status' => 'error', 'message' => 'Registration could not be completed'], 409);
     }
 
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
@@ -83,6 +98,12 @@ class UserController extends Routes
 
   public function login(Request $request, Response $response, $args): Response
   {
+    $ip = $request->getServerParams()['REMOTE_ADDR'] ?? 'unknown';
+    $pdo0 = $this->dbService->getConnection();
+    if ($msg = (new RateLimitService($pdo0))->check('login', $ip)) {
+      return $this->json($response, ['status' => 'error', 'message' => $msg], 429);
+    }
+
     $body = $request->getParsedBody() ?? [];
     $password = (string) ($body['password'] ?? '');
     $email = trim((string) ($body['email'] ?? ''));
@@ -134,6 +155,12 @@ class UserController extends Routes
 
   public function forgotPassword(Request $request, Response $response, $args): Response
   {
+    $ip = $request->getServerParams()['REMOTE_ADDR'] ?? 'unknown';
+    $pdo0 = $this->dbService->getConnection();
+    if ($msg = (new RateLimitService($pdo0))->check('forgot-password', $ip)) {
+      return $this->json($response, ['status' => 'error', 'message' => $msg], 429);
+    }
+
     $body = $request->getParsedBody() ?? [];
     $email = trim((string) ($body['email'] ?? ''));
 
@@ -175,21 +202,22 @@ class UserController extends Routes
     ]);
 
     $frontendUrl = rtrim((string) ($_ENV['FRONTEND_URL'] ?? getenv('FRONTEND_URL') ?: 'http://localhost:4200'), '/');
-    $resetUrl = $frontendUrl . '/?resetToken=' . urlencode($token);
+    // M5: deliver token in URL fragment — not sent to servers or logged by proxies
+    $resetUrl = $frontendUrl . '/#resetToken=' . urlencode($token);
 
     MailService::sendPasswordReset((string) $row['email'], $resetUrl);
-
-    // Local/dev (MAIL_DRIVER=log): return the link so reset works without SMTP.
-    if (MailService::isLogDriver()) {
-      $generic['resetUrl'] = $resetUrl;
-      $generic['devHint'] = 'Email delivery is in log mode. Use resetUrl or check backend/storage/password-resets.log';
-    }
 
     return $this->json($response, $generic);
   }
 
   public function resetPassword(Request $request, Response $response, $args): Response
   {
+    $ip = $request->getServerParams()['REMOTE_ADDR'] ?? 'unknown';
+    $pdo0 = $this->dbService->getConnection();
+    if ($msg = (new RateLimitService($pdo0))->check('reset-password', $ip)) {
+      return $this->json($response, ['status' => 'error', 'message' => $msg], 429);
+    }
+
     $body = $request->getParsedBody() ?? [];
     $token = trim((string) ($body['token'] ?? ''));
     $password = (string) ($body['password'] ?? '');
@@ -197,8 +225,8 @@ class UserController extends Routes
     if ($token === '' || strlen($token) < 32) {
       return $this->json($response, ['status' => 'error', 'message' => 'Invalid or expired reset link'], 400);
     }
-    if (strlen($password) < 6) {
-      return $this->json($response, ['status' => 'error', 'message' => 'Password must be at least 6 characters'], 400);
+    if (strlen($password) < 10) {
+      return $this->json($response, ['status' => 'error', 'message' => 'Password must be at least 10 characters'], 400);
     }
 
     $pdo = $this->dbService->getConnection();
@@ -588,11 +616,12 @@ class UserController extends Routes
       "SELECT user_id, user_name, user_pic, user_bio
        FROM users
        WHERE user_id <> ?
-         AND user_name LIKE ?
+         AND user_name LIKE ? ESCAPE '\\\\'
        ORDER BY user_name ASC
        LIMIT 20"
     );
-    $like = '%' . $q . '%';
+    // Escape LIKE metacharacters to prevent wildcard injection (L2)
+    $like = '%' . addcslashes($q, '%_\\') . '%';
     $stmt->execute([$userId, $like]);
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -606,6 +635,49 @@ class UserController extends Routes
     }, $rows);
 
     return $this->json($response, $users);
+  }
+
+  public function createWsTicket(Request $request, Response $response, $args): Response
+  {
+    $userId = AuthService::getUserId();
+    if (!$userId) {
+      return $this->json($response, ['status' => 'error', 'message' => 'Not authenticated'], 401);
+    }
+
+    $pdo = $this->dbService->getConnection();
+    $this->ensureWsTicketsTable($pdo);
+
+    // Prune expired tickets
+    try {
+      $pdo->prepare('DELETE FROM ws_tickets WHERE expires_at < NOW()')->execute();
+    } catch (\Throwable) {}
+
+    $ticket    = bin2hex(random_bytes(32));
+    $expiresAt = gmdate('Y-m-d H:i:s', time() + 60);
+
+    $pdo->prepare(
+      'INSERT INTO ws_tickets (ticket, user_id, expires_at) VALUES (?, ?, ?)'
+    )->execute([$ticket, $userId, $expiresAt]);
+
+    return $this->json($response, ['ticket' => $ticket, 'expiresAt' => $expiresAt]);
+  }
+
+  private function ensureWsTicketsTable(PDO $pdo): void
+  {
+    if ($this->schemaChecked('ws_tickets')) {
+      return;
+    }
+    $this->markSchemaChecked('ws_tickets');
+    $pdo->exec(
+      'CREATE TABLE IF NOT EXISTS ws_tickets (
+        ticket VARCHAR(64) PRIMARY KEY,
+        user_id BIGINT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        expires_at DATETIME NOT NULL,
+        used_at DATETIME NULL,
+        KEY idx_wst_expires (expires_at)
+      )'
+    );
   }
 
   private function ensurePasswordResetTable(PDO $pdo): void

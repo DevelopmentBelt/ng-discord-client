@@ -117,7 +117,16 @@
                         <span class="text-nimbus-text-muted text-xs">#{{ result.channelName }}</span>
                       }
                     </div>
-                    <div class="text-nimbus-text-light" [innerHTML]="result.highlightText"></div>
+                    <!-- H1: safe rendering — no innerHTML; text nodes bound via interpolation -->
+                    <div class="text-nimbus-text-light">
+                      @for (part of result.highlightParts; track $index) {
+                        @if (part.highlighted) {
+                          <mark class="bg-yellow-300 text-nimbus-dark rounded px-0.5">{{ part.text }}</mark>
+                        } @else {
+                          <span>{{ part.text }}</span>
+                        }
+                      }
+                    </div>
                   </div>
                 </div>
               </div>

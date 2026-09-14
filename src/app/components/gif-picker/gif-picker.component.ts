@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, input, output, signal, WritableSign
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpParams } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 
 export interface GifResult {
   id: string;
@@ -64,18 +65,9 @@ export class GifPickerComponent implements OnInit, OnDestroy {
   private readonly TENOR_API_KEY = 'AIzaSyCqXqXqXqXqXqXqXqXqXqXqXqXqXqXqXqXq'; // You'll need to replace this with your actual API key
   private readonly TENOR_BASE_URL = 'https://tenor.googleapis.com/v2';
 
-  constructor(private http: HttpClient) {
-    // Debug effect to monitor isOpen changes
-    effect(() => {
-      const isOpenValue = this.isOpen();
-      console.log('🔍 GifPicker isOpen changed to:', isOpenValue);
-    });
-  }
+  constructor(private http: HttpClient) {}
 
   ngOnInit(): void {
-    console.log('🎬 GifPickerComponent initialized');
-    console.log('Initial isOpen value:', this.isOpen());
-    console.log('Initial position value:', this.position());
     this.initializeGifCategories();
     this.loadTrendingGifs();
     this.setupKeyboardListeners();
@@ -89,7 +81,6 @@ export class GifPickerComponent implements OnInit, OnDestroy {
   }
 
   private initializeGifCategories(): void {
-    console.log('🎬 Initializing GIF categories...');
     const categories: GifCategory[] = [
       {
         id: 'trending',
@@ -142,7 +133,6 @@ export class GifPickerComponent implements OnInit, OnDestroy {
     ];
 
     this.gifCategories.set(categories);
-    console.log('🎬 GIF categories initialized:', categories.length, 'categories');
   }
 
   private async loadTrendingGifs(): Promise<void> {
@@ -150,7 +140,6 @@ export class GifPickerComponent implements OnInit, OnDestroy {
       this.isLoading.set(true);
       const gifs = await this.searchTenorGifs('trending', 20);
       this.trendingGifs.set(gifs);
-      console.log('🎬 Trending GIFs loaded:', gifs.length, 'GIFs');
     } catch (error) {
       console.error('Error loading trending GIFs:', error);
       // Fallback to placeholder GIFs
@@ -247,7 +236,6 @@ export class GifPickerComponent implements OnInit, OnDestroy {
       this.isLoading.set(true);
       const gifs = await this.searchTenorGifs(query, 20);
       this.searchResults.set(gifs);
-      console.log('🎬 Search results:', gifs.length, 'GIFs');
     } catch (error) {
       console.error('Error performing search:', error);
       this.searchResults.set([]);
@@ -265,7 +253,6 @@ export class GifPickerComponent implements OnInit, OnDestroy {
   }
 
   onGifSelect(gif: GifResult): void {
-    console.log('🎬 GIF selected in picker:', gif);
     
     // Add visual feedback that GIF was selected
     this.showGifSelectionFeedback(gif);
@@ -290,7 +277,6 @@ export class GifPickerComponent implements OnInit, OnDestroy {
   }
 
   onClose(): void {
-    console.log('🔒 Closing GIF picker');
     this.closed.emit();
   }
 

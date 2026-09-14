@@ -41,6 +41,9 @@ testem.log
 /typings
 /backend/storage/*.log
 
+# L5: vendor PHP archive — install via composer install, never commit
+/backend/composer.phar
+
 # System files
 .DS_Store
 Thumbs.db

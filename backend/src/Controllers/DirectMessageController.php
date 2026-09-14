@@ -16,6 +16,9 @@ class DirectMessageController extends Routes
     $this->app->post('/api/dms', [$this, 'startConversation']);
     $this->app->get('/api/dms/{conversationId}/messages', [$this, 'getMessages']);
     $this->app->post('/api/dms/{conversationId}/messages', [$this, 'postMessage']);
+    // M1: DM E2EE key management
+    $this->app->get('/api/dms/{conversationId}/e2ee-key', [$this, 'getE2eeKey']);
+    $this->app->put('/api/dms/{conversationId}/e2ee-keys', [$this, 'putE2eeKeys']);
   }
 
   public function listConversations(Request $request, Response $response, $args): Response
@@ -30,6 +33,7 @@ class DirectMessageController extends Routes
       $stmt = $pdo->prepare(
         "SELECT c.conversation_id, c.updated_at,
                 u.user_id AS other_user_id, u.user_name AS other_username, u.user_pic AS other_user_pic,
+                u.public_key AS other_public_key,
                 lm.message_id AS last_message_id, lm.raw_text AS last_message_text,
                 lm.timestamp_posted AS last_message_at, lm.posted_by_user_id AS last_message_author_id
          FROM dm_conversations c
@@ -37,7 +41,7 @@ class DirectMessageController extends Routes
          INNER JOIN dm_participants other ON other.conversation_id = c.conversation_id AND other.user_id <> ?
          INNER JOIN users u ON u.user_id = other.user_id
          LEFT JOIN dm_messages lm ON lm.message_id = (
-           SELECT m.message_id
+                   SELECT m.message_id
            FROM dm_messages m
            WHERE m.conversation_id = c.conversation_id
            ORDER BY m.timestamp_posted DESC, m.message_id DESC
@@ -56,6 +60,7 @@ class DirectMessageController extends Routes
             'id' => (int) $row['other_user_id'],
             'username' => $row['other_username'],
             'userPic' => $row['other_user_pic'] ?? '',
+            'publicKey' => $row['other_public_key'] ?? null,  // M1: needed for E2EE key wrapping
             'email' => '',
             'userBio' => '',
           ],
@@ -143,12 +148,18 @@ class DirectMessageController extends Routes
         $pdo->commit();
       }
 
+      // M1: include public key so client can immediately distribute E2EE key shares
+      $otherPkStmt = $pdo->prepare('SELECT public_key FROM users WHERE user_id = ? LIMIT 1');
+      $otherPkStmt->execute([$targetUserId]);
+      $otherPublicKey = $otherPkStmt->fetchColumn() ?: null;
+
       return $this->json($response, [
         'id' => (string) $conversationId,
         'participant' => [
           'id' => (int) $other['user_id'],
           'username' => $other['user_name'],
           'userPic' => $other['user_pic'] ?? '',
+          'publicKey' => $otherPublicKey,
           'email' => '',
           'userBio' => '',
         ],
@@ -215,6 +226,9 @@ class DirectMessageController extends Routes
     if ($rawText === '') {
       return $this->json($response, ['error' => 'Message cannot be empty'], 400);
     }
+    if (mb_strlen($rawText) > 4000) {
+      return $this->json($response, ['error' => 'Message exceeds maximum length of 4000 characters'], 400);
+    }
 
     try {
       $timestampPosted = (new \DateTimeImmutable($timestamp ?: 'now'))
@@ -260,6 +274,111 @@ class DirectMessageController extends Routes
       return $this->json($response, ['error' => 'Failed to send message'], 500);
     }
   }
+
+  // =========================================================================
+  // M1: DM E2EE key management
+  // =========================================================================
+
+  /**
+   * GET /api/dms/{conversationId}/e2ee-key
+   * Returns the current user's ECDH-wrapped conversation AES key, if any.
+   */
+  public function getE2eeKey(Request $request, Response $response, $args): Response
+  {
+    $userId = AuthService::getUserId();
+    if (!$userId) {
+      return $this->json($response, ['error' => 'Not authenticated'], 401);
+    }
+    $conversationId = (int) $args['conversationId'];
+    $pdo = $this->dbService->getConnection();
+
+    if (!$this->isParticipant($pdo, $conversationId, $userId)) {
+      return $this->json($response, ['error' => 'Not a participant'], 403);
+    }
+    $this->ensureE2eeTable($pdo);
+
+    $stmt = $pdo->prepare('SELECT wrapped_key FROM dm_e2ee_keys WHERE conversation_id = ? AND user_id = ? LIMIT 1');
+    $stmt->execute([$conversationId, $userId]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    return $this->json($response, ['wrappedKey' => $row ? $row['wrapped_key'] : null]);
+  }
+
+  /**
+   * PUT /api/dms/{conversationId}/e2ee-keys
+   * Body: { keys: [ { userId: int, wrappedKey: string }, ... ] }
+   * Stores wrapped key shares for each conversation participant.
+   * Each user may only update their own share (or the initiator can set both at conversation start).
+   */
+  public function putE2eeKeys(Request $request, Response $response, $args): Response
+  {
+    $userId = AuthService::getUserId();
+    if (!$userId) {
+      return $this->json($response, ['error' => 'Not authenticated'], 401);
+    }
+    $conversationId = (int) $args['conversationId'];
+    $pdo = $this->dbService->getConnection();
+
+    if (!$this->isParticipant($pdo, $conversationId, $userId)) {
+      return $this->json($response, ['error' => 'Not a participant'], 403);
+    }
+    $this->ensureE2eeTable($pdo);
+
+    $body = $request->getParsedBody() ?? [];
+    $keys = $body['keys'] ?? [];
+    if (!is_array($keys) || count($keys) === 0) {
+      return $this->json($response, ['error' => 'No keys provided'], 400);
+    }
+
+    // Validate: caller must be a participant in this conversation
+    // Participants for this conversation
+    $partStmt = $pdo->prepare('SELECT user_id FROM dm_participants WHERE conversation_id = ?');
+    $partStmt->execute([$conversationId]);
+    $participantIds = array_column($partStmt->fetchAll(PDO::FETCH_ASSOC), 'user_id');
+
+    $upsert = $pdo->prepare(
+      'INSERT INTO dm_e2ee_keys (conversation_id, user_id, wrapped_key)
+       VALUES (?, ?, ?)
+       ON DUPLICATE KEY UPDATE wrapped_key = VALUES(wrapped_key)'
+    );
+
+    foreach ($keys as $entry) {
+      $targetUserId = (int) ($entry['userId'] ?? 0);
+      $wrappedKey   = trim((string) ($entry['wrappedKey'] ?? ''));
+
+      if ($targetUserId <= 0 || $wrappedKey === '') {
+        continue;
+      }
+      if (!in_array($targetUserId, $participantIds, false)) {
+        // Only distribute to actual participants
+        continue;
+      }
+      $upsert->execute([$conversationId, $targetUserId, $wrappedKey]);
+    }
+
+    return $this->json($response, ['status' => 'ok']);
+  }
+
+  private function ensureE2eeTable(PDO $pdo): void
+  {
+    if ($this->schemaChecked('table:dm_e2ee_keys')) {
+      return;
+    }
+    $this->markSchemaChecked('table:dm_e2ee_keys');
+    $pdo->exec(
+      'CREATE TABLE IF NOT EXISTS dm_e2ee_keys (
+        id BIGINT AUTO_INCREMENT PRIMARY KEY,
+        conversation_id BIGINT NOT NULL,
+        user_id BIGINT NOT NULL,
+        wrapped_key TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY uniq_dm_e2ee (conversation_id, user_id),
+        KEY idx_dm_e2ee_conv (conversation_id)
+      )'
+    );
+  }
+
+  // =========================================================================
 
   private function isParticipant(PDO $pdo, int $conversationId, int $userId): bool
   {

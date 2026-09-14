@@ -522,6 +522,12 @@ class ServerController extends Routes {
       return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
     }
 
+    // Only the server owner may distribute E2EE key shares (H3 fix)
+    if (!$this->userCanManageServer($pdo, $serverId, $userId)) {
+      $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Only server owners can distribute Phantom key shares']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(403);
+    }
+
     $upsert = $pdo->prepare(
       'INSERT INTO channel_key_shares (channel_id, user_id, wrapped_key, created_by_user_id)
        VALUES (?, ?, ?, ?)
@@ -1166,38 +1172,26 @@ class ServerController extends Routes {
     return (int) $stmt->fetchColumn() > 0;
   }
 
+  // M3: All ensure* methods use the base-class schema cache so DDL queries
+  //     only run once per PHP-FPM worker process lifecycle.
+
   private function ensurePhantomChannelColumns(PDO $pdo): void
   {
-    $columns = [
-      'is_phantom' => 'TINYINT(1) NOT NULL DEFAULT 0',
-      'phantom_key' => 'VARCHAR(128) NULL',
-    ];
-    foreach ($columns as $name => $definition) {
-      $stmt = $pdo->prepare(
-        'SELECT COUNT(*) FROM information_schema.COLUMNS
-         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?'
-      );
-      $stmt->execute(['channels', $name]);
-      if ((int) $stmt->fetchColumn() === 0) {
-        $pdo->exec('ALTER TABLE channels ADD COLUMN `' . $name . '` ' . $definition);
-      }
-    }
+    $this->ensureColumn($pdo, 'channels', 'is_phantom', 'TINYINT(1) NOT NULL DEFAULT 0');
+    $this->ensureColumn($pdo, 'channels', 'phantom_key', 'VARCHAR(128) NULL');
   }
 
   private function ensureEphemeralColumn(PDO $pdo): void
   {
-    $stmt = $pdo->prepare(
-      'SELECT COUNT(*) FROM information_schema.COLUMNS
-       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?'
-    );
-    $stmt->execute(['channels', 'ephemeral_ttl_seconds']);
-    if ((int) $stmt->fetchColumn() === 0) {
-      $pdo->exec('ALTER TABLE channels ADD COLUMN `ephemeral_ttl_seconds` INT NOT NULL DEFAULT 0');
-    }
+    $this->ensureColumn($pdo, 'channels', 'ephemeral_ttl_seconds', 'INT NOT NULL DEFAULT 0');
   }
 
   private function ensureKeyShareTable(PDO $pdo): void
   {
+    if ($this->schemaChecked('table:channel_key_shares')) {
+      return;
+    }
+    $this->markSchemaChecked('table:channel_key_shares');
     $pdo->exec(
       'CREATE TABLE IF NOT EXISTS channel_key_shares (
         share_id BIGINT(64) AUTO_INCREMENT PRIMARY KEY,
@@ -1214,47 +1208,26 @@ class ServerController extends Routes {
 
   private function ensureUserCryptoColumns(PDO $pdo): void
   {
-    $stmt = $pdo->prepare(
-      'SELECT COUNT(*) FROM information_schema.COLUMNS
-       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?'
-    );
-    $stmt->execute(['users', 'public_key']);
-    if ((int) $stmt->fetchColumn() === 0) {
-      $pdo->exec('ALTER TABLE users ADD COLUMN `public_key` TEXT NULL');
-    }
+    $this->ensureColumn($pdo, 'users', 'public_key', 'TEXT NULL');
   }
 
   private function ensureMemberAliasColumns(PDO $pdo): void
   {
-    foreach ([
-      'alias_name' => 'VARCHAR(64) NULL',
-      'alias_pic' => 'VARCHAR(512) NULL',
-    ] as $name => $definition) {
-      $stmt = $pdo->prepare(
-        'SELECT COUNT(*) FROM information_schema.COLUMNS
-         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?'
-      );
-      $stmt->execute(['members', $name]);
-      if ((int) $stmt->fetchColumn() === 0) {
-        $pdo->exec('ALTER TABLE members ADD COLUMN `' . $name . '` ' . $definition);
-      }
-    }
+    $this->ensureColumn($pdo, 'members', 'alias_name', 'VARCHAR(64) NULL');
+    $this->ensureColumn($pdo, 'members', 'alias_pic', 'VARCHAR(512) NULL');
   }
 
   private function ensureServerPrivacyColumn(PDO $pdo): void
   {
-    $stmt = $pdo->prepare(
-      'SELECT COUNT(*) FROM information_schema.COLUMNS
-       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?'
-    );
-    $stmt->execute(['servers', 'is_public']);
-    if ((int) $stmt->fetchColumn() === 0) {
-      $pdo->exec('ALTER TABLE servers ADD COLUMN `is_public` TINYINT(1) NOT NULL DEFAULT 0');
-    }
+    $this->ensureColumn($pdo, 'servers', 'is_public', 'TINYINT(1) NOT NULL DEFAULT 0');
   }
 
   private function ensureInviteTable(PDO $pdo): void
   {
+    if ($this->schemaChecked('table:server_invites')) {
+      return;
+    }
+    $this->markSchemaChecked('table:server_invites');
     $pdo->exec(
       'CREATE TABLE IF NOT EXISTS server_invites (
         invite_id BIGINT(64) AUTO_INCREMENT PRIMARY KEY,

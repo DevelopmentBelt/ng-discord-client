@@ -2,7 +2,11 @@ import { Injectable } from '@angular/core';
 import { firstValueFrom, take } from 'rxjs';
 import { UserWebService } from '../user-web-service/user-web.service';
 import { AuthService } from '../auth-service/auth.service';
+import { DeviceKeyService, DEVENC1_PREFIX } from './device-key.service';
 
+/** C4: v2 storage uses device-key-encrypted blobs (DEVENC1: prefix). */
+const STORAGE_PREFIX_V2 = 'nimbus-identity-v2-';
+/** Legacy keys — read for migration, replaced with v2. */
 const STORAGE_PREFIX = 'nimbus-identity-v1-';
 const LEGACY_STORAGE_PREFIX = 'angcord-identity-v1-';
 
@@ -20,7 +24,8 @@ export class IdentityKeyService {
 
   constructor(
     private userWebService: UserWebService,
-    private authService: AuthService
+    private authService: AuthService,
+    private deviceKey: DeviceKeyService
   ) {}
 
   async ensureIdentity(): Promise<string | null> {
@@ -32,7 +37,7 @@ export class IdentityKeyService {
       return this.publicKeySpkiB64;
     }
 
-    const stored = this.loadLocal(user.id);
+    const stored = await this.loadLocal(user.id);
     if (stored) {
       this.privateKey = await crypto.subtle.importKey(
         'pkcs8',
@@ -50,7 +55,7 @@ export class IdentityKeyService {
       this.privateKey = pair.privateKey;
       this.publicKeySpkiB64 = this.bytesToBase64(spki);
       this.readyUserId = user.id;
-      this.saveLocal(user.id, {
+      await this.saveLocal(user.id, {
         privateKeyPkcs8: this.bytesToBase64(pkcs8),
         publicKeySpki: this.publicKeySpkiB64
       });
@@ -79,11 +84,10 @@ export class IdentityKeyService {
     return this.publicKeySpkiB64;
   }
 
-  exportMaterial(): { privateKeyPkcs8: string; publicKeySpki: string } | null {
+  /** C4: async because loadLocal now decrypts with the device key. */
+  async exportMaterial(): Promise<{ privateKeyPkcs8: string; publicKeySpki: string } | null> {
     const user = this.authService.currentUser();
-    if (!user?.id) {
-      return null;
-    }
+    if (!user?.id) return null;
     return this.loadLocal(user.id);
   }
 
@@ -101,39 +105,63 @@ export class IdentityKeyService {
     );
     this.publicKeySpkiB64 = material.publicKeySpki;
     this.readyUserId = user.id;
-    this.saveLocal(user.id, material);
+    await this.saveLocal(user.id, material);
   }
 
+  /** M12: clear in-memory state AND remove key material from storage. */
   clearSession(): void {
+    if (this.readyUserId != null) {
+      // C4: remove encrypted v2 blob
+      localStorage.removeItem(STORAGE_PREFIX_V2 + this.readyUserId);
+      // Also clean up any legacy plaintext blobs that may still exist
+      localStorage.removeItem(STORAGE_PREFIX + this.readyUserId);
+      localStorage.removeItem(LEGACY_STORAGE_PREFIX + this.readyUserId);
+    }
     this.privateKey = null;
     this.publicKeySpkiB64 = null;
     this.readyUserId = null;
   }
 
-  private loadLocal(userId: number): { privateKeyPkcs8: string; publicKeySpki: string } | null {
+  /**
+   * C4: Loads identity material.
+   * 1. Try v2 key (DEVENC1-encrypted blob in localStorage).
+   * 2. Fall back to v1 plaintext — if found, migrate to v2 and delete v1.
+   */
+  private async loadLocal(userId: number): Promise<{ privateKeyPkcs8: string; publicKeySpki: string } | null> {
     try {
-      const raw =
+      // --- v2: device-encrypted blob ---
+      const v2Raw = localStorage.getItem(STORAGE_PREFIX_V2 + userId);
+      if (v2Raw?.startsWith(DEVENC1_PREFIX)) {
+        const plain = await this.deviceKey.decrypt(v2Raw);
+        return JSON.parse(new TextDecoder().decode(plain));
+      }
+
+      // --- v1 / legacy: plaintext migration path ---
+      const v1Raw =
         localStorage.getItem(STORAGE_PREFIX + userId) ||
         localStorage.getItem(LEGACY_STORAGE_PREFIX + userId);
-      if (!raw) {
-        return null;
-      }
-      const parsed = JSON.parse(raw);
-      if (parsed?.privateKeyPkcs8 && parsed?.publicKeySpki) {
-        // Migrate legacy Angcord key storage
-        if (!localStorage.getItem(STORAGE_PREFIX + userId)) {
-          this.saveLocal(userId, parsed);
+      if (v1Raw) {
+        const parsed = JSON.parse(v1Raw);
+        if (parsed?.privateKeyPkcs8 && parsed?.publicKeySpki) {
+          // Migrate: encrypt and save as v2, remove v1 blobs
+          await this.saveLocal(userId, parsed);
+          localStorage.removeItem(STORAGE_PREFIX + userId);
+          localStorage.removeItem(LEGACY_STORAGE_PREFIX + userId);
+          return parsed;
         }
-        return parsed;
       }
     } catch {
-      // ignore
+      // ignore parse/crypto errors
     }
     return null;
   }
 
-  private saveLocal(userId: number, value: { privateKeyPkcs8: string; publicKeySpki: string }): void {
-    localStorage.setItem(STORAGE_PREFIX + userId, JSON.stringify(value));
+  /** C4: Stores material as a device-key-encrypted blob (DEVENC1:). */
+  private async saveLocal(userId: number, value: { privateKeyPkcs8: string; publicKeySpki: string }): Promise<void> {
+    const encrypted = await this.deviceKey.encrypt(
+      new TextEncoder().encode(JSON.stringify(value))
+    );
+    localStorage.setItem(STORAGE_PREFIX_V2 + userId, encrypted);
   }
 
   private bytesToBase64(bytes: Uint8Array): string {

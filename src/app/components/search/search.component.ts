@@ -6,9 +6,15 @@ import { MessageWebService } from '../../services/message-web-service/message-we
 import { AlertService } from '../../services/alert-service/alert-service';
 import * as moment from 'moment';
 
+export interface HighlightPart {
+  text: string;
+  highlighted: boolean;
+}
+
 export interface SearchResult {
   message: Message;
-  highlightText: string;
+  /** H1: safe segments — rendered with {{ }} interpolation, no innerHTML */
+  highlightParts: HighlightPart[];
   channelName: string;
   serverName: string;
 }
@@ -100,7 +106,7 @@ export class SearchComponent implements OnInit {
   private processSearchResults(results: Message[], query: string): void {
     const processedResults: SearchResult[] = results.map(message => ({
       message,
-      highlightText: this.highlightSearchTerms(message.text, query),
+      highlightParts: this.buildHighlightParts(message.text, query),
       channelName: this.channelName(),
       serverName: this.serverName()
     }));
@@ -110,13 +116,41 @@ export class SearchComponent implements OnInit {
   }
 
   /**
-   * Highlight search terms in text
+   * H1 + L3: Build an array of plain-text segments instead of an HTML string.
+   * Segments are rendered via {{ }} interpolation — no innerHTML needed.
+   * The user query is regex-escaped before use (L3).
    */
-  private highlightSearchTerms(text: string, query: string): string {
-    if (!query || !text) return text;
-    
-    const regex = new RegExp(`(${query})`, this.caseSensitive() ? 'g' : 'gi');
-    return text.replace(regex, '<mark>$1</mark>');
+  private buildHighlightParts(text: string, query: string): HighlightPart[] {
+    if (!query || !text) {
+      return [{ text: text ?? '', highlighted: false }];
+    }
+
+    // L3: escape regex metacharacters so user input cannot cause catastrophic backtracking
+    const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    let regex: RegExp;
+    try {
+      regex = new RegExp(`(${escaped})`, this.caseSensitive() ? 'g' : 'gi');
+    } catch {
+      return [{ text, highlighted: false }];
+    }
+
+    const parts: HighlightPart[] = [];
+    let lastIndex = 0;
+    let match: RegExpExecArray | null;
+
+    while ((match = regex.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push({ text: text.slice(lastIndex, match.index), highlighted: false });
+      }
+      parts.push({ text: match[0], highlighted: true });
+      lastIndex = match.index + match[0].length;
+    }
+
+    if (lastIndex < text.length) {
+      parts.push({ text: text.slice(lastIndex), highlighted: false });
+    }
+
+    return parts.length ? parts : [{ text, highlighted: false }];
   }
 
   /**
@@ -139,7 +173,7 @@ export class SearchComponent implements OnInit {
       next: (results) => {
         const newResults = results.map(message => ({
           message,
-          highlightText: this.highlightSearchTerms(message.text, query),
+          highlightParts: this.buildHighlightParts(message.text, query),
           channelName: this.channelName(),
           serverName: this.serverName()
         }));

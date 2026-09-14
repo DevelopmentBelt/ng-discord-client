@@ -28,10 +28,14 @@ export class LoginComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    const params = new URLSearchParams(window.location.search);
-    const token = (params.get('resetToken') || '').trim();
+    // M5: read resetToken from the URL fragment (hash) — fragments are never sent to servers
+    const hash = window.location.hash.replace(/^#/, '');
+    const hashParams = new URLSearchParams(hash);
+    const token = (hashParams.get('resetToken') || '').trim();
     if (token) {
       this.resetToken = token;
+      // Clear the fragment immediately so the token doesn't linger in history
+      window.history.replaceState({}, '', window.location.pathname + window.location.search);
       this.mode.set('reset');
       this.buildForm('reset');
       return;
@@ -56,9 +60,17 @@ export class LoginComponent implements OnInit {
     if (!url) {
       return;
     }
+    // M4 + M5: validate that the URL is same-origin and read the token from the hash fragment only
     try {
       const parsed = new URL(url, window.location.origin);
-      const token = (parsed.searchParams.get('resetToken') || '').trim();
+      if (parsed.origin !== window.location.origin) {
+        // Reject off-origin redirect (M4)
+        this.errorMessage.set('Invalid reset link origin.');
+        return;
+      }
+      // M5: token is now in the hash fragment
+      const hashParams = new URLSearchParams(parsed.hash.replace(/^#/, ''));
+      const token = (hashParams.get('resetToken') || '').trim();
       if (!token) {
         return;
       }
@@ -68,9 +80,10 @@ export class LoginComponent implements OnInit {
       this.errorMessage.set('');
       this.mode.set('reset');
       this.buildForm('reset');
+      // Replace state without the token fragment
       window.history.replaceState({}, '', parsed.pathname + parsed.search);
     } catch {
-      window.location.href = url;
+      this.errorMessage.set('Invalid reset link.');
     }
   }
 
@@ -202,7 +215,8 @@ export class LoginComponent implements OnInit {
     if (mode === 'login') {
       this.form = this.fb.group({
         identifier: ['', [Validators.required]],
-        password: ['', [Validators.required, Validators.minLength(6)]]
+        // M8: minimum raised to 10 to match backend
+        password: ['', [Validators.required, Validators.minLength(10)]]
       });
       return;
     }
@@ -216,7 +230,8 @@ export class LoginComponent implements OnInit {
 
     if (mode === 'reset') {
       this.form = this.fb.group({
-        password: ['', [Validators.required, Validators.minLength(6)]],
+        // M8: minimum raised to 10
+        password: ['', [Validators.required, Validators.minLength(10)]],
         confirmPassword: ['', [Validators.required]]
       }, { validators: this.passwordsMatch });
       return;
@@ -225,7 +240,8 @@ export class LoginComponent implements OnInit {
     this.form = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       username: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(32), Validators.pattern(/^[a-zA-Z0-9._-]+$/)]],
-      password: ['', [Validators.required, Validators.minLength(6)]],
+      // M8: minimum raised to 10
+      password: ['', [Validators.required, Validators.minLength(10)]],
       confirmPassword: ['', [Validators.required]]
     }, { validators: this.passwordsMatch });
   }

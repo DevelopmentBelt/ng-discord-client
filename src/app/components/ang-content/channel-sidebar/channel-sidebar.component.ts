@@ -26,6 +26,7 @@ import { ServerWebService } from '../../../services/server-web-service/server-we
 import { DmWebService } from '../../../services/dm-web-service/dm-web.service';
 import { InboxService } from '../../../services/inbox-service/inbox.service';
 import { PhantomKeyService } from '../../../services/crypto/phantom-key.service';
+import { AuthService } from '../../../services/auth-service/auth.service';
 import { DmConversation } from '../../../models/dm/dm-conversation';
 
 @Component({
@@ -103,6 +104,7 @@ export class ChannelSidebarComponent implements OnInit {
     private dmWebService: DmWebService,
     private inboxService: InboxService,
     private phantomKeys: PhantomKeyService,
+    private authService: AuthService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -128,10 +130,22 @@ export class ChannelSidebarComponent implements OnInit {
     this.selectedConversationChange.emit(null);
   }
 
+  /** M6: true if the current user is the owner of the selected server. */
+  isCurrentUserOwner(): boolean {
+    const server = this.selectedServer();
+    if (!server?.ownerId) return false;
+    const userId = String(this.authService.currentUser()?.id ?? '');
+    return userId !== '' && userId === String(server.ownerId);
+  }
+
   openCreateChannel(category: Category, event?: Event): void {
     event?.stopPropagation();
     const server = this.selectedServer();
     if (!server?.serverId || server.serverId === 'home') {
+      return;
+    }
+    if (!this.isCurrentUserOwner()) {
+      this.alertService.warning('Permission denied', 'Only the server owner can create channels.');
       return;
     }
     this.channelModalTarget.set(null);
@@ -145,6 +159,10 @@ export class ChannelSidebarComponent implements OnInit {
     event?.stopPropagation();
     const server = this.selectedServer();
     if (!server?.serverId || server.serverId === 'home') {
+      return;
+    }
+    if (!this.isCurrentUserOwner()) {
+      this.alertService.warning('Permission denied', 'Only the server owner can edit channels.');
       return;
     }
     this.channelModalTarget.set(chan);
@@ -407,11 +425,16 @@ export class ChannelSidebarComponent implements OnInit {
 
   openServerSettings(): void {
     const server = this.selectedServer();
-    if (server && !this.isHomeSelected()) {
-      this.showServerSettings.set(true);
-    } else {
+    if (!server || this.isHomeSelected()) {
       this.alertService.warning('No Server Selected', 'Please select a server first to access its settings.');
+      return;
     }
+    // M6: only the server owner may access server settings
+    if (!this.isCurrentUserOwner()) {
+      this.alertService.warning('Permission denied', 'Only the server owner can access server settings.');
+      return;
+    }
+    this.showServerSettings.set(true);
   }
 
   closeServerOverview(): void {
@@ -438,8 +461,9 @@ export class ChannelSidebarComponent implements OnInit {
     return !this.isHomeSelected();
   }
 
+  /** M6: settings entry-point only visible to server owners. */
   canAccessServerSettings(): boolean {
-    return !this.isHomeSelected();
+    return !this.isHomeSelected() && this.isCurrentUserOwner();
   }
 
   lastMessagePreview(conversation: DmConversation): string {

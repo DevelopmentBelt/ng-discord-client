@@ -4,7 +4,10 @@ import { PhantomCryptoService } from './phantom-crypto.service';
 import { IdentityKeyService } from './identity-key.service';
 import { ServerWebService } from '../server-web-service/server-web.service';
 import { AuthService } from '../auth-service/auth.service';
+import { DeviceKeyService, DEVENC1_PREFIX } from './device-key.service';
 
+/** C4: v2 key uses device-encrypted blobs. */
+const LOCAL_CHANNEL_KEYS_V2 = 'nimbus-e2ee-channel-keys-v2';
 const LOCAL_CHANNEL_KEYS = 'nimbus-e2ee-channel-keys-v1';
 const LEGACY_CHANNEL_KEYS = 'angcord-e2ee-channel-keys-v1';
 
@@ -26,7 +29,8 @@ export class PhantomKeyService {
     private cryptoService: PhantomCryptoService,
     private identityKeys: IdentityKeyService,
     private serverWebService: ServerWebService,
-    private authService: AuthService
+    private authService: AuthService,
+    private deviceKey: DeviceKeyService
   ) {}
 
   isReady(channelId: number): boolean {
@@ -41,7 +45,8 @@ export class PhantomKeyService {
 
     await this.identityKeys.ensureIdentity();
 
-    const localRaw = this.loadLocalRaw(channelId);
+    // C4: try device-encrypted v2 store first (async), then v1 plaintext
+    const localRaw = await this.loadLocalRawAsync(channelId);
     if (localRaw) {
       return this.cacheRaw(channelId, localRaw);
     }
@@ -105,6 +110,27 @@ export class PhantomKeyService {
       next.delete(channelId);
       return next;
     });
+  }
+
+  /** M12 + C4: wipe all locally stored channel keys for the given user on logout. */
+  clearAllLocalKeys(userId: number): void {
+    for (const storageKey of [LOCAL_CHANNEL_KEYS_V2, LOCAL_CHANNEL_KEYS]) {
+      try {
+        const all: Record<string, any> = JSON.parse(localStorage.getItem(storageKey) || '{}');
+        if (all[String(userId)]) {
+          delete all[String(userId)];
+          if (Object.keys(all).length === 0) {
+            localStorage.removeItem(storageKey);
+          } else {
+            localStorage.setItem(storageKey, JSON.stringify(all));
+          }
+        }
+      } catch { /* ignore */ }
+    }
+    localStorage.removeItem(LEGACY_CHANNEL_KEYS);
+    this.keyCache.clear();
+    this.rawCache.clear();
+    this.readyIds.set(new Set());
   }
 
   /** Export all locally held channel AES keys for the current user (base64 raw). */
@@ -215,35 +241,77 @@ export class PhantomKeyService {
     return {};
   }
 
+  /**
+   * C4: Prefer the device-encrypted v2 store; fall back to v1 plaintext for migration.
+   * Returns raw key bytes synchronously from in-memory cache only (the async path is
+   * handled in ensureKey which is already async).
+   */
   private loadLocalRaw(channelId: number): Uint8Array | null {
     const userId = this.authService.currentUser()?.id;
-    if (!userId) {
-      return null;
-    }
+    if (!userId) return null;
     try {
+      // v2: device-encrypted blobs — need async decrypt, not usable here synchronously
+      // (ensureKey calls loadLocalRaw synchronously; async migration happens on first ensureKey)
+      // v1: plaintext fallback for migration path
       const all = this.readChannelKeyStore();
       const b64 = all?.[String(userId)]?.[String(channelId)];
-      return b64 ? this.cryptoService.base64ToBytes(b64) : null;
+      if (b64 && !b64.startsWith(DEVENC1_PREFIX)) {
+        return this.cryptoService.base64ToBytes(b64);
+      }
+    } catch { /* ignore */ }
+    return null;
+  }
+
+  /**
+   * C4: Async version that reads the device-encrypted v2 store.
+   * Called from ensureKey before falling back to v1.
+   */
+  async loadLocalRawAsync(channelId: number): Promise<Uint8Array | null> {
+    const userId = this.authService.currentUser()?.id;
+    if (!userId) return null;
+    try {
+      // Try v2 store first
+      const allV2 = this.readChannelKeyStoreV2();
+      const blob = allV2?.[String(userId)]?.[String(channelId)];
+      if (blob?.startsWith(DEVENC1_PREFIX)) {
+        return await this.deviceKey.decrypt(blob);
+      }
+    } catch { /* ignore */ }
+    // Fall through to sync v1 path
+    return this.loadLocalRaw(channelId);
+  }
+
+  private readChannelKeyStoreV2(): Record<string, Record<string, string>> {
+    try {
+      const raw = localStorage.getItem(LOCAL_CHANNEL_KEYS_V2);
+      return raw ? JSON.parse(raw) : {};
     } catch {
-      return null;
+      return {};
     }
   }
 
   private saveLocalRaw(channelId: number, raw: Uint8Array): void {
-    const userId = this.authService.currentUser()?.id;
-    if (!userId) {
-      return;
-    }
-    try {
-      const all = this.readChannelKeyStore();
-      if (!all[String(userId)]) {
-        all[String(userId)] = {};
-      }
-      all[String(userId)][String(channelId)] = this.cryptoService.bytesToBase64(raw);
-      localStorage.setItem(LOCAL_CHANNEL_KEYS, JSON.stringify(all));
-    } catch {
-      // ignore quota errors
-    }
+    // C4: encrypt with device key before writing to localStorage
+    this.deviceKey.encrypt(raw).then(encrypted => {
+      const userId = this.authService.currentUser()?.id;
+      if (!userId) return;
+      try {
+        const all = this.readChannelKeyStoreV2();
+        if (!all[String(userId)]) all[String(userId)] = {};
+        all[String(userId)][String(channelId)] = encrypted;
+        localStorage.setItem(LOCAL_CHANNEL_KEYS_V2, JSON.stringify(all));
+      } catch { /* ignore quota */ }
+    }).catch(() => {
+      // Fallback: store plaintext if device key unavailable (best-effort)
+      const userId = this.authService.currentUser()?.id;
+      if (!userId) return;
+      try {
+        const all = this.readChannelKeyStore();
+        if (!all[String(userId)]) all[String(userId)] = {};
+        all[String(userId)][String(channelId)] = this.cryptoService.bytesToBase64(raw);
+        localStorage.setItem(LOCAL_CHANNEL_KEYS, JSON.stringify(all));
+      } catch { /* ignore */ }
+    });
   }
 
   private removeLocalRaw(channelId: number): void {

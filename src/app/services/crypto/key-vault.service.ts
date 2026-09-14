@@ -33,8 +33,9 @@ export class KeyVaultService {
   }
 
   async createEncryptedBackup(passphrase: string): Promise<string> {
-    if (!passphrase || passphrase.length < 8) {
-      throw new Error('Passphrase must be at least 8 characters');
+    // M8: raised from 8 to 12 to match security policy
+    if (!passphrase || passphrase.length < 12) {
+      throw new Error('Passphrase must be at least 12 characters');
     }
     const user = this.authService.currentUser();
     if (!user?.id) {
@@ -42,7 +43,7 @@ export class KeyVaultService {
     }
 
     await this.identityKeys.ensureIdentity();
-    const identity = this.identityKeys.exportMaterial();
+    const identity = await this.identityKeys.exportMaterial();
     if (!identity) {
       throw new Error('No identity key on this device to back up');
     }
@@ -95,8 +96,8 @@ export class KeyVaultService {
   }
 
   async restoreFromBlob(blob: string, passphrase: string): Promise<void> {
-    if (!passphrase || passphrase.length < 8) {
-      throw new Error('Passphrase must be at least 8 characters');
+    if (!passphrase || passphrase.length < 12) {
+      throw new Error('Passphrase must be at least 12 characters');
     }
     const user = this.authService.currentUser();
     if (!user?.id) {

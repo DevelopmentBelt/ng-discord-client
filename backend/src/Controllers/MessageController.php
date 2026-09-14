@@ -80,6 +80,10 @@ class MessageController extends Routes {
       $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Message cannot be empty']));
       return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
     }
+    if (mb_strlen($rawText) > 4000) {
+      $response->getBody()->write(json_encode(['status' => 'error', 'message' => 'Message exceeds maximum length of 4000 characters']));
+      return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+    }
 
     try {
       $timestampPosted = (new \DateTimeImmutable($timestampPosted ?: 'now'))
@@ -199,6 +203,8 @@ class MessageController extends Routes {
     return $response;
   }
 
+  // M3: DDL guards all use the base-class schema cache.
+
   private function ensurePhantomColumns(PDO $pdo): void
   {
     $this->ensureColumn($pdo, 'channels', 'is_phantom', 'TINYINT(1) NOT NULL DEFAULT 0');
@@ -207,41 +213,25 @@ class MessageController extends Routes {
     $this->ensureColumn($pdo, 'messages', 'is_encrypted', 'TINYINT(1) NOT NULL DEFAULT 0');
     PhantomPersonaService::ensureSchema($pdo);
 
-    // Allow anonymous phantom posts without an author id
-    try {
-      $pdo->exec('ALTER TABLE messages MODIFY COLUMN posted_by_user_id BIGINT(64) NULL');
-    } catch (\Throwable $e) {
-      // already nullable or insufficient privileges
-    }
-    try {
-      $pdo->exec('ALTER TABLE messages MODIFY COLUMN raw_text TEXT NOT NULL');
-    } catch (\Throwable $e) {
-      // ignore
+    if (!$this->schemaChecked('msg:phantom-modifycol')) {
+      $this->markSchemaChecked('msg:phantom-modifycol');
+      try {
+        $pdo->exec('ALTER TABLE messages MODIFY COLUMN posted_by_user_id BIGINT(64) NULL');
+      } catch (\Throwable) {}
+      try {
+        $pdo->exec('ALTER TABLE messages MODIFY COLUMN raw_text TEXT NOT NULL');
+      } catch (\Throwable) {}
     }
   }
 
   private function ensureExpiresColumn(PDO $pdo): void
   {
-    $stmt = $pdo->prepare(
-      'SELECT COUNT(*) FROM information_schema.COLUMNS
-       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?'
-    );
-    $stmt->execute(['messages', 'expires_at']);
-    if ((int) $stmt->fetchColumn() === 0) {
-      $pdo->exec('ALTER TABLE messages ADD COLUMN `expires_at` DATETIME NULL');
-    }
+    $this->ensureColumn($pdo, 'messages', 'expires_at', 'DATETIME NULL');
   }
 
   private function ensureEphemeralChannelColumn(PDO $pdo): void
   {
-    $stmt = $pdo->prepare(
-      'SELECT COUNT(*) FROM information_schema.COLUMNS
-       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?'
-    );
-    $stmt->execute(['channels', 'ephemeral_ttl_seconds']);
-    if ((int) $stmt->fetchColumn() === 0) {
-      $pdo->exec('ALTER TABLE channels ADD COLUMN `ephemeral_ttl_seconds` INT NOT NULL DEFAULT 0');
-    }
+    $this->ensureColumn($pdo, 'channels', 'ephemeral_ttl_seconds', 'INT NOT NULL DEFAULT 0');
   }
 
   private function userIsServerMember(PDO $pdo, int $serverId, int $userId): bool
@@ -258,15 +248,4 @@ class MessageController extends Routes {
     return (int) $stmt->fetchColumn() > 0;
   }
 
-  private function ensureColumn(PDO $pdo, string $table, string $column, string $definition): void
-  {
-    $stmt = $pdo->prepare(
-      'SELECT COUNT(*) FROM information_schema.COLUMNS
-       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?'
-    );
-    $stmt->execute([$table, $column]);
-    if ((int) $stmt->fetchColumn() === 0) {
-      $pdo->exec('ALTER TABLE `' . $table . '` ADD COLUMN `' . $column . '` ' . $definition);
-    }
-  }
 }

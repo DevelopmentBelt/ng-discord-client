@@ -5,9 +5,22 @@
     </div>
     <div>
       <h5 class="m-0 text-lg font-semibold text-nimbus-text-lighter">{{ participantName() }}</h5>
-      <p class="m-0 text-sm text-nimbus-text-muted">Direct Message</p>
+      <p class="m-0 text-sm text-nimbus-text-muted flex items-center gap-1">
+        @if (e2eeReady()) {
+          <span title="End-to-end encrypted">🔒</span>
+          <span>End-to-end encrypted</span>
+        } @else {
+          <span>Direct Message</span>
+        }
+      </p>
     </div>
   </div>
+
+  @if (tofuWarning()) {
+    <div class="mx-4 mt-2 px-4 py-3 bg-yellow-900/40 border border-yellow-600 rounded-lg text-yellow-300 text-sm whitespace-pre-wrap">
+      {{ tofuWarning() }}
+    </div>
+  }
 
   <div class="flex-1 overflow-y-auto pb-2.5 px-4">
     @if (isLoading()) {
@@ -36,7 +49,7 @@
                   <span class="text-xs text-nimbus-text-muted">{{ msg.postedTimestamp | datetimeFormatter: 'MMM D, YYYY h:mm A' }}</span>
                 </div>
               }
-              <div class="text-nimbus-text text-sm whitespace-pre-wrap break-words">{{ msg.rawText }}</div>
+              <div class="text-nimbus-text text-sm whitespace-pre-wrap break-words">{{ msg.text }}</div>
             </div>
           </div>
         </div>

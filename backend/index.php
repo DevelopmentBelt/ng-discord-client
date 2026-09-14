@@ -25,7 +25,7 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
   session_set_cookie_params([
     'lifetime' => 0,
     'path' => '/',
-    'secure' => false,
+    'secure' => filter_var($_ENV['SESSION_SECURE'] ?? getenv('SESSION_SECURE') ?: false, FILTER_VALIDATE_BOOLEAN),
     'httponly' => true,
     'samesite' => 'Lax',
   ]);
@@ -54,9 +54,14 @@ $app->options('/{routes:.+}', function (Request $request, Response $response) {
   return $response->withStatus(204);
 });
 
-$errorMiddleware = $app->addErrorMiddleware(true, true, true);
+$displayErrorDetails = filter_var($_ENV['APP_DEBUG'] ?? getenv('APP_DEBUG') ?: false, FILTER_VALIDATE_BOOLEAN);
+$errorMiddleware = $app->addErrorMiddleware($displayErrorDetails, true, true);
 
-$corsMiddleware = function (Request $request, RequestHandlerInterface $handler) use ($app): Response {
+$allowedOrigins = array_values(array_filter(array_map('trim', explode(',',
+  (string) ($_ENV['CORS_ALLOWED_ORIGINS'] ?? getenv('CORS_ALLOWED_ORIGINS') ?: 'http://localhost:4200')
+))));
+
+$corsMiddleware = function (Request $request, RequestHandlerInterface $handler) use ($app, $allowedOrigins): Response {
   if ($request->getMethod() === 'OPTIONS') {
     $response = $app->getResponseFactory()->createResponse(204);
   } else {
@@ -64,8 +69,8 @@ $corsMiddleware = function (Request $request, RequestHandlerInterface $handler) 
   }
 
   $origin = $request->getHeaderLine('Origin');
-  if ($origin === '') {
-    $origin = '*';
+  if ($origin === '' || !in_array($origin, $allowedOrigins, true)) {
+    return $response;
   }
 
   return $response

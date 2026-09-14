@@ -155,6 +155,15 @@ export class LocalMessageVaultService {
     return out.sort((a, b) => String(a.postedTimestamp).localeCompare(String(b.postedTimestamp)));
   }
 
+  /** M12: remove only the vault AES key from localStorage (leaves encrypted IDB records in place). */
+  clearLocalKey(userId?: number): void {
+    const uid = userId ?? this.authService.currentUser()?.id;
+    if (!uid) return;
+    localStorage.removeItem(LOCAL_KEY_PREFIX + uid);
+    localStorage.removeItem(LEGACY_KEY_PREFIX + uid);
+    this.cryptoKeyCache.delete(uid);
+  }
+
   async clearForUser(userId?: number): Promise<void> {
     const uid = userId ?? this.authService.currentUser()?.id;
     if (!uid) {

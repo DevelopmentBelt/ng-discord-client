@@ -4,6 +4,9 @@ import { User } from '../../models/user/user';
 import { UserWebService } from '../user-web-service/user-web.service';
 import { AuthResponse } from '../../models/user/auth';
 import { IdentityKeyService } from '../crypto/identity-key.service';
+import { PhantomKeyService } from '../crypto/phantom-key.service';
+import { LocalMessageVaultService } from '../crypto/local-message-vault.service';
+import { DmCryptoService } from '../crypto/dm-crypto.service';
 
 @Injectable({
   providedIn: 'root'
@@ -87,11 +90,27 @@ export class AuthService {
   logout(): Observable<AuthResponse> {
     return this.userWebService.logout().pipe(
       tap(() => {
+        // M12: clear all crypto key material from localStorage on logout
+        const userId = this.currentUserSignal()?.id;
         try {
           this.injector.get(IdentityKeyService).clearSession();
-        } catch {
-          // ignore
-        }
+        } catch { /* ignore */ }
+        try {
+          if (userId) {
+            this.injector.get(PhantomKeyService).clearAllLocalKeys(userId);
+          }
+        } catch { /* ignore */ }
+        try {
+          if (userId) {
+            this.injector.get(LocalMessageVaultService).clearLocalKey(userId);
+          }
+        } catch { /* ignore */ }
+        // M1: clear DM E2EE keys on logout
+        try {
+          if (userId) {
+            this.injector.get(DmCryptoService).clearAllLocalKeys(userId);
+          }
+        } catch { /* ignore */ }
         this.currentUserSignal.set(null);
       }),
       catchError(() => {

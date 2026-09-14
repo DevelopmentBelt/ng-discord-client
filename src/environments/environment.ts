@@ -1,18 +1,17 @@
-// This file can be replaced during build by using the `fileReplacements` array.
-// `ng build` replaces `environment.ts` with `environment.prod.ts`.
-// The list of file replacements can be found in `angular.json`.
+// This file is replaced during build by environment.prod.ts for --configuration production.
+// Runtime overrides can be injected via src/assets/env.js (loaded in index.html).
+
+declare global {
+  interface Window {
+    // H9 — set by docker/frontend/generate-env.sh at container start for production
+    __env?: { apiUrl?: string; wsUrl?: string };
+  }
+}
+
+const _runtimeEnv = typeof window !== 'undefined' ? window.__env : undefined;
 
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:80',
-  wsUrl: 'ws://localhost:8080'
+  apiUrl: _runtimeEnv?.apiUrl ?? 'http://localhost:80',
+  wsUrl:  _runtimeEnv?.wsUrl  ?? 'ws://localhost:8080',
 };
-
-/*
- * For easier debugging in development mode, you can import the following file
- * to ignore zone related error stack frames such as `zone.run`, `zoneDelegate.invokeTask`.
- *
- * This import should be commented out in production mode because it will have a negative impact
- * on performance if an error is thrown.
- */
-// import 'zone.js/plugins/zone-error';  // Included with Angular CLI.
